@@ -1,0 +1,50 @@
+{
+  "family": "fieldkit-timescale",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "timescale",
+      "image": "timescale/timescaledb:2.4.2-pg13",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 5432,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "POSTGRES_DB",
+          "value": "fk"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "POSTGRES_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:fieldkit/NAMESPACE/database/timescale/password"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/fieldkit-timescale",
+          "awslogs-region": "ap-southeast-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "pg_isready -U postgres -d fk || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}
+

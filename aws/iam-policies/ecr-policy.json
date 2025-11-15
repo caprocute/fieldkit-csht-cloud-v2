@@ -1,0 +1,34 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ECRGetAuthorizationToken",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECRRepositoryManagement",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:CreateRepository",
+        "ecr:DescribeRepositories",
+        "ecr:ListImages",
+        "ecr:DescribeImages",
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:PutImage",
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:CompleteLayerUpload"
+      ],
+      "Resource": [
+        "arn:aws:ecr:ap-southeast-1:ACCOUNT_ID:repository/hieuhk_fieldkit/*"
+      ]
+    }
+  ]
+}
+

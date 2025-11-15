@@ -1,0 +1,54 @@
+{
+  "family": "fieldkit-postgres",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "postgres",
+      "image": "parjom/timescaledb-postgis:2.17.2-pg16-postgis350",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 5432,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "POSTGRES_DB",
+          "value": "fieldkit"
+        },
+        {
+          "name": "POSTGRES_USER",
+          "value": "fieldkit"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "POSTGRES_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:fieldkit/NAMESPACE/database/postgres/password"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/fieldkit-postgres",
+          "awslogs-region": "ap-southeast-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "pg_isready -U fieldkit -d fieldkit || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}
+

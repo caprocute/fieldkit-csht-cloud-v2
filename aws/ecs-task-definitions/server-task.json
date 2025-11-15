@@ -1,0 +1,71 @@
+{
+  "family": "fieldkit-server",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "server",
+      "image": "ACCOUNT_ID.dkr.ecr.ap-southeast-1.amazonaws.com/hieuhk_fieldkit/server:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "FIELDKIT_ADDR",
+          "value": ":80"
+        },
+        {
+          "name": "FIELDKIT_HTTP_SCHEME",
+          "value": "https"
+        },
+        {
+          "name": "FIELDKIT_PORTAL_ROOT",
+          "value": "/portal"
+        },
+        {
+          "name": "AWS_PROFILE",
+          "value": "fieldkit"
+        },
+        {
+          "name": "FIELDKIT_WORKERS",
+          "value": "5"
+        },
+        {
+          "name": "FIELDKIT_MAPBOX_TOKEN",
+          "value": "pk.eyJ1IjoiY2Fwcm9jdXRlIiwiYSI6ImNsZnV5d2cyYTAyMTQzbG4wZWRxb2diaWcifQ.XuOwx36NEjavOcNoWlhg8A"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "FIELDKIT_POSTGRES_URL",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:fieldkit/NAMESPACE/database/postgres"
+        },
+        {
+          "name": "FIELDKIT_TIME_SCALE_URL",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:fieldkit/NAMESPACE/database/timescale"
+        },
+        {
+          "name": "FIELDKIT_SESSION_KEY",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:fieldkit/NAMESPACE/session/key"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/fieldkit-server",
+          "awslogs-region": "ap-southeast-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
+

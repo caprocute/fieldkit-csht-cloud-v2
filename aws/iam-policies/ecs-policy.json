@@ -1,0 +1,63 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ECSClusterManagement",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:CreateCluster",
+        "ecs:DescribeClusters",
+        "ecs:ListClusters",
+        "ecs:DeleteCluster",
+        "ecs:UpdateCluster"
+      ],
+      "Resource": [
+        "arn:aws:ecs:ap-southeast-1:ACCOUNT_ID:cluster/fieldkit-*"
+      ]
+    },
+    {
+      "Sid": "ECSServiceManagement",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:CreateService",
+        "ecs:DescribeServices",
+        "ecs:ListServices",
+        "ecs:UpdateService",
+        "ecs:DeleteService"
+      ],
+      "Resource": [
+        "arn:aws:ecs:ap-southeast-1:ACCOUNT_ID:service/fieldkit-*/*"
+      ]
+    },
+    {
+      "Sid": "ECSTaskDefinitionManagement",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:RegisterTaskDefinition",
+        "ecs:DeregisterTaskDefinition",
+        "ecs:DescribeTaskDefinition",
+        "ecs:ListTaskDefinitions"
+      ],
+      "Resource": [
+        "arn:aws:ecs:ap-southeast-1:ACCOUNT_ID:task-definition/fieldkit-*"
+      ]
+    },
+    {
+      "Sid": "ECSTaskManagement",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:RunTask",
+        "ecs:StopTask",
+        "ecs:DescribeTasks",
+        "ecs:ListTasks"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "ArnEquals": {
+          "ecs:cluster": "arn:aws:ecs:ap-southeast-1:ACCOUNT_ID:cluster/fieldkit-*"
+        }
+      }
+    }
+  ]
+}
+

@@ -1,0 +1,167 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ECRGetAuthorizationToken",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECRRepositoryManagement",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:CreateRepository",
+        "ecr:DescribeRepositories",
+        "ecr:ListImages",
+        "ecr:DescribeImages"
+      ],
+      "Resource": [
+        "arn:aws:ecr:ap-southeast-1:ACCOUNT_ID:repository/hieuhk_fieldkit/*"
+      ]
+    },
+    {
+      "Sid": "ECRImagePushPull",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:PutImage",
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:CompleteLayerUpload"
+      ],
+      "Resource": [
+        "arn:aws:ecr:ap-southeast-1:ACCOUNT_ID:repository/hieuhk_fieldkit/*"
+      ]
+    },
+    {
+      "Sid": "ECSAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:CreateCluster",
+        "ecs:DescribeClusters",
+        "ecs:ListClusters",
+        "ecs:DeleteCluster",
+        "ecs:UpdateCluster",
+        "ecs:CreateService",
+        "ecs:DescribeServices",
+        "ecs:ListServices",
+        "ecs:UpdateService",
+        "ecs:DeleteService",
+        "ecs:RegisterTaskDefinition",
+        "ecs:DeregisterTaskDefinition",
+        "ecs:DescribeTaskDefinition",
+        "ecs:ListTaskDefinitions",
+        "ecs:RunTask",
+        "ecs:StopTask",
+        "ecs:DescribeTasks",
+        "ecs:ListTasks"
+      ],
+      "Resource": [
+        "arn:aws:ecs:ap-southeast-1:ACCOUNT_ID:cluster/fieldkit-*",
+        "arn:aws:ecs:ap-southeast-1:ACCOUNT_ID:service/fieldkit-*/*",
+        "arn:aws:ecs:ap-southeast-1:ACCOUNT_ID:task-definition/fieldkit-*",
+        "*"
+      ]
+    },
+    {
+      "Sid": "SecretsManagerAccess",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:ListSecrets",
+        "secretsmanager:CreateSecret",
+        "secretsmanager:UpdateSecret",
+        "secretsmanager:DeleteSecret",
+        "secretsmanager:TagResource",
+        "secretsmanager:UntagResource"
+      ],
+      "Resource": [
+        "arn:aws:secretsmanager:ap-southeast-1:ACCOUNT_ID:secret:fieldkit/*"
+      ]
+    },
+    {
+      "Sid": "CloudWatchLogsAccess",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:DescribeLogGroups",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "logs:DescribeLogStreams",
+        "logs:DeleteLogGroup",
+        "logs:PutRetentionPolicy",
+        "logs:FilterLogEvents",
+        "logs:GetLogEvents"
+      ],
+      "Resource": [
+        "arn:aws:logs:ap-southeast-1:ACCOUNT_ID:log-group:/ecs/fieldkit-*",
+        "arn:aws:logs:ap-southeast-1:ACCOUNT_ID:log-group:/ecs/fieldkit-*:*"
+      ]
+    },
+    {
+      "Sid": "CloudWatchLogsDescribeAccess",
+      "Effect": "Allow",
+      "Action": [
+        "logs:DescribeLogGroups"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IAMReadAccess",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetRole",
+        "iam:ListRoles",
+        "iam:GetRolePolicy",
+        "iam:ListRolePolicies",
+        "iam:ListAttachedRolePolicies"
+      ],
+      "Resource": [
+        "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+        "arn:aws:iam::ACCOUNT_ID:role/ecsTaskRole"
+      ]
+    },
+    {
+      "Sid": "IAMRoleManagement",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole",
+        "iam:UpdateRole",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:PutRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:CreatePolicy",
+        "iam:CreatePolicyVersion",
+        "iam:DeletePolicyVersion",
+        "iam:GetPolicy",
+        "iam:GetPolicyVersion",
+        "iam:ListPolicyVersions"
+      ],
+      "Resource": [
+        "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+        "arn:aws:iam::ACCOUNT_ID:role/ecsTaskRole",
+        "arn:aws:iam::ACCOUNT_ID:policy/ECSTaskExecutionRolePolicy",
+        "arn:aws:iam::ACCOUNT_ID:policy/ECSTaskRolePolicy"
+      ]
+    },
+    {
+      "Sid": "IAMPassRole",
+      "Effect": "Allow",
+      "Action": [
+        "iam:PassRole"
+      ],
+      "Resource": [
+        "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+        "arn:aws:iam::ACCOUNT_ID:role/ecsTaskRole"
+      ]
+    }
+  ]
+}
+
