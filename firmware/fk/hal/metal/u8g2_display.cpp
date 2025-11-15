@@ -1,0 +1,526 @@
+#include <tiny_printf.h>
+
+#include "fk.h"
+#include "platform.h"
+#include "hal/display.h"
+#include "hal/metal/u8g2_display.h"
+
+#if defined(__SAMD51__)
+
+namespace fk {
+
+#include "logos/conservify_logo_bw-56.h"
+#include "logos/fk_logo_bw-128x27.h"
+#include "logos/fk_logo_bw-100x21.h"
+#include "logos/fk_logo_bw-80x17.h"
+
+// constexpr char glyph_open_iconic_all_arrow_door = '\x40';
+// constexpr char glyph_open_iconic_all_clock = '\x7B';
+// constexpr char glyph_open_iconic_all_bug = '\x68';
+// constexpr char glyph_open_iconic_all_glass = '\xCF';
+
+constexpr char glyph_open_iconic_all_gps = '\xD1';
+constexpr char glyph_open_iconic_all_wifi_1 = '\xF7';
+constexpr char glyph_open_iconic_all_wifi_2 = '\xF8';
+constexpr char glyph_open_iconic_all_letter_closed = '\x9C';
+
+constexpr char glyph_open_cursor_all_recording = '\x47';
+
+constexpr char glyph_battery19[] = { '1', '2', '3', '4', '5' };
+
+/**
+ * I2C address for the SH1106 driver for the OLED display. Note that the u8g2
+ * library relies on this being the read I2C address.
+ */
+constexpr uint8_t OLED_ADDRESS = 0x3C * 2;
+
+/**
+ * Width of the OLED display in pixels. Adjusted for the display's physical alignment.
+ */
+constexpr uint8_t OLED_WIDTH = 128;
+
+/**
+ * Height of the OLED display in pixels. Adjusted for the display's physical alignment.
+ */
+constexpr uint8_t OLED_HEIGHT = 64;
+
+/**
+ * Offset on the Y axis.
+ */
+constexpr uint8_t OLED_X_OFFSET = 0;
+
+/**
+ * Offset on the Y axis.
+ */
+constexpr uint8_t OLED_Y_OFFSET = 0;
+
+U8g2Display::U8g2Display() : draw_(U8G2_R0, U8X8_PIN_NONE, PIN_WIRE_SCL, PIN_WIRE_SDA) {
+    draw_.setI2CAddress(OLED_ADDRESS);
+}
+
+bool U8g2Display::begin() {
+    if (!draw_.begin()) {
+        available_ = false;
+
+        return false;
+    }
+
+    available_ = true;
+
+    off();
+
+    return true;
+}
+
+void U8g2Display::on() {
+    draw_.clearBuffer();
+    draw_.setPowerSave(0);
+    draw_.sendBuffer();
+}
+
+void U8g2Display::centered(const xbm_data_t &xbm) {
+    auto x = (OLED_WIDTH / 2) - (xbm.w / 2) + OLED_X_OFFSET;
+    auto y = (OLED_HEIGHT / 2) - (xbm.h / 2) + OLED_Y_OFFSET;
+    draw_.drawXBM(x, y, xbm.w, xbm.h, xbm.data);
+}
+
+void U8g2Display::company_logo() {
+    draw_.setPowerSave(0);
+    draw_.clearBuffer();
+    centered(conservify_logo_bw_56);
+    draw_.sendBuffer();
+}
+
+void U8g2Display::fk_logo() {
+    draw_.setPowerSave(0);
+    draw_.clearBuffer();
+    centered(fk_logo_bw_128x27);
+    draw_.sendBuffer();
+}
+
+static bool toggle_every(uint32_t time, uint32_t interval) {
+    return (time / interval) % 2 == 0;
+}
+
+static int32_t lerp(int32_t start, int32_t end, uint32_t interval, uint32_t time) {
+    auto scale = ((float)(time % interval) / (float)interval);
+    return start + (int32_t)((float)(end - start) * scale);
+}
+
+template <typename T> static void draw_centered(T draw, uint16_t y, const char *str) {
+    auto width = draw.getUTF8Width(str);
+    draw.drawUTF8((OLED_WIDTH / 2) - (width / 2), y, str);
+}
+
+template <typename T>
+static bool draw_string_auto_sized(T draw, bool bold, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *str) {
+    constexpr size_t NumberFaces = 5;
+
+    uint8_t const *bold_faces[NumberFaces] = {
+        u8g2_font_courR14_tf, u8g2_font_courR14_tf, u8g2_font_courR12_tf, u8g2_font_courR10_tf, u8g2_font_courR08_tf,
+    };
+
+    uint8_t const *normal_faces[NumberFaces] = {
+        u8g2_font_courR14_tf, u8g2_font_courR14_tf, u8g2_font_courR12_tf, u8g2_font_courR10_tf, u8g2_font_courR08_tf,
+    };
+
+    auto faces = bold ? bold_faces : normal_faces;
+
+    for (auto i = 0u; i < NumberFaces; ++i) {
+        draw.setFontMode(0);
+        draw.setFont(faces[i]);
+        auto width = draw.getUTF8Width(str);
+        if (width <= w) {
+            auto fx = x + ((w / 2) - (width / 2));
+            auto fy = y + h;
+            draw.drawUTF8(fx, fy, str);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static void pretty_bytes(uint32_t bytes, uint32_t *value, const char **suffix) {
+    if (bytes > 1024 * 1024) {
+        *value = bytes / (1024 * 1024);
+        *suffix = "MB";
+    } else if (bytes > 1024) {
+        *value = bytes / (1024);
+        *suffix = "kB";
+    } else {
+        *value = bytes;
+        *suffix = "B";
+    }
+}
+
+static void draw_battery(U8G2_SH1106_128X64_NONAME_F_HW_I2C &draw, HomeScreen::PowerInfo power) {
+    switch (power.battery_status) {
+    case BatteryStatus::Good: {
+        float battery = power.battery;
+        size_t frames = sizeof(glyph_battery19);
+        size_t frame = (size_t)(battery * frames) / 100.0f;
+        if (frame > frames - 1) {
+            frame = frames - 1;
+        }
+        if (frame < 0) {
+            frame = 0;
+        }
+        draw.setFont(u8g2_font_battery19_tn);
+        draw.drawGlyph(OLED_WIDTH - 12, 20, glyph_battery19[frame]);
+        break;
+    }
+    case BatteryStatus::External: {
+        draw.setFont(u8g2_font_courR12_tf);
+        draw.drawGlyph(OLED_WIDTH - 12, 20, 'E');
+        break;
+    }
+    case BatteryStatus::Low: {
+        draw.setFont(u8g2_font_courR12_tf);
+        draw.drawGlyph(OLED_WIDTH - 12, 20, 'L');
+        break;
+    }
+    case BatteryStatus::Dangerous: {
+        draw.setFont(u8g2_font_courR12_tf);
+        draw.drawGlyph(OLED_WIDTH - 12, 20, 'X');
+        break;
+    }
+    case BatteryStatus::Unknown:
+    // FALLTHROUGH
+    default: {
+        draw.setFont(u8g2_font_courR12_tf);
+        draw.drawGlyph(OLED_WIDTH - 12, 20, '?');
+        break;
+    }
+    }
+}
+
+void U8g2Display::home(HomeScreen const &data) {
+    draw_.setPowerSave(0);
+    draw_.clearBuffer();
+
+    if (data.progress.operation == nullptr) {
+        char buffer[64];
+
+        if (data.messages == 0) {
+            // Only show "bytes tx" if we're connected.
+            if (data.network.enabled && data.network.connected) {
+                if (toggle_every(data.time, 5000)) {
+                    const char *rx_suffix = "";
+                    uint32_t rx_pretty = 0;
+
+                    pretty_bytes(data.network.bytes_tx, &rx_pretty, &rx_suffix);
+
+                    tiny_snprintf(buffer, sizeof(buffer), "%d%s tx", rx_pretty, rx_suffix);
+                    draw_.setFontMode(0);
+                    draw_.setFont(u8g2_font_courR08_tf);
+                    auto width = draw_.getUTF8Width(buffer);
+                    draw_.drawUTF8(((OLED_WIDTH - 48) / 2) - (width / 2), 12, buffer);
+                } else {
+                    tiny_snprintf(buffer, sizeof(buffer), "%d", data.readings);
+                    draw_.setFontMode(0);
+                    draw_.setFont(u8g2_font_courR08_tf);
+                    auto width = draw_.getUTF8Width(buffer);
+                    draw_.drawUTF8(((OLED_WIDTH - 48) / 2) - (width / 2), 12, buffer);
+                }
+            } else {
+                if (data.debug_mode != nullptr) {
+                    draw_.setFontMode(0);
+                    draw_.setFont(u8g2_font_courR08_tf);
+                    auto width = draw_.getUTF8Width(data.debug_mode);
+                    draw_.drawUTF8(((OLED_WIDTH - 48) / 2) - (width / 2), 12, data.debug_mode);
+                } else {
+                    tiny_snprintf(buffer, sizeof(buffer), "%d", data.readings);
+                    draw_.setFontMode(0);
+                    draw_.setFont(u8g2_font_courR08_tf);
+                    auto width = draw_.getUTF8Width(buffer);
+                    draw_.drawUTF8(((OLED_WIDTH - 48) / 2) - (width / 2), 12, buffer);
+                }
+            }
+        } else {
+            // TODO l10n, add a ticket
+            tiny_snprintf(buffer, sizeof(buffer), data.messages == 1 ? "%d message" : "%d messages", data.messages);
+            draw_.setFontMode(0);
+            draw_.setFont(u8g2_font_courR08_tf);
+            auto width = draw_.getUTF8Width(buffer);
+            draw_.drawUTF8(((OLED_WIDTH - 48) / 2) - (width / 2), 12, buffer);
+        }
+    } else {
+        // TODO Modify this so that the percentage is full size and the label varies.
+        char buffer[128];
+        tiny_snprintf(buffer, sizeof(buffer), "%s %.1f", data.progress.operation, data.progress.progress);
+        draw_.setFontMode(0);
+        draw_.setFont(u8g2_font_courR08_tf);
+        auto width = draw_.getUTF8Width(buffer);
+        draw_.drawUTF8(((OLED_WIDTH - 44) / 2) - (width / 2), 12, buffer);
+    }
+
+    if (data.debug_mode == nullptr) {
+        if (data.messages > 0) {
+            draw_.setFont(u8g2_font_open_iconic_all_2x_t);
+            draw_.drawGlyph(OLED_WIDTH - 16, 18, glyph_open_iconic_all_letter_closed);
+        } else {
+            if (data.recording) {
+                if (toggle_every(data.time, 1000)) {
+                    draw_.setFont(u8g2_font_cursor_tf);
+                    draw_.drawGlyph(OLED_WIDTH - 10, 10, glyph_open_cursor_all_recording);
+                } else {
+                    draw_battery(draw_, data.power);
+                }
+            } else {
+                draw_battery(draw_, data.power);
+            }
+        }
+    }
+
+    if (data.network.enabled) {
+        if (data.network.connected) {
+            draw_.setFont(u8g2_font_open_iconic_all_2x_t);
+            auto interval = data.network.connected ? 10000 : 1000;
+            if (toggle_every(data.time, interval)) {
+                draw_.drawGlyph(OLED_WIDTH - 48, 18, glyph_open_iconic_all_wifi_1);
+            } else {
+                draw_.drawGlyph(OLED_WIDTH - 48, 18, glyph_open_iconic_all_wifi_2);
+            }
+        }
+    }
+
+    if (data.gps.enabled) {
+        draw_.setFont(u8g2_font_open_iconic_all_2x_t);
+        auto interval = data.gps.fix ? 10000 : 1000;
+        if (toggle_every(data.time, interval)) {
+            draw_.drawGlyph(OLED_WIDTH - 32, 18, glyph_open_iconic_all_gps);
+        }
+    }
+
+    auto top = 18;
+    auto max_h = 20;
+    auto rendered_workers = false;
+    if (data.primary != nullptr && data.secondary != nullptr) {
+        max_h = 16;
+    }
+
+    for (auto &info : data.workers) {
+        if (info.visible) {
+            draw_string_auto_sized(draw_, false, 0, top, OLED_WIDTH, max_h, info.name);
+            top += max_h + 6;
+            max_h -= 2;
+
+            auto width = (u8g2_uint_t)(OLED_WIDTH * info.progress);
+            draw_.drawHLine(0, top, width);
+
+            rendered_workers = true;
+        }
+    }
+
+    if (!rendered_workers) {
+        if (data.primary != nullptr) {
+            if (!draw_string_auto_sized(draw_, false, 0, top, OLED_WIDTH, max_h, data.primary)) {
+                draw_.setFontMode(0);
+                draw_.setFont(u8g2_font_courR14_tf);
+                auto width = draw_.getUTF8Width(data.primary);
+                auto x = lerp(-width, OLED_WIDTH, 10000, data.time);
+                draw_.drawUTF8(x, 18 + 18, data.primary);
+            }
+            top += max_h + 7;
+            max_h -= 2;
+        }
+        if (data.secondary != nullptr) {
+            draw_string_auto_sized(draw_, false, 0, top, OLED_WIDTH, max_h, data.secondary);
+        }
+    }
+
+    draw_.sendBuffer();
+}
+
+void U8g2Display::menu(MenuScreen const &menu) {
+    draw_.setPowerSave(0);
+    draw_.setFontMode(1);
+    draw_.clearBuffer();
+
+    auto noptions = menu.number_of_options();
+    if (noptions > 0) {
+        draw_.setFontMode(0);
+        draw_.setFont(u8g2_font_courR08_tf);
+        auto y = 0;
+        for (auto i = 0u; i < noptions; ++i) {
+            auto option = menu.get_option(i);
+            if (option->visible()) {
+                if (option->focused()) {
+                    draw_.drawBox(2, y + 6, 6, 6);
+                }
+
+                auto width = draw_.getUTF8Width(option->label());
+                auto x = 0;
+                if (width > OLED_WIDTH) {
+                    x = lerp(OLED_WIDTH / 3, -width + (OLED_WIDTH / 2), 10000 / 2, fk_uptime());
+                }
+                if (option->selected()) {
+                    draw_.setDrawColor(1);
+                    auto h = min(10, OLED_HEIGHT - y + 4);
+                    draw_.drawBox(10, y + 4, OLED_WIDTH - 10, h);
+                    draw_.setDrawColor(0);
+                    draw_.setClipWindow(0 + 10, y, OLED_WIDTH - 10, y + 12);
+                    draw_.drawUTF8(2 + 10 + x, y + 12, option->label());
+                    draw_.setMaxClipWindow();
+                    draw_.setDrawColor(1);
+                } else {
+                    draw_.setDrawColor(1);
+                    draw_.setClipWindow(0 + 10, y, OLED_WIDTH - 10, y + 12);
+                    draw_.drawUTF8(2 + 10 + x, y + 12, option->label());
+                    draw_.setMaxClipWindow();
+                }
+                y += 12;
+            }
+        }
+    }
+
+    draw_.sendBuffer();
+}
+
+static const char *to_flags(char *str, uint32_t value, uint8_t length) {
+    for (auto i = 0u; i < length; ++i) {
+        if ((value & (0x1 << i)) > 0) {
+            str[i] = 'X';
+        } else {
+            str[i] = 'O';
+        }
+    }
+    str[length] = 0;
+    return str;
+}
+
+void U8g2Display::self_check(SelfCheckScreen const &screen) {
+    draw_.setPowerSave(0);
+    draw_.clearBuffer();
+    draw_.setFontMode(1);
+    draw_.setFont(u8g2_font_courR08_tf);
+
+    char flags_str[MaximumNumberOfPhysicalModules + 1];
+    auto x = 0;
+    auto y = 12;
+    for (auto i = 0u; screen.checks[i] != nullptr; ++i) {
+        auto c = screen.checks[i];
+
+        if (c->type == CheckType::Skipped) {
+            continue;
+        }
+
+        auto label = c->name;
+        if (c->type == CheckType::Flags) {
+            label = to_flags(flags_str, c->value, sizeof(flags_str) - 1);
+        }
+
+        auto width = draw_.getUTF8Width(label);
+        if (x + width > OLED_WIDTH) {
+            y += 16;
+            x = 0;
+        }
+
+        if (c->value) {
+            draw_.setDrawColor(1);
+            draw_.drawUTF8(x, y, label);
+        } else {
+            draw_.setDrawColor(1);
+            draw_.drawBox(x - 2, y - 10, width + 4, 14);
+            draw_.setDrawColor(0);
+            draw_.drawUTF8(x, y, label);
+        }
+
+        x += width + 10;
+    }
+
+    draw_.setDrawColor(1);
+    draw_.sendBuffer();
+}
+
+void U8g2Display::simple(SimpleScreen const &screen) {
+    draw_.setPowerSave(0);
+    draw_.clearBuffer();
+
+    auto y = OLED_HEIGHT / 3;
+
+    if (screen.message != nullptr) {
+        draw_.setFontMode(1);
+        draw_.setFont(u8g2_font_courR08_tf);
+        draw_centered(draw_, y, screen.message);
+    }
+
+    if (screen.secondary != nullptr) {
+        draw_.setFontMode(1);
+        draw_.setFont(u8g2_font_courR08_tf);
+        draw_centered(draw_, y * 2, screen.secondary);
+    }
+
+    draw_.sendBuffer();
+}
+
+void U8g2Display::item(ItemScreen const &screen) {
+}
+
+void U8g2Display::reading(ReadingScreen const &screen) {
+    draw_.clearBuffer();
+
+    if (screen.readings->only_one()) {
+        auto reading = *screen.readings->begin();
+
+        draw_.setFontMode(1);
+        draw_.setFont(u8g2_font_courR08_tf);
+        draw_.drawUTF8(0, 10, reading.module_name);
+        draw_.drawUTF8(0, 20, reading.sensor_name);
+        draw_.setFont(u8g2_font_courR10_tf);
+        char value[16];
+        if (reading.value.has_value()) {
+            tiny_snprintf(value, sizeof(value), "%.3f", reading.value.value());
+        } else {
+            tiny_snprintf(value, sizeof(value), "<none>");
+        }
+        draw_centered(draw_, 40, value);
+    }
+
+    draw_.sendBuffer();
+}
+
+void U8g2Display::module_status(ModuleStatusScreen const &screen) {
+    char bay_info[16];
+    tiny_snprintf(bay_info, sizeof(bay_info), "Bay #%d", screen.bay);
+
+    draw_.setPowerSave(0);
+    draw_.clearBuffer();
+
+    auto y = OLED_HEIGHT / 4;
+
+    draw_.setFontMode(1);
+    draw_.setFont(u8g2_font_courR08_tf);
+
+    draw_centered(draw_, y, bay_info);
+    draw_centered(draw_, y * 2, screen.name);
+    draw_centered(draw_, y * 3, screen.message);
+
+    draw_.sendBuffer();
+}
+
+void U8g2Display::off() {
+    draw_.setPowerSave(1);
+}
+
+void U8g2Display::fault(FaultCode const *code) {
+    draw_.setPowerSave(0);
+    draw_.clearBuffer();
+
+    auto y = OLED_HEIGHT / 3;
+
+    draw_.setFontMode(1);
+    draw_.setFont(u8g2_font_courR08_tf);
+    draw_centered(draw_, y, code->code);
+
+    draw_.setFontMode(1);
+    draw_.setFont(u8g2_font_courR08_tf);
+    draw_centered(draw_, y * 2, code->message);
+
+    draw_.sendBuffer();
+}
+
+} // namespace fk
+
+#endif

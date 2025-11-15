@@ -1,0 +1,78 @@
+#pragma once
+
+#include "io.h"
+#include "pool.h"
+#include "hal/network.h"
+#include "platform.h"
+
+namespace fk {
+
+class Connection : public Writer, public Reader {
+protected:
+    Pool *pool_;
+    NetworkConnection *conn_;
+    uint32_t number_{ 0 };
+    uint32_t started_{ 0 };
+    uint32_t activity_{ 0 };
+    uint32_t bytes_rx_{ 0 };
+    uint32_t bytes_tx_{ 0 };
+    uint32_t bytes_rx_previous_{ 0 };
+    uint32_t bytes_tx_previous_{ 0 };
+    bool busy_{ false };
+
+public:
+    Connection(Pool *pool, NetworkConnection *conn, uint32_t number);
+    virtual ~Connection();
+
+    friend class ConnectionPool;
+
+public:
+    virtual bool service();
+
+    int32_t printf(const char *s, ...) __attribute__((format(printf, 2, 3)));
+
+    int32_t write(uint8_t const *buffer, size_t size) override;
+
+    int32_t read(uint8_t *buffer, size_t size) override;
+
+    int32_t close();
+
+public:
+    virtual bool is_debug() const {
+        return false;
+    }
+
+    uint32_t number() const {
+        return number_;
+    }
+
+    uint32_t activity() const {
+        return activity_;
+    }
+
+    bool active() const {
+        return (fk_uptime() - activity()) < NetworkConnectionMaximumDuration;
+    }
+
+    bool closed() const {
+        if (conn_ != nullptr) {
+            FK_ASSERT_ADDRESS(conn_);
+            return false;
+        }
+        return true;
+    }
+
+    void busy(bool busy) {
+        busy_ = busy;
+    }
+
+    bool busy() const {
+        return busy_;
+    }
+
+    Pool *pool() {
+        return pool_;
+    }
+};
+
+} // namespace fk

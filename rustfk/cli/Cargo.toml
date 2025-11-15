@@ -1,0 +1,32 @@
+[package]
+name = "cli"
+version = "0.1.0"
+authors = ["Jacob Lewallen <jlewallen@gmail.com>"]
+edition = "2021"
+
+[dependencies.discovery]
+path = "../libs/discovery"
+
+[dependencies.query]
+path = "../libs/query"
+
+[dependencies.sync]
+path = "../libs/sync"
+
+[dependencies]
+anyhow = { workspace = true }
+base64 = { workspace = true }
+clap = { version = "4.5.4", features = ["derive"] }
+hex = { workspace = true }
+itertools = { workspace = true }
+lazy_static = { workspace = true }
+quick-protobuf = { workspace = true }
+range-set-blaze = { workspace = true }
+serde_json = { workspace = true }
+socket2 = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+tokio-stream = { workspace = true, features = ["full"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+varint = { workspace = true }

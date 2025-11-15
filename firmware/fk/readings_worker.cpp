@@ -1,0 +1,236 @@
+#include <samd51_common.h>
+
+#include "graceful_shutdown.h"
+#include "hal/hal.h"
+#include "readings_worker.h"
+#include "state_manager.h"
+
+#include "modules/scan_modules_worker.h"
+#include "update_readings_listener.h"
+#include "lora_worker.h"
+
+extern const struct fkb_header_t fkb_header;
+
+namespace fk {
+
+FK_DECLARE_LOGGER("rw");
+
+ReadingsWorker::ReadingsWorker(bool scan, bool read_only, bool throttle, bool unattended, ModulePowerState power_state)
+    : scan_(scan), read_only_(read_only), throttle_(throttle), unattended_(unattended), power_state_(power_state) {
+}
+
+TryTake ReadingsWorker::try_take(state::ReadingsListener *listener, Pool &pool) {
+    auto state = read_state();
+    if (throttle_ && state.throttle) {
+        logwarn("readings throttled");
+        return TryTake::TryTakeSkipped;
+    }
+
+    auto lock = get_modmux()->lock();
+    if (scan_ || !state.scanned) {
+        loginfo("scanning");
+
+        if (!scan(pool)) {
+            return TryTake::TryTakeError;
+        }
+    } else {
+        loginfo("scan skipped");
+    }
+
+    if (!take(listener, pool)) {
+        logerror("take");
+        return TryTake::TryTakeError;
+    }
+
+    return TryTake::TryTakeSuccess;
+}
+
+void ReadingsWorker::run(Pool &pool) {
+    if (has_conflicting_worker(false)) {
+        return;
+    }
+
+    UpdateReadingsListener listener{ pool };
+    switch (try_take(&listener, pool)) {
+    case TryTake::TryTakeSkipped:
+        return;
+    case TryTake::TryTakeError:
+        logerror("take");
+        return;
+    case TryTake::TryTakeSuccess:
+        break;
+    }
+
+    FK_ASSERT(listener.flush() >= 0);
+
+    if (!read_only_) {
+        if (!save(pool)) {
+            logerror("save");
+            return;
+        }
+
+        update_global_state(pool);
+    }
+
+    if (spawn_lora_if_due(pool)) {
+        if (unattended_) {
+            LoraWorker worker{ LoraWork{ LoraWorkOperation::Readings } };
+            worker.run(pool);
+        } else {
+            loginfo("skipping lora: attended");
+        }
+    }
+}
+
+bool ReadingsWorker::has_conflicting_worker(bool check_readings) {
+    // Don't bother if the worker is already running.
+    if (check_readings && get_ipc()->has_running_worker(WorkerCategory::Readings)) {
+        logwarn("skip: readings task");
+        return true;
+    }
+    if (get_ipc()->has_running_worker(WorkerCategory::Transfer)) {
+        logwarn("skip: transfer task");
+        return true;
+    }
+    if (get_ipc()->has_running_worker(WorkerCategory::Storage)) {
+        logwarn("skip: storage task");
+        return true;
+    }
+
+    return false;
+}
+
+bool ReadingsWorker::spawn_lora_if_due(Pool &pool) {
+    auto gs = get_global_state_rw();
+    if (gs.get()->lora.has_module) {
+        auto &lora = gs.get()->scheduler.lora;
+        auto elapsed_since = fk_uptime() - lora.mark;
+        auto should = elapsed_since > lora.interval * OneSecondMs;
+        loginfo("%s lora %" PRId32 "ms elapsed (%" PRIu32 "ms, %" PRIu32 "s)", should ? "spawning" : "skipping", elapsed_since, lora.mark,
+                lora.interval);
+        if (should) {
+            lora.mark = fk_uptime();
+            return true;
+        }
+    } else {
+        loginfo("skipping lora: no-module");
+    }
+    return false;
+}
+
+bool ReadingsWorker::scan(Pool &pool) {
+    ScanModulesWorker scan_worker;
+    scan_worker.run(pool);
+
+    return true;
+}
+
+bool ReadingsWorker::take(state::ReadingsListener *listener, Pool &pool) {
+    // So, this is a little strange because we're getting a read only
+    // lock but we do actually write the live readings. No real
+    // danger, yet but it's strange.
+    // Wait, what? TODO
+    auto gs = get_global_state_ro();
+    auto attached = gs.get()->dynamic.attached();
+
+    if (attached->take_readings(listener, pool) < 0) {
+        logerror("take readings");
+        return false;
+    }
+
+    return true;
+}
+
+bool ReadingsWorker::save(Pool &pool) {
+    auto lock = storage_mutex.acquire(UINT32_MAX);
+    FK_ASSERT(lock);
+
+    // This makes testing way easier and honestly, so far having the phylum logs
+    // be verbose hasn't been necessary. I'd love a way to keep DEBUG and only
+    // flush on certain conditions.
+    ScopedLogLevelChange temporary_info_only{ LogLevels::INFO };
+
+    // jlewallen: storage-write
+    Storage storage{ MemoryFactory::get_data_memory(), pool, false };
+    if (!storage.begin()) {
+        return false;
+    }
+
+    auto gs = get_global_state_ro();
+
+    MetaRecord meta_record{ pool };
+    if (!meta_record.include_modules(gs.get(), &fkb_header, pool)) {
+        logwarn("include-modules failed, skipping write");
+        return true;
+    }
+
+    auto meta_ops = storage.meta_ops();
+    auto meta_record_number = meta_ops->write_record(SignedRecordKind::Modules, meta_record.record(), pool);
+    if (!meta_record_number) {
+        return false;
+    }
+
+    auto meta_attributes = meta_ops->attributes(pool);
+    if (!meta_attributes) {
+        return false;
+    }
+
+    DataRecord data_record{ pool };
+    data_record.include_readings(gs.get(), &fkb_header, *meta_record_number, pool);
+
+    auto data_ops = storage.data_ops();
+    auto data_record_number = data_ops->write_readings(&data_record.record(), pool);
+    if (!data_record_number) {
+        return false;
+    }
+
+    auto data_attributes = data_ops->attributes(pool);
+    if (!data_attributes) {
+        return false;
+    }
+
+    loginfo("storage-update wrote=%" PRIu32 " data-attr=%" PRIu32, *data_record_number, data_attributes->records);
+
+    storage_update_ = StorageUpdate{ .meta = StorageStreamUpdate{ meta_attributes->size, meta_attributes->records },
+                                     .data = StorageStreamUpdate{ data_attributes->size, data_attributes->records },
+                                     .nreadings = data_attributes->nreadings,
+                                     .installed = storage.installed(),
+                                     .used = storage.used(),
+                                     .time = get_clock_now() };
+
+    if (!storage.flush()) {
+        return false;
+    }
+
+    return true;
+}
+
+bool ReadingsWorker::update_global_state(Pool &pool) {
+    auto gs = get_global_state_rw();
+
+    gs.get()->apply(storage_update_);
+
+    return true;
+}
+
+ReadingsWorker::ThrottleAndScanState ReadingsWorker::read_state() {
+    auto gs = get_global_state_rw();
+    auto attached = gs.get()->dynamic.attached();
+    auto scanned = attached != nullptr && attached->initialized();
+    if (gs.get()->network.state.udp_activity > 0) {
+        auto elapsed = fk_uptime() - gs.get()->network.state.udp_activity;
+        if (elapsed < TenSecondsMs) {
+            return ThrottleAndScanState{ true, scanned };
+        }
+    }
+    if (gs.get()->scheduler.readings.mark > 0) {
+        auto elapsed = fk_uptime() - gs.get()->scheduler.readings.mark;
+        if (elapsed < TenSecondsMs) {
+            return ThrottleAndScanState{ true, scanned };
+        }
+    }
+    gs.get()->scheduler.readings.mark = fk_uptime();
+    return ThrottleAndScanState{ false, scanned };
+}
+
+} // namespace fk

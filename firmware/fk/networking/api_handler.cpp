@@ -1,0 +1,591 @@
+#include <tiny_printf.h>
+#include <algorithm>
+
+#include "networking/api_handler.h"
+#include "networking/http_reply.h"
+
+#include "storage/storage.h"
+#include "state_manager.h"
+#include "utilities.h"
+#include "records.h"
+#include "base64.h"
+#include "hal/clock.h"
+
+#include "readings_worker.h"
+#include "simple_workers.h"
+#include "lora_worker.h"
+#include "modules/scan_modules_worker.h"
+
+extern const struct fkb_header_t fkb_header;
+
+namespace fk {
+
+FK_DECLARE_LOGGER("api");
+
+static bool send_networks(HttpServerConnection *connection, NetworkScan scan, Pool *pool);
+
+static bool send_simple_success(HttpServerConnection *connection, fk_app_HttpQuery *query, Pool *pool);
+
+static bool send_status(HttpServerConnection *connection, fk_app_HttpQuery *query, Pool *pool);
+
+static bool send_readings(HttpServerConnection *connection, fk_app_HttpQuery *query, Pool *pool);
+
+static bool send_files(HttpServerConnection *connection, fk_app_HttpQuery *query, Pool *pool);
+
+static bool configure(HttpServerConnection *connection, fk_app_HttpQuery *query, Pool *pool);
+
+void ApiHandler::adjust_time_if_necessary(fk_app_HttpQuery const *query) {
+    if (query->time > 0) {
+        clock_adjust_maybe(query->time);
+    } else {
+        logdebug("query time is missing");
+    }
+}
+
+void ApiHandler::adjust_location_if_necessary(fk_app_HttpQuery const *query) {
+    if (query->locate.modifying) {
+        GlobalStateManager gsm;
+        gsm.apply([=](GlobalState *gs) {
+            if (gs->gps.fix) {
+                loginfo("location(%f, %f) ignored, local fix", query->locate.longitude, query->locate.latitude);
+                return;
+            }
+
+            loginfo("location(%f, %f)", query->locate.longitude, query->locate.latitude);
+            gs->gps.longitude = query->locate.longitude;
+            gs->gps.latitude = query->locate.latitude;
+            gs->gps.time = query->locate.time;
+            gs->gps.altitude = 0.0f;
+            gs->gps.satellites = 0;
+            gs->gps.hdop = 0;
+        });
+    }
+}
+
+static const char *query_type_to_string(fk_app_QueryType type) {
+    switch (type) {
+    case fk_app_QueryType_QUERY_STATUS: {
+        return "QUERY_STATUS";
+    }
+    case fk_app_QueryType_QUERY_RECORDING_CONTROL: {
+        return "QUERY_RECORDING_CONTROL";
+    }
+    case fk_app_QueryType_QUERY_CONFIGURE: {
+        return "QUERY_CONFIGURE";
+    }
+    case fk_app_QueryType_QUERY_TAKE_READINGS: {
+        return "QUERY_TAKE_READINGS";
+    }
+    case fk_app_QueryType_QUERY_GET_READINGS: {
+        return "QUERY_GET_READINGS";
+    }
+    case fk_app_QueryType_QUERY_FILES_SD: {
+        return "QUERY_FILES_SD";
+    }
+    case fk_app_QueryType_QUERY_RESET: {
+        return "QUERY_RESET";
+    }
+    case fk_app_QueryType_QUERY_SCAN_NETWORKS: {
+        return "QUERY_SCAN_NETWORKS";
+    }
+    case fk_app_QueryType_QUERY_SCAN_MODULES: {
+        return "QUERY_SCAN_MODULES";
+    }
+    default: {
+        return "unknown";
+    }
+    }
+}
+
+bool ApiHandler::handle(HttpServerConnection *connection, Pool &pool) {
+    if (connection->length() == 0) {
+        loginfo("handling %s", "QUERY_STATUS (implied)");
+        return send_status(connection, nullptr, &pool);
+    }
+
+    Reader *reader = connection;
+    if (connection->content_type() == WellKnownContentType::TextPlain) {
+        reader = new (pool) HexReader(reader);
+        connection->hex_encoding(true);
+    }
+
+    size_t buffer_size = NetworkBufferSize;
+    auto ptr = reinterpret_cast<uint8_t *>(pool.malloc(buffer_size));
+    bzero(ptr, buffer_size);
+    BufferedReader buffered{ reader, ptr, buffer_size };
+
+    auto query = fk_http_query_prepare_decoding(pool.malloc<fk_app_HttpQuery>(), &pool);
+    auto stream = pb_istream_from_readable(&buffered);
+    if (!pb_decode_delimited(&stream, fk_app_HttpQuery_fields, query)) {
+        fk_dump_memory("NOPARSE ", ptr, 256);
+        logwarn("error parsing query (%" PRIu32 ")", connection->length());
+        return send_status(connection, nullptr, &pool);
+    }
+
+    adjust_time_if_necessary(query);
+
+    adjust_location_if_necessary(query);
+
+    loginfo("handling %s", query_type_to_string(query->type));
+
+    switch (query->type) {
+    case fk_app_QueryType_QUERY_STATUS: {
+        return send_status(connection, query, &pool);
+    }
+    case fk_app_QueryType_QUERY_RECORDING_CONTROL: {
+        return configure(connection, query, &pool);
+    }
+    case fk_app_QueryType_QUERY_CONFIGURE: {
+        return configure(connection, query, &pool);
+    }
+    case fk_app_QueryType_QUERY_TAKE_READINGS: {
+        return send_readings(connection, query, &pool);
+    }
+    case fk_app_QueryType_QUERY_GET_READINGS: {
+        return send_readings(connection, query, &pool);
+    }
+    case fk_app_QueryType_QUERY_FILES_SD: {
+        return send_files(connection, query, &pool);
+    }
+    case fk_app_QueryType_QUERY_RESET: {
+        get_ipc()->launch_worker(create_pool_worker<FactoryWipeWorker>(false));
+        return send_simple_success(connection, query, &pool);
+    }
+    case fk_app_QueryType_QUERY_SCAN_NETWORKS: {
+        auto scan = get_network()->scan(pool);
+        loginfo("scanning done: %zu", scan.length());
+        return send_networks(connection, scan, &pool);
+    }
+    case fk_app_QueryType_QUERY_SCAN_MODULES: {
+        ScanModulesWorker worker;
+        worker.run(pool);
+        return send_simple_success(connection, query, &pool);
+    }
+    default: {
+        break;
+    }
+    }
+
+    connection->error(HttpStatus::BadRequest, "unknown query type", pool);
+
+    return true;
+}
+
+static bool flush_configuration(Pool *pool) {
+    auto gs = get_global_state_rw();
+    return gs.get()->flush(OneSecondMs, *pool);
+}
+
+static void debug_schedule(const char *which, Schedule const &s) {
+    for (auto i = 0u; i < MaximumScheduleIntervals; ++i) {
+        auto &ival = s.intervals[i];
+        if (ival.interval > 0) {
+            loginfo("schedule: [%s] %" PRIu32 " -> %" PRIu32 " every %" PRIu32 "secs", which, ival.start, ival.end, ival.interval);
+        }
+    }
+}
+
+static bool valid_readings_schedule(const fk_app_Schedule &s) {
+    Schedule app_copy;
+    app_copy = s;
+    for (auto i = 0u; i < MaximumScheduleIntervals; ++i) {
+        auto &ival = app_copy.intervals[i];
+        if (ival.start != ival.end && ival.interval > 0) {
+            return true;
+        }
+    }
+
+    return s.interval > 0;
+}
+
+static char *trim_whitespace(const char *s, Pool *pool) {
+    char *copy = pool->strdup(s);
+    while (isspace(*copy)) {
+        copy++;
+    }
+
+    if (*copy == 0) {
+        return copy;
+    }
+
+    auto end = copy + strlen(copy) - 1;
+    while (end > copy && isspace(*end)) {
+        end--;
+    }
+
+    end[1] = 0;
+
+    return copy;
+}
+
+static bool configure(HttpServerConnection *connection, fk_app_HttpQuery *query, Pool *pool) {
+    auto lock = storage_mutex.acquire(500);
+    if (!lock) {
+        return connection->busy(OneSecondMs, "storage busy", *pool);
+    }
+
+    auto configuration_modified = false;
+
+    GlobalStateManager gsm;
+
+    auto name = pb_get_string_if_provided(query->identity.name.arg, pool);
+    if (name != nullptr) {
+        configuration_modified |= gsm.apply([=](GlobalState *gs) {
+            auto trimmed = trim_whitespace(name, pool);
+            if (strlen(trimmed) > 0) {
+                loginfo("rename: '%s'", trimmed);
+                strncpy(gs->general.name, trimmed, sizeof(gs->general.name));
+                get_sd_card()->name(gs->general.name);
+            }
+        });
+    }
+
+    if (query->recording.modifying) {
+        configuration_modified |= gsm.apply([=](GlobalState *gs) {
+            if (query->recording.enabled) {
+                gs->general.recording = get_clock_now();
+            } else {
+                gs->general.recording = 0;
+            }
+            loginfo("recording: %" PRIu32, gs->general.recording);
+        });
+    }
+
+    if (query->loraSettings.clearing) {
+        configuration_modified |= gsm.apply([&](GlobalState *gs) {
+            auto had_module = gs->lora.has_module;
+            gs->lora = {};
+            bzero(gs->lora.device_eui, sizeof(gs->lora.device_eui));
+            bzero(gs->lora.app_key, sizeof(gs->lora.device_eui));
+            bzero(gs->lora.join_eui, sizeof(gs->lora.join_eui));
+            bzero(gs->lora.device_address, sizeof(gs->lora.device_address));
+            gs->lora.has_module = had_module;
+        });
+    }
+
+    if (query->loraSettings.modifying) {
+        if (query->loraSettings.verify) {
+            get_ipc()->launch_worker(create_pool_worker<LoraWorker>(LoraWork{ LoraWorkOperation::Verify }));
+        } else {
+            configuration_modified |= gsm.apply([&](GlobalState *gs) {
+                // Set frequency band if we're given a valid one.
+                switch (query->loraSettings.frequencyBand) {
+                case 915:
+                    gs->lora.frequency_band = lora_frequency_t::Us915;
+                    break;
+                case 868:
+                    gs->lora.frequency_band = lora_frequency_t::Eu868;
+                    break;
+                }
+
+                // OTAA
+
+                auto device_eui = pb_get_data_if_provided(query->loraSettings.deviceEui.arg, pool);
+                if (device_eui != nullptr) {
+                    loginfo("lora device eui: %s (%zd)", pb_data_to_hex_string(device_eui, *pool), device_eui->length);
+                    FK_ASSERT(device_eui->length == LoraDeviceEuiLength);
+                    memcpy(gs->lora.device_eui, device_eui->buffer, LoraDeviceEuiLength);
+                }
+
+                auto join_eui = pb_get_data_if_provided(query->loraSettings.joinEui.arg, pool);
+                if (join_eui != nullptr) {
+                    loginfo("lora app eui: %s (%zd)", pb_data_to_hex_string(join_eui, *pool), join_eui->length);
+                    FK_ASSERT(join_eui->length == LoraJoinEuiLength);
+                    memcpy(gs->lora.join_eui, join_eui->buffer, LoraJoinEuiLength);
+                }
+
+                auto app_key = pb_get_data_if_provided(query->loraSettings.appKey.arg, pool);
+                if (app_key != nullptr) {
+                    loginfo("lora app key: %s (%zd)", pb_data_to_hex_string(app_key, *pool), app_key->length);
+                    FK_ASSERT(app_key->length == LoraAppKeyLength);
+                    memcpy(gs->lora.app_key, app_key->buffer, LoraAppKeyLength);
+                }
+
+#if defined(FK_LORA_ABP)
+                // ABP
+
+                auto app_session_key = pb_get_data_if_provided(query->loraSettings.appSessionKey.arg, pool);
+                auto network_session_key = pb_get_data_if_provided(query->loraSettings.networkSessionKey.arg, pool);
+                auto device_address = pb_get_data_if_provided(query->loraSettings.deviceAddress.arg, pool);
+
+                if (app_session_key != nullptr) {
+                    loginfo("lora app session key: %s (%zd)", pb_data_to_hex_string(app_session_key, *pool), app_session_key->length);
+                    FK_ASSERT(app_session_key->length == LoraAppSessionKeyLength);
+                    memcpy(gs->lora.app_session_key, app_session_key->buffer, LoraAppSessionKeyLength);
+                }
+
+                if (network_session_key != nullptr) {
+                    loginfo("lora network session key: %s (%zd)", pb_data_to_hex_string(network_session_key, *pool),
+                            network_session_key->length);
+                    FK_ASSERT(network_session_key->length == LoraNetworkSessionKeyLength);
+                    memcpy(gs->lora.network_session_key, network_session_key->buffer, LoraNetworkSessionKeyLength);
+                }
+
+                if (device_address != nullptr) {
+                    loginfo("lora device address: %s (%zd)", pb_data_to_hex_string(device_address, *pool), device_address->length);
+                    FK_ASSERT(device_address->length == LoraDeviceAddressLength);
+                    memcpy(gs->lora.device_address, device_address->buffer, LoraDeviceAddressLength);
+                }
+#endif
+            });
+        }
+    }
+
+    auto networks_array = (pb_array_t *)query->networkSettings.networks.arg;
+    if (query->networkSettings.modifying && networks_array != nullptr) {
+        auto nnetworks = std::min(networks_array->length, WifiMaximumNumberOfNetworks);
+
+        loginfo("have %zd networks", networks_array->length);
+
+        configuration_modified |= gsm.apply([=](GlobalState *gs) {
+            auto networks = (fk_app_NetworkInfo *)networks_array->buffer;
+            for (auto i = 0u; i < nnetworks; ++i) {
+                auto &n = networks[i];
+                auto ssid = pb_get_string_if_provided(n.ssid.arg, pool);
+                auto password = pb_get_string_if_provided(n.password.arg, pool);
+                auto &nc = gs->network.config.wifi_networks[i];
+
+                // If they're keeping the network, we don't care what values are there.
+                if (n.keeping) {
+#if defined(FK_LOG_SENSITIVE)
+                    loginfo("[%d] network: keep '%s'", i, nc.ssid);
+#else
+                    loginfo("[%d] network: keep", i);
+#endif
+                    continue;
+                }
+
+                // Ignore empty SSID networks.
+                if (ssid == nullptr || strlen(ssid) == 0) {
+                    loginfo("[%d] network: empty", i);
+                    nc.ssid[0] = 0;
+                    nc.password[0] = 0;
+                    nc.valid = false;
+                    nc.create = false;
+                    continue;
+                }
+
+                // If SSID is the same and no password, just assume we're keeping the network.
+                auto same_ssid = strncmp(ssid, nc.ssid, sizeof(nc.ssid)) == 0;
+                if (same_ssid && strlen(password) == 0) {
+#if defined(FK_LOG_SENSITIVE)
+                    loginfo("[%d] network: same-ssid '%s'", i, ssid);
+#else
+                    loginfo("[%d] network: same-ssid", i);
+#endif
+                    continue;
+                }
+
+#if defined(FK_LOG_SENSITIVE)
+                loginfo("[%d] network: %s '%s'", i, same_ssid ? "same" : "new", ssid);
+#else
+                loginfo("[%d] network: %s", i, same_ssid ? "same" : "new");
+#endif
+
+                strncpy(nc.ssid, ssid, sizeof(nc.ssid));
+                strncpy(nc.password, password, sizeof(nc.password));
+                nc.valid = nc.ssid[0] != 0;
+                nc.create = false;
+            }
+            for (auto i = nnetworks; i < WifiMaximumNumberOfNetworks; ++i) {
+                auto &nc = gs->network.config.wifi_networks[i];
+                nc.ssid[0] = 0;
+                nc.password[0] = 0;
+                nc.valid = false;
+                nc.create = false;
+            }
+        });
+    }
+
+    if (query->schedules.modifying) {
+        loginfo("modifying schedules");
+
+        configuration_modified |= gsm.apply([=](GlobalState *gs) {
+            if (query->schedules.has_readings) {
+                loginfo("modifying schedules/readings");
+
+                if (valid_readings_schedule(query->schedules.readings)) {
+                    gs->scheduler.readings = query->schedules.readings;
+                    debug_schedule("readings", gs->scheduler.readings);
+                } else {
+                    loginfo("invalid schedule: readings");
+                }
+            }
+
+            if (query->schedules.has_network) {
+                loginfo("modifying schedules/network");
+
+                // Ensure we always have a minimum of 60s of network uptime before shutting off.
+                if (query->schedules.network.duration < NetworkMinimumDurationSeconds) {
+                    query->schedules.network.duration = std::max(gs->scheduler.network.duration, NetworkMinimumDurationSeconds);
+                }
+
+                gs->scheduler.network = query->schedules.network;
+                debug_schedule("network", gs->scheduler.network);
+            }
+
+            if (query->schedules.has_gps) {
+                loginfo("modifying schedules/gps");
+
+                if (query->schedules.gps.interval > 0) {
+                    gs->scheduler.gps = query->schedules.gps;
+                    debug_schedule("gps", gs->scheduler.gps);
+                } else {
+                    loginfo("invalid schedule: gps");
+                }
+            }
+
+            if (query->schedules.has_lora) {
+                loginfo("modifying schedules/lora");
+
+                if (query->schedules.lora.interval > 0) {
+                    gs->scheduler.lora = query->schedules.lora;
+                    debug_schedule("lora", gs->scheduler.lora);
+                }
+            }
+        });
+    }
+
+    if (query->transmission.wifi.modifying) {
+        loginfo("modifying transmission");
+
+        configuration_modified |= gsm.apply([&](GlobalState *gs) {
+            if (query->transmission.wifi.enabled) {
+                loginfo("modifying transmission/enable");
+
+                auto url = pb_get_string_if_provided(query->transmission.wifi.url.arg, pool);
+                if (url != nullptr) {
+                    strncpy(gs->transmission.url, url, sizeof(gs->transmission.url));
+                    loginfo("transmission url: %s", gs->transmission.url);
+                }
+
+                auto token = pb_get_string_if_provided(query->transmission.wifi.token.arg, pool);
+                if (token != nullptr) {
+                    strncpy(gs->transmission.token, token, sizeof(gs->transmission.token));
+                    loginfo("transmission token: <%d bytes>", strlen(gs->transmission.token));
+                }
+
+            } else {
+                loginfo("modifying transmission/disable");
+                gs->transmission.token[0] = 0;
+                gs->transmission.url[0] = 0;
+            }
+
+            gs->transmission.enabled = query->transmission.wifi.enabled;
+        });
+    }
+
+    if (configuration_modified) {
+        if (!flush_configuration(pool)) {
+            logerror("unable to flush configuration (mutex?)");
+            return false;
+        }
+    }
+
+    return send_status(connection, query, pool);
+}
+
+static bool send_networks(HttpServerConnection *connection, NetworkScan scan, Pool *pool) {
+    auto gs = get_global_state_ro();
+
+    HttpReply http_reply{ *pool, gs.get() };
+
+    FK_ASSERT(http_reply.include_success(get_clock_now(), fk_uptime()));
+    FK_ASSERT(http_reply.include_scan(scan));
+
+    connection->write(http_reply.reply(), *pool);
+    connection->close();
+
+    return true;
+}
+
+static bool send_simple_success(HttpServerConnection *connection, fk_app_HttpQuery *query, Pool *pool) {
+    auto gs = get_global_state_ro();
+
+    HttpReply http_reply{ *pool, gs.get() };
+
+    FK_ASSERT(http_reply.include_success(get_clock_now(), fk_uptime()));
+
+    connection->write(http_reply.reply(), *pool);
+    connection->close();
+
+    return true;
+}
+
+static bool send_status(HttpServerConnection *connection, fk_app_HttpQuery *query, Pool *pool) {
+    auto gs = get_global_state_ro();
+
+    HttpReply http_reply{ *pool, gs.get() };
+
+    auto logs = false;
+    if (query != nullptr) {
+        logs = (query->flags & fk_app_QueryFlags_QUERY_FLAGS_LOGS) == fk_app_QueryFlags_QUERY_FLAGS_LOGS;
+    }
+
+    FK_ASSERT(http_reply.include_status(get_clock_now(), fk_uptime(), logs, &fkb_header));
+
+    connection->write(http_reply.reply(), *pool);
+    connection->close();
+
+#if defined(FK_LOGS_FLUSH_AGGRESSIVE)
+    fk::fk_logs_flush();
+#endif
+
+    return true;
+}
+
+static bool send_readings(HttpServerConnection *connection, fk_app_HttpQuery *query, Pool *pool) {
+    auto gs = get_global_state_ro();
+
+    HttpReply http_reply{ *pool, gs.get() };
+
+    auto logs = (query->flags & fk_app_QueryFlags_QUERY_FLAGS_LOGS) == fk_app_QueryFlags_QUERY_FLAGS_LOGS;
+
+    FK_ASSERT(http_reply.include_status(get_clock_now(), fk_uptime(), logs, &fkb_header));
+    FK_ASSERT(http_reply.include_readings());
+
+    connection->write(http_reply.reply(), *pool);
+    connection->close();
+
+#if defined(FK_LOGS_FLUSH_AGGRESSIVE)
+    fk::fk_logs_flush();
+#endif
+
+    return true;
+}
+
+static bool send_files(HttpServerConnection *connection, fk_app_HttpQuery *query, Pool *pool) {
+    auto lock = sd_mutex.acquire(UINT32_MAX);
+    auto gs = get_global_state_ro();
+
+    auto sd = get_sd_card();
+    if (!sd->begin()) {
+        logwarn("error opening sd");
+        connection->error(HttpStatus::ServerError, "error opening sd", *pool);
+        return true;
+    }
+
+    fk_app_DirectoryEntry *entries = nullptr;
+    size_t number_entries = 0u;
+    size_t total_entries = 0u;
+    auto path = (const char *)query->directory.path.arg;
+
+    loginfo("listing: %s", path);
+
+    if (!sd->ls(path, query->directory.page, &entries, number_entries, total_entries, *pool)) {
+        logwarn("error listing sd");
+        connection->error(HttpStatus::ServerError, "error listing sd", *pool);
+        return true;
+    }
+
+    HttpReply http_reply{ *pool, gs.get() };
+
+    FK_ASSERT(http_reply.include_listing(path, entries, number_entries, total_entries));
+
+    connection->write(http_reply.reply(), *pool);
+    connection->close();
+
+    return true;
+}
+
+} // namespace fk

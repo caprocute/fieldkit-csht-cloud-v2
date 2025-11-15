@@ -1,0 +1,252 @@
+stages:
+  - test
+  - build
+  - deploy
+  - db
+
+variables:
+  VERSION: 0.4.4
+
+test:go:
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
+  image: golang:latest
+  variables:
+    POSTGRES_DB: fieldkit
+    POSTGRES_USER: fieldkit
+    POSTGRES_PASSWORD: password
+    FIELDKIT_POSTGRES_URL: postgres://fieldkit:password@db:5432/fieldkit?sslmode=disable
+  services:
+    - name: parjom/timescaledb-postgis:2.17.2-pg16-postgis350
+      alias: db
+  script:
+    - (cd server/cmd/server && go build -o build/server)
+    - (cd server && go test -p 1 -coverprofile=coverage.data ./...)
+
+test:js:
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
+  image: node:18.17.0
+  script:
+    - cd portal && which node && which npm
+    - npm install
+    - cp src/secrets.ts.template src/secrets.ts
+    - node_modules/.bin/vue-cli-service build
+    - node_modules/.bin/vue-cli-service test:unit
+
+test:charting:
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
+  image: node:18.17.0
+  script:
+    - cd charting && which node && which npm
+    - npm install
+    - node_modules/.bin/tsc -esModuleInterop -t es5 server.ts
+
+test:cypress:
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
+  image: node:22.6-bookworm
+  variables:
+    POSTGRES_DB: fktest
+    POSTGRES_USER: fieldkit
+    POSTGRES_PASSWORD: password
+    FIELDKIT_POSTGRES_URL: postgres://fieldkit:password@db:5432/fktest?sslmode=disable
+    FIELDKIT_TIME_SCALE_URL: postgres://fieldkit:password@db:5432/fktest?sslmode=disable
+    FIELDKIT_API_DOMAIN: 127.0.0.1:8080
+    FIELDKIT_API_HOST: http://127.0.0.1:8080
+  services:
+    - name: parjom/timescaledb-postgis:2.17.2-pg16-postgis350
+      alias: db
+  script:
+    - apt update -qyy && apt install -qyy xvfb libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libgtk-3-0 libgdm1 libgbm1 libasound2 golang
+    - go version
+    - make server
+    - (cd portal && npm install && cp src/secrets.ts.template src/secrets.ts)
+    - (cd migrations/cli && go build -o migrate *.go)
+    - MIGRATE_PATH=migrations/primary MIGRATE_DATABASE_URL=${FIELDKIT_POSTGRES_URL} migrations/cli/migrate migrate
+    - (cd server && go test -p 1 -coverprofile=coverage.data ./...)
+    - build/server &
+    - tools/wait-for-site.sh 127.0.0.1:8080
+    - (cd portal && npm run serve) &
+    - tools/wait-for-site.sh 127.0.0.1:8082
+    - (cd portal && npm run cypress:run)
+
+build:tools-amd64:
+  stage: build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
+  image: golang:latest
+  script:
+    - mkdir build
+    - (cd server/cmd/fktool && go build -o ../../../build/fktool *.go)
+    - (cd server/cmd/fkdata && go build -o ../../../build/fkdata *.go)
+    - (cd server/cmd/sanitizer && go build -o ../../../build/sanitizer *.go)
+    - (cd server/cmd/scratch && go build -o ../../../build/scratch *.go)
+    - (cd server/cmd/merger && go build -o ../../../build/merger *.go)
+    - (cd tools/passwords && go build -o ../../build/passwords *.go)
+  artifacts:
+    name: "cloud-tools-amd64-${CI_COMMIT_REF_NAME}"
+    paths:
+      - build/fktool
+      - build/fkdata
+      - build/sanitizer
+      - build/scratch
+      - build/merger
+      - build/passwords
+
+build:compile:
+  stage: build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
+  image: golang:latest
+  script:
+    - cp portal/src/secrets.ts.template portal/src/secrets.ts
+    - cd server/cmd/server && go build -o build/server
+
+# An opportunity here to use one of the include or sharing features for docker
+# in docker configuration.
+
+build:images:
+  stage: build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_PIPELINE_SOURCE == 'web'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
+  image: docker:28.0.2
+  services:
+    - name: docker:28.0.2-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - docker version
+    - docker info
+    - cp portal/src/secrets.ts.aws portal/src/secrets.ts
+    - export DOCKER_TAG=main # This is an interim tag, required by stack build.
+    - docker build -t conservify/fk-cloud:$DOCKER_TAG --build-arg GIT_HASH=${CI_COMMIT_SHA} --build-arg VERSION=${VERSION} .
+    - cd charting
+    - tar -czh --exclude='./node_modules' . | docker build -t conservify/fk-charting:$DOCKER_TAG --build-arg GIT_HASH=${CI_COMMIT_SHA:0:8} --build-arg VERSION=${VERSION} -
+    - cd ..
+    - apk add wget make unzip
+    - wget -q https://github.com/conservify/dev-ops/archive/refs/heads/main.zip && unzip -q main.zip && cd dev-ops-main
+    - export TAG=${CI_COMMIT_REF_SLUG}
+    - cd amis && make clean && make portal-stack charting-stack
+    - echo $DOCKER_TAG > TAG
+  artifacts:
+    name: "cloud-${CI_COMMIT_REF_NAME}"
+    paths:
+      - dev-ops-main/amis/build/*.tar
+
+build:migrations:
+  stage: build
+  image: golang:latest
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
+  script:
+    - cd migrations/cli && go build -o migrate *.go
+  artifacts:
+    name: "cloud-migrations-${CI_COMMIT_REF_NAME}"
+    paths:
+      - migrations/migrate
+      - migrations/primary
+
+deploy:staging:
+  stage: deploy
+  needs: ["build:images"]
+  image: docker:28.0.2
+  timeout: 1h
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+      when: manual
+      allow_failure: true
+  services:
+    - name: docker:28.0.2-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_TLS_CERTDIR: ""
+    TERRAFORM_ENV: .secure_files/dev.json
+    SSH_KEY: .secure_files/deploy.pem
+    PRIMARY_MIGRATIONS_PATH: migrations/primary
+    ARCHIVE: dev-ops-main/amis/build/portal-stack.tar
+    ENV: dev
+    POLL_URL: https://api.fkdev.org/status
+  script:
+    - apk add wget curl unzip bash jq go musl-dev make
+    - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | bash
+    - chmod 0600 "${SSH_KEY}"
+    - (cd migrations && docker build --progress=plain -t conservify/fk-cloud-migrations:latest .)
+    - (cd tools && docker build --progress=plain -t conservify/fk-cloud-tools:latest .)
+    - MIGRATE_DATABASE_URL=`jq -r .database_external_url.value ${TERRAFORM_ENV}`
+    - docker run -e MIGRATE_PATH=/migrations -e MIGRATE_DATABASE_URL=${MIGRATE_DATABASE_URL} -v `pwd`/${PRIMARY_MIGRATIONS_PATH}:/migrations conservify/fk-cloud-migrations migrate
+    - docker run -v $(pwd)/.secure_files:/work/.secure_files -v $(pwd)/dev-ops-main:/work/dev-ops-main conservify/fk-cloud-tools /work/deployer deploy --cert ${SSH_KEY} --terraform ${TERRAFORM_ENV} --archive ${ARCHIVE} --poll ${POLL_URL}
+    - export FIELDKIT_POSTGRES_URL=`jq -r .database_external_url.value ${TERRAFORM_ENV}`
+  environment:
+    name: staging
+    url: https://portal.fkdev.org
+
+deploy:prod:
+  stage: deploy
+  needs: ["build:images"]
+  image: docker:28.0.2
+  timeout: 1h
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+      allow_failure: true
+  services:
+    - name: docker:28.0.2-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_TLS_CERTDIR: ""
+    TERRAFORM_ENV: .secure_files/prod.json
+    SSH_KEY: .secure_files/deploy.pem
+    PRIMARY_MIGRATIONS_PATH: migrations/primary
+    ARCHIVE: dev-ops-main/amis/build/portal-stack.tar
+    ENV: dev
+    POLL_URL: https://api.fieldkit.org/status
+  script:
+    - apk add wget curl unzip bash jq
+    - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | bash
+    - chmod 0600 "${SSH_KEY}"
+    - (cd migrations && docker build --progress=plain -t conservify/fk-cloud-migrations:latest .)
+    - (cd tools && docker build --progress=plain -t conservify/fk-cloud-tools:latest .)
+    - MIGRATE_DATABASE_URL=`jq -r .database_external_url.value ${TERRAFORM_ENV}`
+    - docker run -e MIGRATE_PATH=/migrations -e MIGRATE_DATABASE_URL=${MIGRATE_DATABASE_URL} -v `pwd`/${PRIMARY_MIGRATIONS_PATH}:/migrations conservify/fk-cloud-migrations migrate
+    - docker run -v $(pwd)/.secure_files:/work/.secure_files -v $(pwd)/dev-ops-main:/work/dev-ops-main conservify/fk-cloud-tools /work/deployer deploy --cert ${SSH_KEY} --terraform ${TERRAFORM_ENV} --archive ${ARCHIVE} --poll ${POLL_URL}
+  environment:
+    name: production
+    url: https://portal.fieldkit.org

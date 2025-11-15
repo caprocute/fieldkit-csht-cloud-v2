@@ -1,0 +1,265 @@
+package design
+
+import (
+	. "goa.design/goa/v3/dsl"
+)
+
+var _ = Service("sensor", func() {
+	Method("meta", func() {
+		Result(func() {
+			Attribute("object", Any)
+			Required("object")
+		})
+
+		HTTP(func() {
+			GET("sensors")
+
+			Response(func() {
+				Body("object")
+			})
+		})
+	})
+
+	Method("station meta", func() {
+		Payload(func() {
+			Attribute("stations", String)
+		})
+
+		Result(func() {
+			Attribute("object", Any)
+			Required("object")
+		})
+
+		HTTP(func() {
+			GET("meta/stations")
+
+			Params(func() {
+				Param("stations")
+			})
+
+			Response(func() {
+				Body("object")
+			})
+		})
+	})
+
+	Method("sensor meta", func() {
+		Result(func() {
+			Attribute("object", Any)
+			Required("object")
+		})
+
+		HTTP(func() {
+			GET("meta/sensors")
+
+			Response(func() {
+				Body("object")
+			})
+		})
+	})
+
+	Method("data", func() {
+		Security(JWTAuth, func() {
+			// Optional
+		})
+
+		Payload(func() {
+			Token("auth")
+			Attribute("start", Int64)
+			Attribute("end", Int64)
+			Attribute("stations", String)
+			Attribute("sensors", String)
+			Attribute("resolution", Int32)
+			Attribute("aggregate", String)
+			Attribute("complete", Boolean)
+			Attribute("tail", Int32)
+			Attribute("backend", String)
+		})
+
+		Result(func() {
+			Attribute("object", Any)
+			Required("object")
+		})
+
+		HTTP(func() {
+			GET("sensors/data")
+
+			Params(func() {
+				Param("start")
+				Param("end")
+				Param("stations")
+				Param("sensors")
+				Param("resolution")
+				Param("aggregate")
+				Param("complete")
+				Param("tail")
+				Param("backend")
+			})
+
+			Response(func() {
+				Body("object")
+			})
+
+			httpAuthentication()
+		})
+	})
+
+	Method("tail", func() {
+		Security(JWTAuth, func() {
+			// Optional
+		})
+
+		Payload(func() {
+			Token("auth")
+			Attribute("stations", String)
+			Attribute("backend", String)
+		})
+
+		Result(func() {
+			Attribute("object", Any)
+			Required("object")
+		})
+
+		HTTP(func() {
+			GET("sensors/data/tail")
+
+			Params(func() {
+				Param("stations")
+				Param("backend")
+			})
+
+			Response(func() {
+				Body("object")
+			})
+
+			httpAuthentication()
+		})
+	})
+
+	Method("recently", func() {
+		Security(JWTAuth, func() {
+			// Optional
+		})
+
+		Payload(func() {
+			Token("auth")
+			Attribute("stations", String)
+			Attribute("windows", String)
+		})
+
+		Result(func() {
+			Attribute("object", Any)
+			Required("object")
+		})
+
+		HTTP(func() {
+			GET("sensors/data/recently")
+
+			Params(func() {
+				Param("stations")
+				Param("windows")
+			})
+
+			Response(func() {
+				Body("object")
+			})
+
+			httpAuthentication()
+		})
+	})
+
+	Method("bookmark", func() {
+		Security(JWTAuth, func() {
+			// Optional
+		})
+
+		Payload(func() {
+			Token("auth")
+			Attribute("bookmark", String)
+			Required("bookmark")
+		})
+
+		Result(BookmarkAndPermissions)
+
+		HTTP(func() {
+			POST("bookmarks/save")
+
+			Params(func() {
+				Param("bookmark")
+			})
+
+			httpAuthentication()
+		})
+	})
+
+	Method("resolve", func() {
+		Security(JWTAuth, func() {
+			// Optional
+		})
+
+		Payload(func() {
+			Token("auth")
+			Attribute("v", String)
+			Required("v")
+		})
+
+		Result(BookmarkAndPermissions)
+
+		HTTP(func() {
+			GET("bookmarks/resolve")
+
+			Params(func() {
+				Param("v")
+			})
+
+			httpAuthentication()
+		})
+	})
+
+	commonOptions()
+})
+
+var BookmarkPermissions = ResultType("application/vnd.app.bookmark.permissions", func() {
+	TypeName("BookmarkPermissions")
+	Attributes(func() {
+		Attribute("canAddEvent", Boolean)
+		Attribute("canAddComment", Boolean)
+		Required("canAddEvent", "canAddComment")
+	})
+	View("default", func() {
+		Attribute("canAddEvent")
+		Attribute("canAddComment")
+	})
+})
+
+var BookmarkAndPermissions = ResultType("application/vnd.app.bookmark-and-permissions", func() {
+	TypeName("BookmarkAndPermissions ")
+	Attributes(func() {
+		Attribute("url", String)
+		Attribute("bookmark", String)
+		Attribute("token", String)
+		Attribute("permissions", BookmarkPermissions)
+		Required("url", "bookmark", "token", "permissions")
+	})
+	View("default", func() {
+		Attribute("url")
+		Attribute("bookmark")
+		Attribute("token")
+		Attribute("permissions")
+	})
+})
+
+var SavedBookmark = ResultType("application/vnd.app.bookmark", func() {
+	TypeName("SavedBookmark")
+	Attributes(func() {
+		Attribute("url", String)
+		Attribute("bookmark", String)
+		Attribute("token", String)
+		Required("url", "bookmark", "token")
+	})
+	View("default", func() {
+		Attribute("url")
+		Attribute("bookmark")
+		Attribute("token")
+	})
+})

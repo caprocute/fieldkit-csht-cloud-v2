@@ -1,0 +1,104 @@
+image: ubuntu:24.04
+
+stages:
+  - test
+  - build
+  - deploy
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
+
+variables:
+  DEBIAN_FRONTEND: noninteractive
+
+before_script:
+  - apt-get update && apt-get install -y make cmake libboost-dev git python3-full python3-wheel python3-pip zip build-essential
+  # These are necessary to allow the arm-none-eabi compiler to run, otherwise
+  # you get No such file or directory errors.
+  # https://ubuntuforums.org/showthread.php?t=2246066
+  - apt install -y lib32stdc++6 lib32z1
+  - python3 -m venv env
+  - source env/bin/activate
+  - pip3 install -U sphinx
+  - pip3 install -U pyelftools
+  - pip3 install -U lief
+
+tests:
+  stage: test
+  script:
+    - cp fk/secrets.h.template fk/secrets.h
+    - cp fk/secrets.cpp.template fk/secrets.cpp
+    - mkdir -p build/amd64 && cd build/amd64
+    - cmake -DTARGET_ARCH=amd64 ../../
+    - make testall test ARGS=-VV
+
+build:firmware:
+  stage: build
+  script:
+    - cp fk/secrets.h.template fk/secrets.h
+    - cp fk/secrets.cpp.template fk/secrets.cpp
+    - mkdir -p build/samd51 && cd build/samd51
+    - cmake -DTARGET_ARCH=samd51 ../../
+    - make
+    - make package
+  artifacts:
+    name: "fk-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - fk-firmware-*/*
+
+build:underwater-firmware:
+  stage: build
+  script:
+    - cp fk/secrets.h.template fk/secrets.h
+    - cp fk/secrets.cpp.template fk/secrets.cpp
+    - mkdir -p build/samd51-fkuw && cd build/samd51-fkuw
+    - cmake -DTARGET_ARCH=samd51 -DFK_UNDERWATER=1 ../../
+    - make
+    - make package
+  artifacts:
+    name: "fk-underwater-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - fk-firmware-*/*
+
+build:weather:
+  stage: build
+  script:
+    - mkdir -p build/samd09 && cd build/samd09
+    - cmake -DTARGET_ARCH=samd09 ../../
+    - make
+    - make package
+  artifacts:
+    name: "fk-weather-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - build/samd09/*.zip
+
+deploy:upload:
+  stage: deploy
+  image: ubuntu:22.04
+  needs: ["build:firmware", "build:underwater-firmware"]
+  script:
+    - apt update && apt install wget curl -y
+    - wget "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" -O - | bash
+    - source .secure_files/upload.env
+    - cd tools
+    - wget "https://gitlab.com/api/v4/projects/48313780/jobs/artifacts/develop/download?job=build:tools-amd64" -O tools.zip
+    - unzip -j tools.zip
+    - cd ..
+    - rm -rf fk-firmware-*-underwater
+    - ls -alh
+    - ls -alh fk-firmware-*/*
+    - export BUILD_ID=0
+    - export BUILD_NUMBER=0
+    - export BUILD_TAG=${CI_COMMIT_REF_NAME}
+    - export GIT_COMMIT=${CI_COMMIT_SHORT_SHA}
+    - export GIT_BRANCH=${CI_COMMIT_REF_NAME}
+    - export JOB_NAME=${CI_COMMIT_REF_NAME}
+    - export JOB_BASE_NAME=${CI_PROJECT_NAME}
+    - export VERSION=`head -n 1 fk-firmware-*/version.txt | tr -d  '\n'`
+    - export BUILD_TIMESTAMP=`tail -n 1 fk-firmware-*/version.txt | tr -d  '\n'`
+    - tools/fktool --version "${VERSION}" --profile standard --module fk-core --firmware-file fk-firmware-*/fk-bundled-fkb.bin --host api.fieldkit.org --scheme https
+    - tools/fktool --version "${VERSION}" --profile standard --module fk-bl --firmware-file fk-firmware-*/fkbl-fkb.bin --host api.fieldkit.org --scheme https

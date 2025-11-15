@@ -1,0 +1,288 @@
+import Config from "@/secrets";
+import { DisplayStation, Project } from "@/store";
+import moment from "moment";
+
+import Vue, { Component, PropType } from "vue";
+
+const FieldKitProjectDescription = Vue.extend({
+    name: "FieldKitProjectDescription",
+    props: {
+        showLinksOnMobile: {
+            type: Boolean,
+            required: true,
+        },
+        project: {
+            type: Object as PropType<Project>,
+            required: true,
+        },
+    },
+    data(): {
+        isMobileView: boolean;
+    } {
+        return {
+            isMobileView: window.screen.availWidth < 768,
+        };
+    },
+    template: `
+        <div>
+            <div class="flex flex-al-center">
+                <h1 class="detail-title">{{ project.name }}</h1>
+                <div class="detail-links" :class="{ 'mobile-visible': showLinksOnMobile }">
+                  <router-link :to="{ name: 'viewProject', params: { id: project.id } }" class="link">
+                      {{$t('project.dashboard')}} >
+                  </router-link>
+                </div>
+            </div>
+            <div class="detail-description">{{ project.description }}</div>
+        </div>
+    `,
+});
+
+const FloodNetProjectDescription = Vue.extend({
+    name: "FloodNetProjectDescription",
+    props: {
+        showLinksOnMobile: {
+            type: Boolean,
+            required: true,
+        },
+        project: {
+            type: Object as PropType<Project>,
+            required: true,
+        },
+    },
+    data(): {
+        isMobileView: boolean;
+        links: {
+            text: string;
+            mobileText: string;
+            url: string;
+        }[];
+    } {
+        return {
+            isMobileView: window.screen.availWidth < 768,
+            links: [
+                {
+                    text: "linkToFloodnet.desktop",
+                    mobileText: "linkToFloodnet.mobile",
+                    url: "https://www.floodnet.nyc/methodology",
+                },
+            ],
+        };
+    },
+    template: `
+        <div>
+            <div class="flex flex-al-center">
+                <h1 class="detail-title">{{ project.name }}</h1>
+                <div class="detail-links" :class="{ 'mobile-visible': showLinksOnMobile }">
+                    <a v-for="link in links" v-bind:key="link.url" :href="link.url" target="_blank" class="link">
+                        <template v-if="isMobileView">{{ $t(link.mobileText) }} ></template>
+                        <template v-else>{{ $t(link.text) }} ></template>
+                    </a>
+                    <a v-if="isMobileView" href="https://mycoast.org/ny/flood-watch" target="_blank" class="link">
+                        {{ $t('floodnet.reportFlood') }} >
+                    </a>
+                </div>
+            </div>
+            <div class="detail-description">{{ project.description }}</div>
+            <div class="detail-description">
+                <a href="https://mycoast.org/ny/flood-watch" target="_blank" class="link">
+                    {{ $t('floodnet.reportFlood') }}
+                </a>
+            </div>
+        </div>
+    `,
+});
+
+export interface PartnerCustomization {
+    class: string;
+    icon: string;
+    sharing: {
+        viz: string;
+    };
+    nav: {
+        viz: {
+            back: {
+                // project: string;
+                map: { label: string };
+            };
+        };
+        project: {
+            back: {
+                label: string;
+            };
+        };
+    };
+    projectId: number | null;
+    interpolate: (base: string) => string;
+    email: {
+        subject: string;
+    };
+    stationLocationName: (station: DisplayStation) => string;
+    getStationDeploymentDate: (station: DisplayStation) => string | Date | null;
+    viz: {
+        groupStation: (station: unknown) => string | null;
+    };
+    routeAfterLogin: string;
+    sidebarNarrow: boolean;
+    exportSupported: boolean;
+    components: {
+        project: Component | null;
+    };
+    latestPrimaryNoDataColor: string;
+    googleTagManagerIds?: { staging: string; prod: string } | null;
+    queryRecentlyQueryString: (station: number[]) => URLSearchParams;
+}
+
+function getAttribute(station: DisplayStation, name: string): string | null {
+    if (station.attributes) {
+        const maybeAttribute = station.attributes.find((attr) => attr.name === name);
+        if (maybeAttribute) return maybeAttribute.stringValue;
+    }
+    return null;
+}
+
+function getNeighborhood(station: DisplayStation): string | null {
+    return getAttribute(station, "Neighborhood");
+}
+
+function getBorough(station: DisplayStation): string | null {
+    return getAttribute(station, "Borough");
+}
+
+function getDeploymentDate(station: DisplayStation): string | null {
+    return getAttribute(station, "Deployment Date");
+}
+
+export function getPartnerCustomization(): PartnerCustomization | null {
+    // dataviz.floodnet.nyc, floodnet.fieldkit.org
+    const hostname = Config.partners.hostOverride || window.location.hostname;
+    if (hostname.indexOf("floodnet.") >= 0) {
+        return {
+            class: "floodnet",
+            icon: "/favicon-floodnet.ico",
+            exportSupported: false,
+            sharing: {
+                viz: `Check out this data on FloodNet!`, // TODO i18n
+            },
+            nav: {
+                viz: {
+                    back: {
+                        // project: "layout.backProjectDashboard",
+                        map: { label: "layout.backToSensors" },
+                    },
+                },
+                project: {
+                    back: {
+                        label: "",
+                    },
+                },
+            },
+            projectId: 174,
+            interpolate: (baseString: string) => {
+                return baseString + "floodnet";
+            },
+            email: {
+                subject: "sharePanel.emailSubject.floodnet",
+            },
+            stationLocationName: (station: DisplayStation) => {
+                return getNeighborhood(station) || station.locationName;
+            },
+            getStationDeploymentDate: (station: DisplayStation) => {
+                return getDeploymentDate(station) || (station.deployedAt ? moment(station.deployedAt).format("M/D/YYYY") : "N/A");
+            },
+            viz: {
+                groupStation: (station: DisplayStation): string | null => {
+                    return getBorough(station) || null;
+                },
+            },
+            routeAfterLogin: "root",
+            sidebarNarrow: true,
+            components: {
+                project: FloodNetProjectDescription,
+            },
+            latestPrimaryNoDataColor: "#cccccc",
+            googleTagManagerIds: {
+                staging: "G-F1QGZ545F8",
+                prod: "G-TTJPFSVRX6",
+            },
+            queryRecentlyQueryString: (stations: number[]): URLSearchParams => {
+                const qp = new URLSearchParams();
+                qp.append("stations", stations.join(","));
+                qp.append("windows", [1].join(","));
+                return qp;
+            },
+        };
+    }
+    return null;
+}
+
+export function getPartnerCustomizationWithDefault(): PartnerCustomization {
+    const maybePartner = getPartnerCustomization();
+    if (maybePartner) {
+        return maybePartner;
+    }
+
+    return {
+        class: "fieldkit",
+        icon: "/favicon-fieldkit.ico",
+        exportSupported: true,
+        sharing: {
+            viz: `Check out this data on FieldKit!`, // TODO i18n
+        },
+        nav: {
+            viz: {
+                back: {
+                    // project: "layout.backProjectDashboard",
+                    map: { label: "layout.backToStations" },
+                },
+            },
+            project: {
+                back: {
+                    label: "layout.backProjects",
+                },
+            },
+        },
+        projectId: null,
+        interpolate: (baseString: string) => {
+            return baseString;
+        },
+        email: {
+            subject: "sharePanel.emailSubject.fieldkit",
+        },
+        stationLocationName: (station: DisplayStation) => {
+            return station.locationName;
+        },
+        getStationDeploymentDate: (station: DisplayStation) => {
+            return station.deployedAt ? moment(station.deployedAt).format("M/D/YYYY") : "N/A";
+        },
+        viz: {
+            groupStation: (_station: DisplayStation): string | null => {
+                return null;
+            },
+        },
+        routeAfterLogin: "projects",
+        sidebarNarrow: false,
+        components: {
+            project: FieldKitProjectDescription,
+        },
+        latestPrimaryNoDataColor: "#777a80",
+        queryRecentlyQueryString: (stations: number[]): URLSearchParams => {
+            const qp = new URLSearchParams();
+            qp.append("stations", stations.join(","));
+            qp.append("windows", [24, 48, 72].join(","));
+            return qp;
+        },
+    };
+}
+
+export function isCustomisationEnabled(): boolean {
+    return getPartnerCustomization() != null;
+}
+
+export function interpolatePartner(baseString): string {
+    const partnerCustomization = getPartnerCustomization();
+    if (partnerCustomization != null) {
+        return partnerCustomization.interpolate(baseString);
+    }
+    return baseString + "fieldkit";
+}

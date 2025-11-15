@@ -1,0 +1,464 @@
+{
+  "strings": [
+    {
+      "name": "FK_MENU_DOWNLOAD_FIRMWARE_DOWNLOADING",
+      "english": "Downloading",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_DOWNLOAD_FIRMWARE_ERROR",
+      "english": "Download Error",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_DOWNLOAD_FIRMWARE_SUCCESS",
+      "english": "Success!",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_DUMP_FLASH_FLASH_COPIED",
+      "english": "Flash Copied",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_FORMAT_ERROR",
+      "english": "Card Error",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_FORMAT_FORMATTING",
+      "english": "Formatting",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_FORMAT_SUCCESS",
+      "english": "Success!",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_GPS_OFF",
+      "english": "GPS Off",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_LOW_BATTERY",
+      "english": "Low Battery",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_BACK",
+      "english": "Back",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_CONFIRM_NO_CANCEL",
+      "english": "No / Cancel",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_CONFIRM_YES",
+      "english": "Yes",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_GPS_MODE_ALWAYS_ON",
+      "english": "Always on",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_GPS_MODE_IDLE_OFF",
+      "english": "Idle off",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_HOME",
+      "english": "Home",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_INFO_BUILD",
+      "english": "Build",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MAIN_INFO",
+      "english": "Info",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MAIN_MODULES",
+      "english": "Modules",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MAIN_NETWORK",
+      "english": "Network",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MAIN_READINGS",
+      "english": "Readings",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MAIN_SCHEDULES",
+      "english": "Schedules",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MAIN_TOOLS",
+      "english": "Tools",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_BAY_STATUS",
+      "english": "Status",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_DEBUG",
+      "english": "Debug",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_ERASE",
+      "english": "Erase",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM",
+      "english": "Program",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_DISTANCE",
+      "english": "Distance",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_FKUW_ALL",
+      "english": "FkUW",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_MS5837",
+      "english": "Ms5837",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_OMNI",
+      "english": "Omni-water",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_WATER_DO",
+      "english": "Water (DO)",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_WATER_EC",
+      "english": "Water (EC)",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_WATER_ORP",
+      "english": "Water (ORP)",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_WATER_PH",
+      "english": "Water (pH)",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_WATER_TEMP",
+      "english": "Water (Temp)",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_WEATHER",
+      "english": "Weather",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_NETWORK_CHOOSE",
+      "english": "Choose",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_NETWORK_CHOOSE_SELF_AP",
+      "english": "Self AP",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_NETWORK_DURATION",
+      "english": "Duration",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_NETWORK_DURATION_ALWAYS_ON",
+      "english": "Always on",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_NETWORK_DURATION_IDLE_OFF",
+      "english": "Idle off",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_NETWORK_FORGET",
+      "english": "Forget Networks",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_NETWORK_UPLOAD",
+      "english": "Upload",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_SCHEDULE_LORA",
+      "english": "LoRa",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_SCHEDULE_READINGS",
+      "english": "Readings",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_BACKUP",
+      "english": "Backup",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_DUMP_FLASH",
+      "english": "Flash -> SD",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_ESP32_PASSTHRU",
+      "english": "Esp32 Passthru",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_EXPORT_CSV",
+      "english": "Export CSV",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_FACTORY_RESET",
+      "english": "Factory Reset",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_FORMAT_SD",
+      "english": "Format SD",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_GPS_MODE",
+      "english": "GPS Mode",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_LORA_FACTORY_RESET",
+      "english": "LoRa Factory Reset",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_LORA_RANGING",
+      "english": "LoRa Ranging",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_LORA_VIEW",
+      "english": "LoRa View",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_RESTART",
+      "english": "Restart",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_RUN_FSCK",
+      "english": "Run Fs Check",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_SD_UPGRADE",
+      "english": "SD Upgrade",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_SELF_CHECK",
+      "english": "Self Check",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_SET_TIME",
+      "english": "Set Time",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_WATCH_GPS",
+      "english": "Watch GPS",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_READINGS_BACK",
+      "english": "Back",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_READINGS_VU",
+      "english": "V/U",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_SCHEDULE_CANCEL",
+      "english": "Cancel",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_SCHEDULE_NEVER",
+      "english": "Never (!)",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_SCHEDULE_NEXT",
+      "english": "Next:",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_SCHEDULE_SET_10M",
+      "english": "Set 10m",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_SCHEDULE_SET_1H",
+      "english": "Set 60m",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_SCHEDULE_SET_1M",
+      "english": "Set 1m",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_SCHEDULE_SET_30M",
+      "english": "Set 30m",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_SCHEDULE_SET_5M",
+      "english": "Set 5m",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_SCHEDULE_SET_6H",
+      "english": "Set 6hrs",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_SD_UPGRADE_FATAL_ERROR",
+      "english": "Upgrade: Error",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_SD_UPGRADE_LOAD_BL_ERROR",
+      "english": "Upgrade: BL Error",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_SD_UPGRADE_LOAD_FK_ERROR",
+      "english": "Upgrade: FK Error",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_SD_UPGRADE_SD_ERROR",
+      "english": "Upgrade: SD Error",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_SD_UPGRADE_SUCCESS",
+      "english": "Success!",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_SD_UPGRADE_SUCCESS_SWAP",
+      "english": "Ok! Restarting.",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_STARTUP_DEBUG_MODE",
+      "english": "Debug Moded",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_STARTUP_HOLD_FOR_DEBUG",
+      "english": "Hold for Debug",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_STARTUP_PROVISIONING",
+      "english": "Provisioning",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_STARTUP_RELEASE_FOR_DEBUG",
+      "english": "Release for Debug",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_STARTUP_SELF_CHECK",
+      "english": "Self Check",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_STARTUP_UPGRADING",
+      "english": "Upgrading",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_WIFI_OFF",
+      "english": "WiFi Off",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_FLASH_MARKER_LIGHTS",
+      "english": "Flash Markers",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_READINGS_REFRESH",
+      "english": "Refresh",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_GENERATE_NAME",
+      "english": "New Name",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_UPGRADE_WINC1500",
+      "english": "Upgrade WINC",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_NETWORK_CONNECTING",
+      "english": "Connecting",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MAIN_MESSAGES",
+      "english": "Messages",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_SCHEDULE_NETWORK",
+      "english": "Network",
+      "value": null
+    }
+  ]
+}

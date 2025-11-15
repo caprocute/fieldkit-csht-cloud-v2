@@ -1,0 +1,42 @@
+@use "variables";
+
+.icon {
+    &-heart {
+        font-size: 15px;
+        font-weight: 600;
+
+        &:before {
+            color: variables.$color-fieldkit-secondary;
+        }
+
+        &.gray {
+            &:before {
+                color: #575757;
+            }
+        }
+    }
+
+    &-plus-round {
+        font-size: 18px;
+    }
+
+    &-minus-round {
+        font-size: 18px;
+    }
+}
+
+.icon-location {
+    &:before {
+        body.floodnet & {
+            color: var(--color-dark);
+        }
+    }
+}
+
+.icon-calendar {
+    &:before {
+        body.floodnet & {
+            color: var(--color-dark);
+        }
+    }
+}

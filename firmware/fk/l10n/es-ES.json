@@ -1,0 +1,224 @@
+{
+  "strings": [
+    {
+      "name": "FK_MENU_OPTION_CONFIRM_NO_CANCEL",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_CONFIRM_YES",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_BACK",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_HOME",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_INFO_BUILD",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_BAY_STATUS",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_WEATHER",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_WATER_PH",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_WATER_EC",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_WATER_DO",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_WATER_TEMP",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_WATER_ORP",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_DISTANCE",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_MS5837",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM_OMNI",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_PROGRAM",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_ERASE",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MODULE_DEBUG",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_GPS_MODE_IDLE_OFF",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_GPS_MODE_ALWAYS_ON",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_ESP32_PASSTHRU",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_SET_TIME",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_GPS_MODE",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_FORMAT_SD",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_SELF_CHECK",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_DUMP_FLASH",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_BACKUP",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_SD_UPGRADE",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_RUN_FSCK",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_LORA_RANGING",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_LORA_VIEW",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_LORA_FACTORY_RESET",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_FACTORY_RESET",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_RESTART",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_EXPORT_CSV",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_TOOLS_WATCH_GPS",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_NETWORK_CHOOSE_SELF_AP",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_NETWORK_DURATION_IDLE_OFF",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_NETWORK_DURATION_ALWAYS_ON",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_NETWORK_CHOOSE",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_NETWORK_UPLOAD",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_NETWORK_DURATION",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_NETWORK_FORGET",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_SCHEDULE_READINGS",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_SCHEDULE_LORA",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MAIN_READINGS",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MAIN_INFO",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MAIN_SCHEDULES",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MAIN_NETWORK",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MAIN_MODULES",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_OPTION_MAIN_TOOLS",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_WIFI_OFF",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_READINGS_BACK",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_GPS_OFF",
+      "value": null
+    },
+    {
+      "name": "FK_MENU_READINGS_VU",
+      "value": null
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+image: golang:latest
+
+stages:
+  - build
+
+build-linux-amd64:
+  stage: build
+  needs: []
+  script:
+    - GOOS=linux GOARCH=amd64 go build -o fkc cmd/*.go
+  artifacts:
+    name: fkc-linux-amd64
+    paths:
+      - fkc
+
+build-darwin-amd64:
+  stage: build
+  needs: []
+  script:
+    - GOOS=darwin GOARCH=amd64 go build -o fkc cmd/*.go
+  artifacts:
+    name: fkc-darwin-amd64
+    paths:
+      - fkc
+
+build-windows-amd64:
+  stage: build
+  needs: []
+  script:
+    - GOOS=windows GOARCH=amd64 go build -o fkc cmd/*.go
+  artifacts:
+    name: fkc-windows-amd64
+    paths:
+      - fkc
+
+build-darwin-arm64:
+  stage: build
+  needs: []
+  script:
+    - GOOS=darwin GOARCH=arm64 go build -o fkc cmd/*.go
+  artifacts:
+    name: fkc-darwin-arm64
+    paths:
+      - fkc

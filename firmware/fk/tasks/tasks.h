@@ -1,0 +1,38 @@
+#pragma once
+
+#include <os.h>
+
+#include "common.h"
+#include "platform.h"
+#include "config.h"
+
+namespace fk {
+
+void task_handler_idle();
+void task_handler_scheduler(void *params);
+void task_handler_display(void *params);
+void task_handler_network(void *params);
+void task_handler_worker(void *params);
+
+extern os_task_t idle_task;
+extern os_task_t scheduler_task;
+extern os_task_t display_task;
+extern os_task_t network_task;
+extern os_task_t worker_tasks[NumberOfWorkerTasks];
+
+os_task_t **fk_tasks_all();
+
+bool fk_can_start_task(os_task_t *task);
+
+bool fk_start_task_if_necessary(os_task_t *task);
+
+bool fk_task_stop_requested(uint32_t *checked);
+
+class NetworkTaskParameters {
+public:
+    bool external_ap;
+};
+
+extern NetworkTaskParameters task_network_params_external_ap;
+
+} // namespace fk

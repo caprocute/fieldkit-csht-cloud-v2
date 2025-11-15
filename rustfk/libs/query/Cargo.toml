@@ -1,0 +1,34 @@
+[package]
+name = "query"
+version = "0.1.0"
+authors = ["Jacob Lewallen <jlewallen@gmail.com>"]
+edition = "2021"
+
+[dependencies.protos]
+path = "../protos"
+
+[dependencies]
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+prost = { workspace = true }
+bytes = "1.6.0"
+serde_json = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+base64 = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+async-stream = "0.3.5"
+tokio-util = "0.7.10"
+tokio = { workspace = true }
+tokio-stream = { workspace = true }
+# This is using rustls-tls instead of native-tls-vendored or something because
+# of a build error about a missing arm-linux-androideabi-ranlib.
+reqwest = { version = "0.11.27", default-features = false, features = [
+    "gzip",
+    "stream",
+    "rustls-tls",
+    "json",
+] }
+async-trait = "0.1.79"
+governor = "0.6.3"
+nonzero_ext = "0.3.0"

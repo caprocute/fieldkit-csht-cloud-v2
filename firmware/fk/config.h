@@ -1,0 +1,533 @@
+#pragma once
+
+#include <inttypes.h>
+#include <string.h>
+#include "secrets.h"
+#include "common/memory.h"
+#include "lora_frequency.h"
+
+namespace fk {
+
+// -------------------------------------------------------------------------------------------
+// Time Intervals
+
+/**
+ * One second in milliseconds.
+ */
+constexpr uint32_t OneSecondMs = 1000;
+
+/**
+ * Two seconds in milliseconds.
+ */
+constexpr uint32_t TwoSecondsMs = 2000;
+
+/**
+ * Five seconds in milliseconds.
+ */
+constexpr uint32_t FiveSecondsMs = 5000;
+
+/**
+ * Ten seconds in milliseconds.
+ */
+constexpr uint32_t TenSecondsMs = 10 * 1000;
+
+/**
+ * Thirty seconds in milliseconds.
+ */
+constexpr uint32_t ThirtySecondsMs = 30 * 1000;
+
+/**
+ * One minute in milliseconds.
+ */
+constexpr uint32_t OneMinuteMs = 60 * 1000;
+
+/**
+ * One minute in seconds.
+ */
+constexpr uint32_t OneMinuteSeconds = 60;
+
+/**
+ * Five minutes in seconds.
+ */
+constexpr uint32_t FiveMinutesSeconds = 5 * 60;
+
+/**
+ * Five minutes in milliseconds.
+ */
+constexpr uint32_t FiveMinutesMs = FiveMinutesSeconds * 1000;
+
+/**
+ * Ten minutes in seconds.
+ */
+constexpr uint32_t TenMinutesSeconds = FiveMinutesSeconds * 2;
+
+/**
+ * Ten minutes in milliseconds.
+ */
+constexpr uint32_t TenMinutesMs = FiveMinutesSeconds * 1000 * 2;
+
+/**
+ * Thirty minutes in milliseconds.
+ */
+constexpr uint32_t ThirtyMinutesMs = OneMinuteMs * 30;
+
+/**
+ * One hour in milliseconds.
+ */
+constexpr uint32_t OneHourMs = OneMinuteMs * 60;
+
+/**
+ * One day in milliseconds.
+ */
+constexpr uint32_t OneDayMs = OneHourMs * 24;
+
+/**
+ * One hour in seconds.
+ */
+constexpr uint32_t OneHourSeconds = 60 * 60;
+
+/**
+ * One day in seconds.
+ */
+constexpr uint32_t OneDaySeconds = 86400;
+
+/**
+ * Threshold for clock drift warning.
+ */
+constexpr int32_t TimeDriftWarnThreshold = 5;
+
+// -------------------------------------------------------------------------------------------
+// Sizes
+
+/**
+ * Precisely 1024 * 1024.
+ */
+constexpr uint32_t OneMegabyte = 1024 * 1024;
+
+// -------------------------------------------------------------------------------------------
+// Schedules and Time
+
+constexpr uint32_t DefaultReadingsInterval = OneHourSeconds;
+constexpr uint32_t DefaultNetworkInterval = 60 * 60 * 60;
+constexpr uint32_t DefaultLoraInterval = 60 * 60 * 6;
+constexpr uint32_t DefaultGpsInterval = OneDaySeconds;
+constexpr uint32_t DefaultGpsDuration = TenMinutesSeconds;
+constexpr uint32_t DefaultSynchronizeTimeInterval = OneDaySeconds;
+constexpr uint32_t DefaultDebugReadingsInterval = 60;
+constexpr uint32_t DefaultDebugNetworkInterval = 60 * 5;
+constexpr uint32_t DefaultDebugLoraInterval = 60 * 5;
+constexpr uint32_t DefaultDebugGpsInterval = 60 * 60 * 2;
+constexpr uint32_t DefaultDebugGpsDuration = TenMinutesSeconds;
+
+/**
+ * Maximum number of intervals per schedule.
+ * TODO Remove eventually.
+ */
+constexpr size_t MaximumScheduleIntervals = 10;
+
+/**
+ * Maximum allowed time drift, in seconds.
+ */
+constexpr int32_t AcceptableTimeDriftSeconds = 5;
+
+/**
+ * How long the user should hold the button to initiate a factory wipe.
+ */
+constexpr uint32_t InteractiveStartupButtonDuration = TwoSecondsMs;
+
+/**
+ * How often to display progress information.
+ */
+constexpr uint32_t ProgressIntervalMs = 1000;
+
+/**
+ * How often to check for configuration changes.
+ */
+constexpr uint32_t ConfigurationCheckIntervalMs = 500;
+
+// -------------------------------------------------------------------------------------------
+// Memory
+
+/**
+ * Standard page size to allocate for operations.
+ */
+constexpr size_t StandardPageSize = 8192;
+
+/**
+ * Size of the circular buffer that stores logs.
+ */
+constexpr size_t InMemoryLogBufferSize = 32768;
+
+/**
+ * Size of the network buffers.
+ */
+constexpr size_t NetworkBufferSize = 1446;
+
+/**
+ * Size of the network buffers.
+ */
+constexpr size_t MaximumUdpPacketSize = NetworkBufferSize;
+
+/**
+ * Delay to wait between attempting to flush network writes.
+ */
+constexpr uint32_t NetworkFlushAllDelay = 250;
+
+/**
+ * Maximum size to use for general IO buffers.
+ */
+constexpr size_t IoBufferSize = 1024;
+
+/**
+ * Standard size of buffers linked together to form a single buffer.
+ */
+constexpr size_t LinkedBufferSize = 256;
+
+/**
+ * Maximum size to use for buffers allocated on the stack.
+ */
+constexpr size_t StackBufferSize = 128;
+
+/**
+ * Size of a page in EEPROM memory.
+ */
+constexpr size_t CodeMemoryPageSize = 512;
+
+/**
+ * Size of a block in EEPROM memory.
+ */
+constexpr size_t CodeMemoryBlockSize = 8192;
+
+// -------------------------------------------------------------------------------------------
+// Modules
+
+/**
+ * If true then modules will never be turned off to optimize power consumption.
+ */
+constexpr bool ModulesAlwaysOn = false;
+
+/**
+ * If enabled the virtual diagnostics module will be scanned.
+ */
+constexpr bool ModulesEnableDiagnostics = true;
+
+/**
+ * If enabled the virtual random module will be scanned.
+ */
+constexpr bool ModulesEnableRandom = false;
+
+/**
+ * Only allow one module to be powered up when taking readings.
+ */
+constexpr bool ModulesPowerIndividually = true;
+
+/**
+ * This is the theorhetical maximum number of modules that can be physically
+ * connected to a single station. This is governed by the largest backplanes and
+ * their possible combinations.
+ */
+#if defined(FK_UNDERWATER)
+constexpr size_t MaximumNumberOfPhysicalModules = 7;
+#else
+constexpr size_t MaximumNumberOfPhysicalModules = 5;
+#endif
+
+constexpr size_t MaximumConfigurationSize = 1024;
+
+constexpr uint32_t MinimumModuleStartupDelayMs = 10;
+
+// -------------------------------------------------------------------------------------------
+// LoRa
+
+/**
+ * Transmission frequency to save RN module state.
+ */
+constexpr int32_t LoraSaveEveryTx = 10;
+
+/**
+ * Transmission frequency to save RN module state. 65k hourly saves is about 7
+ * years.
+ */
+constexpr int32_t LoraSaveEveryMinutes = 3600;
+
+/**
+ *
+ */
+constexpr int32_t LoraFailuresBeforeRejoin = 1;
+
+/**
+ * Number of times to retry confirmed message.
+ */
+constexpr int32_t LoraConfirmedRetries = 0;
+
+/**
+ * Transmission frequency to request confirmation packets.
+ */
+constexpr int32_t LoraConfirmEveryTx = 30;
+
+/**
+ * Minutes between confirmed transmissions.
+ */
+constexpr int32_t LoraConfirmEveryMinutes = 0;
+
+/**
+ * Length of a LoRa Join EUI.
+ */
+constexpr size_t LoraJoinEuiLength = 8;
+
+/**
+ * Length of a LoRa Device EUI.
+ */
+constexpr size_t LoraDeviceEuiLength = 8;
+
+/**
+ * Length of a LoRa App Key.
+ */
+constexpr size_t LoraAppKeyLength = 16;
+
+/**
+ * Length of a LoRa Device Address.
+ */
+constexpr size_t LoraDeviceAddressLength = 4;
+
+/**
+ * Length of a LoRa network session key.
+ */
+constexpr size_t LoraNetworkSessionKeyLength = 16;
+
+/**
+ * Length of a LoRa app session key.
+ */
+constexpr size_t LoraAppSessionKeyLength = 16;
+
+/**
+ * LoRaWAN port for data messages.
+ */
+constexpr uint8_t LoraDataPort = 10;
+
+/**
+ * LoRaWAN port for status messages.
+ */
+constexpr uint8_t LoraStatusPort = 11;
+
+/**
+ * LoRaWAN port for location messages.
+ */
+constexpr uint8_t LoraLocationPort = 12;
+
+/**
+ * Number of times to try a LoRa transmission.
+ */
+constexpr size_t LoraSendTries = 3;
+
+/**
+ * TODO Calculate this from spreading factor.
+ */
+constexpr size_t LoraMaximumPacketSize{ 10 };
+
+/**
+ * Delay between LoRa packets.
+ */
+constexpr uint32_t LoraPacketDelay = TenSecondsMs;
+
+/**
+ * Default LoRa frequency.
+ */
+constexpr lora_frequency_t LoraDefaultFrequency = lora_frequency_t::Us915;
+
+constexpr size_t LoraKeysNameMaximum = 16;
+
+struct lora_keys_t {
+    char name[LoraKeysNameMaximum];
+    lora_frequency_t frequency_band;
+    uint8_t device_eui[LoraDeviceEuiLength];
+    uint8_t app_key[LoraAppKeyLength];
+};
+
+extern const lora_keys_t lora_keys[];
+
+// -------------------------------------------------------------------------------------------
+// Field Lengths
+
+/**
+ * Maximum length of a device's name.
+ */
+constexpr size_t MaximumNameLength = 64;
+
+/**
+ * Maximum length of the build string.
+ */
+constexpr size_t MaximumBuildStringLength = 32;
+
+/**
+ * Maximum length of a device's generation. This is regeneration whenever the
+ * file system is created.
+ */
+constexpr size_t GenerationLength = 32;
+
+// -------------------------------------------------------------------------------------------
+// Network/Wifi
+
+/**
+ * How long to wait for a WiFi connection to establish.
+ */
+constexpr uint32_t NetworkConnectionTimeoutMs = 30 * 1000;
+
+/**
+ * Maximum duration to allow an inactive connection open. This is
+ * adjusted to be higher than the status message frequency so that
+ * debug connections aren't killed prematurely.
+ */
+constexpr uint32_t NetworkConnectionMaximumDuration = TenSecondsMs;
+
+/**
+ * Maximum number of WiFi networks.
+ * TODO Remove eventually.
+ */
+constexpr size_t WifiMaximumNumberOfNetworks = 5;
+
+/**
+ * Maximum length of a WiFi SSID.
+ */
+constexpr size_t WifiMaximumSsidLength = 64;
+
+/**
+ * Maximum length of a WiFi password.
+ */
+constexpr size_t WifiMaximumPasswordLength = 64;
+
+/**
+ * The number of fixed HTTP routes that the firmware registers. These are routes
+ * that are always there and never change with configuration.
+ */
+constexpr size_t HttpFixedRoutes = 7;
+
+/**
+ * The maximum number of HTTP routes that can be registered. Trying to register
+ * more than this will fail. This is a function of the maximum number of modules
+ * and the number of fixed routes.
+ */
+constexpr size_t HttpMaximumRoutes = MaximumNumberOfPhysicalModules + HttpFixedRoutes;
+
+/**
+ * Maximum size of all the headers in an HTTP request.
+ */
+constexpr size_t HttpMaximumHeaderSize = 1024;
+
+/**
+ * Buffer size to use for HTTP operations.
+ */
+constexpr size_t HttpConnectionBufferSize = 1024;
+
+/**
+ * Maximum length of API urls.
+ */
+constexpr size_t HttpMaximumUrlLength = 64;
+
+/**
+ * Maximum length of API authentication tokens.
+ */
+constexpr size_t HttpMaximumTokenLength = 512;
+
+/**
+ * Time between UDP discovery publishes.
+ */
+constexpr uint32_t NetworkUdpDiscoveryInterval = 5000;
+
+/**
+ * Port to do our own lazy broadcasting on.
+ */
+constexpr uint32_t NetworkUdpDiscoveryPort = 22143;
+
+/**
+ * Minimum duration of network AP availability in seconds.
+ */
+constexpr uint32_t NetworkMinimumDurationSeconds = 60;
+
+// -------------------------------------------------------------------------------------------
+constexpr uint32_t MenuRefreshInterval = 125;
+
+constexpr uint32_t DisplayButtonWaitMs = 100;
+
+// -------------------------------------------------------------------------------------------
+// GPS
+
+/**
+ * Buffer size for storing GPS sentences for debugging purposes.
+ */
+constexpr size_t GpsDebuggingBuffer = 64;
+
+/**
+ * Flag to enable logging of raw GPS data.
+ */
+constexpr bool GpsLoggingRaw = false;
+
+// -------------------------------------------------------------------------------------------
+// Storage
+
+/**
+ * Maximum number of blocks to look ahead for an available block. This means we
+ * can't deal with this many bad blocks sequentially.
+ */
+constexpr int32_t StorageAvailableBlockLookAhead = 10;
+
+/**
+ * Maximum number of memory banks we're capable of supporting.
+ */
+#if defined(FK_UNDERWATER)
+#define FK_MAXIMUM_NUMBER_OF_MEMORY_BANKS 1
+#else
+#define FK_MAXIMUM_NUMBER_OF_MEMORY_BANKS 2
+#endif
+constexpr size_t StorageMaximumNumberOfMemoryBanks = FK_MAXIMUM_NUMBER_OF_MEMORY_BANKS;
+
+// -------------------------------------------------------------------------------------------
+// Debug
+
+/**
+ * True to enable dumping memory, hash comparisons, etc...
+ */
+constexpr bool DebugEnableMemoryDumps = false;
+
+// -------------------------------------------------------------------------------------------
+// Basically Fixed
+
+/**
+ * Size of the bootloader.
+ */
+constexpr uint32_t BootloaderSize = FK_MEMORY_BOOTLOADER_SIZE;
+
+/**
+ * Maximum size of the vector table at the start of the
+ * bootloader. This is used to calculate an offset into memory to
+ * check for the fkb_header_t struct.
+ *
+ * Also note that this should be within NetworkBufferSize as well so
+ * that first-page erases nuke this as well.
+ */
+constexpr uint32_t VectorsMaximumSize = FK_MEMORY_MAXIMUM_VTOR_SIZE;
+
+/**
+ * Address of the primary bank of flash memory.
+ */
+constexpr uint32_t PrimaryBankAddress = FK_MEMORY_FLASH_ADDRESS_RUNNING_BASE;
+
+/**
+ * Address of the secondary bank of flash memory.
+ */
+constexpr uint32_t OtherBankAddress = FK_MEMORY_FLASH_ADDRESS_UPGRADE_BASE;
+
+/**
+ * Number of worker tasks to allow.
+ */
+constexpr size_t NumberOfWorkerTasks = 2;
+
+#if !defined(FK_TASK_STACK_SIZE_BYTES)
+#define FK_TASK_STACK_SIZE_BYTES (4096 + 2048)
+#endif
+
+#if !defined(FK_MEMORY_PAGES)
+#define FK_MEMORY_PAGES (19)
+#endif
+
+} // namespace fk

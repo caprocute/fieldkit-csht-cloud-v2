@@ -1,0 +1,225 @@
+@use "mixins";
+@use "variables";
+
+a {
+    cursor: pointer;
+}
+
+.button-solid {
+    width: 240px;
+    height: 45px;
+    color: white;
+    font-size: 18px;
+    font-family: var(--font-family-bold);
+    background-color: var(--color-secondary);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.btn {
+    width: 280px;
+    height: 45px;
+    font-size: 18px;
+    color: white;
+    background-color: var(--color-secondary);
+    border: none;
+    border-radius: 5px;
+    font-family: var(--font-family-bold);
+    letter-spacing: 0.1px;
+    margin-bottom: 20px;
+
+    &:nth-of-type(1) {
+        margin-right: 18px;
+    }
+
+    &-outline {
+        background: #fff;
+        color: var(--color-secondary);
+        border: 1px solid var(--color-secondary);
+    }
+}
+
+.checkbox {
+    position: relative;
+    padding-left: 30px;
+    margin: 7px 0;
+    cursor: pointer;
+    min-height: 20px;
+    @include mixins.flex(center);
+
+    input {
+        opacity: 0;
+        position: absolute;
+        z-index: -1;
+    }
+
+    &-btn {
+        width: 18px;
+        height: 18px;
+        border-radius: 2px;
+        border: solid 1px rgba(0, 0, 0, 0.1);
+        background: #f2f4f7;
+        @include mixins.position(absolute, 0 null null 0);
+    }
+
+    input:checked ~ .checkbox-btn {
+        &:after {
+            @include mixins.position(absolute, 0 null null 0);
+            content: "";
+            background: url("~@/assets/icon-tick.svg") no-repeat center center;
+            background-size: 10px 8px;
+            width: 20px;
+            height: 20px;
+        }
+    }
+}
+
+.validation-errors {
+    color: variables.$color-danger;
+    font-size: 14px;
+
+    > * {
+        color: variables.$color-danger;
+    }
+}
+
+.button-social {
+    height: 33px;
+    padding: 0 12px;
+    font-size: 14px;
+    font-family: var(--font-family-bold);
+    letter-spacing: 0.08px;
+    border-radius: 3px;
+    border: solid 1px #cccdcf;
+    background: #fff;
+    @include mixins.flex(center, center);
+
+    img,
+    i {
+        margin-right: 5px;
+    }
+}
+
+.tribute-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: auto;
+    max-height: 300px;
+    max-width: 500px;
+    overflow: auto;
+    display: block;
+    z-index: 999999;
+}
+.tribute-container ul {
+    margin: 0;
+    margin-top: 2px;
+    padding: 0;
+    list-style: none;
+    background: #efefef;
+}
+.tribute-container li {
+    padding: 5px 5px;
+    cursor: pointer;
+}
+.tribute-container li.highlight {
+    background: #ddd;
+}
+.tribute-container li span {
+    font-weight: bold;
+}
+.tribute-container li.no-match {
+    cursor: default;
+}
+.tribute-container .menu-highlighted {
+    font-weight: bold;
+}
+.tribute-wrapper {
+    width: 100%;
+}
+.tribute-user-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    image-rendering: -webkit-optimize-contrast;
+}
+
+.link,
+::v-deep .link {
+    text-decoration: underline;
+    font-family: var(--font-family-bold);
+}
+
+.button-submit {
+    width: 100%;
+    white-space: nowrap;
+    max-width: 300px;
+    height: 45px;
+    background-color: var(--color-secondary);
+    border: none;
+    color: #fff !important;
+    font-size: 18px;
+    font-family: var(--font-family-bold);
+    border-radius: 3px;
+    letter-spacing: 0.1px;
+    padding: 0 13px;
+    cursor: pointer;
+    @include mixins.flex(center, center);
+
+    .icon {
+        font-size: 15px;
+        margin-right: 10px;
+    }
+}
+
+.small-light {
+    font-size: 12px;
+    color: #6a6d71;
+    font-family: var(--font-family-light);
+}
+
+.input {
+    background-color: transparent;
+    border: 0;
+    padding: 5px;
+    font-size: 16px;
+    color: var(--color-dark);
+    font-family: variables.$font-family-medium;
+    outline: none;
+
+    &:not(:disabled) {
+        border: 1px solid variables.$color-border;
+    }
+}
+
+.loading-container {
+    background-color: #e2e4e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    height: 100%;
+
+    ::v-deep .spinner {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.hide-mob {
+    @include mixins.bp-down(variables.$sm) {
+        display: none !important;
+    }
+}
+
+.hide-desktop {
+    @include mixins.bp-up(variables.$sm) {
+        display: none !important;
+    }
+}

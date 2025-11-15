@@ -1,0 +1,8 @@
+add_subdirectory(diagnostics)
+add_subdirectory(random)
+add_subdirectory(weather)
+add_subdirectory(water)
+add_subdirectory(omni_water)
+add_subdirectory(distance)
+add_subdirectory(dynamic)
+add_subdirectory(ms5837)

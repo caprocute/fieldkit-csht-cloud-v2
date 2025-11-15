@@ -1,0 +1,219 @@
+import _ from "lodash";
+import moment from "moment";
+
+export class ExistingFieldNote {
+    constructor(
+        public readonly id: number,
+        public readonly key: string,
+        public readonly body: string,
+        public readonly mediaIds: number[],
+        public readonly title: string
+    ) {}
+}
+
+export class NewFieldNote {
+    constructor(
+        public readonly key: string,
+        public readonly body: string,
+        public readonly mediaIds: number[],
+        public readonly title: string
+    ) {}
+}
+
+export class Ids {
+    constructor(public readonly mobile: number, public readonly portal: number) {}
+}
+
+export interface PortalStationNotes {
+    id: number;
+    createdAt: number;
+    author: { id: number; name: number };
+    key: string;
+    body: string;
+    title: string;
+    media: { id: number; key: string; url: string; contentType: string }[];
+}
+
+export interface PortalNoteMedia {
+    id: number;
+    contentType: string;
+    url: string;
+    key: string;
+}
+
+export interface PortalStationNotesReply {
+    media: PortalNoteMedia[];
+    notes: PortalStationNotes[];
+}
+
+export class PatchPortalNote {
+    constructor(public readonly creating: NewFieldNote[], public readonly notes: ExistingFieldNote[]) {}
+}
+
+export interface PortalPatchNotesPayload {
+    notes: PatchPortalNote[];
+}
+
+export class NoteHelp {
+    constructor(public readonly title: string) {}
+}
+
+export class NoteMedia {
+    constructor(public readonly key: string) {}
+
+    public static onlyAudio(media: NoteMedia[]): NoteMedia[] {
+        return media.filter(NoteMedia.isAudio);
+    }
+
+    public static onlyPhotos(media: NoteMedia[]): NoteMedia[] {
+        return media.filter(NoteMedia.isPhoto);
+    }
+
+    public static isPhoto(nm: NoteMedia): boolean {
+        return !NoteMedia.isAudio(nm);
+    }
+
+    public static isAudio(nm: NoteMedia): boolean {
+        return /(m4a|caf)$/.test(nm.key.toLowerCase());
+    }
+}
+
+export class NoteForm {
+    constructor(
+        public readonly body: string,
+        public readonly help: NoteHelp,
+        public readonly photos: NoteMedia[] = [],
+        public readonly audio: NoteMedia[] = [],
+        public readonly title: string = ""
+    ) {}
+
+    public withBody(body: string, title: string) {
+        return new NoteForm(body, this.help, this.photos, this.audio, title);
+    }
+}
+
+function getPathTimestamp(ts): string {
+    return moment(ts).utc().format("YYYYMMDD_hhmmss");
+}
+
+function getExtension(fn: string, type: string): string {
+    const parts = fn.split(".");
+    if (parts.length < 2) {
+        console.warn("unable to get extension:", fn, parts);
+        if (/jpeg/.test(type) || /jpg/.test(type)) {
+            return "jpg";
+        }
+        if (/png/.test(type)) {
+            return "png";
+        }
+        if (/gif/.test(type)) {
+            return "gif";
+        }
+        throw new Error(`unable to get extension: ${fn} ${type}`);
+    }
+    return parts[parts.length - 1];
+}
+
+export class AddedPhoto {
+    public readonly key: string;
+
+    constructor(public readonly type: any, public readonly file: any, public readonly image: any) {
+        const extension = getExtension(this.file.name, this.file.type);
+        this.key = getPathTimestamp(new Date()) + "." + extension;
+    }
+}
+
+export const NoteCustomTitleDefault = "notes.fields.customKey";
+
+export class Notes {
+    static Keys = ["studyObjective", "sitePurpose", "siteCriteria", "siteDescription", "customKey"];
+
+    public readonly studyObjective: NoteForm;
+    public readonly sitePurpose: NoteForm;
+    public readonly siteCriteria: NoteForm;
+    public readonly siteDescription: NoteForm;
+    public readonly customKey: NoteForm;
+
+    constructor(public readonly addedPhotos: AddedPhoto[] = []) {
+        this.studyObjective = new NoteForm("", new NoteHelp("notes.fields.studyObjective"));
+        this.sitePurpose = new NoteForm("", new NoteHelp("notes.fields.sitePurpose"));
+        this.siteCriteria = new NoteForm("", new NoteHelp("notes.fields.siteCriteria"));
+        this.siteDescription = new NoteForm("", new NoteHelp("notes.fields.siteDescription"));
+        this.customKey = new NoteForm("", new NoteHelp(NoteCustomTitleDefault));
+    }
+
+    private isNoteCompleted(note: NoteForm): boolean {
+        return note.body.length > 0 || note.photos.length > 0 || note.audio.length > 0;
+    }
+
+    public get progress(): { total: number; completed: number } {
+        const progress = _.map(Notes.Keys, (key) => {
+            return this.isNoteCompleted(this[key]) ? 1 : 0;
+        });
+        const done = _.sum(progress);
+        return {
+            total: Notes.Keys.length,
+            completed: done,
+        };
+    }
+
+    public static createFrom(portalNotes: PortalStationNotesReply): Notes {
+        return portalNotes.notes.reduceRight((formNotes, portalNote) => {
+            const key = portalNote.key;
+            if (!formNotes[key]) {
+                throw new Error("unexpected note");
+            }
+            Object.assign(formNotes[key], {
+                photos: NoteMedia.onlyPhotos(portalNote.media),
+                audio: NoteMedia.onlyAudio(portalNote.media),
+                body: portalNote.body,
+                title: portalNote.title,
+            });
+            return formNotes;
+        }, new Notes());
+    }
+}
+
+export function mergeNotes(portalNotes: PortalStationNotesReply, notesForm: Notes): PatchPortalNote {
+    const portalExisting = _.keyBy(portalNotes.notes, (n) => n.key);
+    const localByKey = {
+        studyObjective: notesForm.studyObjective,
+        sitePurpose: notesForm.sitePurpose,
+        siteCriteria: notesForm.siteCriteria,
+        siteDescription: notesForm.siteDescription,
+        customKey: notesForm.customKey,
+    };
+
+    const media = {};
+
+    const modifications = _(localByKey)
+        .mapValues((value, key) => {
+            const photoIds = value.photos.map((m) => media[m.key]).filter((v) => v);
+            const audioIds = value.audio.map((m) => media[m.key]).filter((v) => v);
+            const mediaIds = [...photoIds, ...audioIds];
+            if (portalExisting[key]) {
+                return {
+                    creating: null,
+                    updating: new ExistingFieldNote(portalExisting[key].id, key, value.body, mediaIds, value.title),
+                };
+            }
+            return {
+                creating: new NewFieldNote(key, value.body, mediaIds, value.title),
+                updating: null,
+            };
+        })
+        .values()
+        .value();
+    const creating = modifications
+        .map((v) => v.creating)
+        .filter((v) => v !== null && (v.body.length > 0 || !isDefaultCustomTitle(v.title))) as NewFieldNote[];
+    const updating = modifications
+        .map((v) => v.updating)
+        .filter((v) => v !== null && !isDefaultCustomTitle(v.title)) as ExistingFieldNote[];
+
+    return new PatchPortalNote(creating, updating);
+}
+
+function isDefaultCustomTitle(title: string): boolean {
+    return title === NoteCustomTitleDefault;
+}

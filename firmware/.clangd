@@ -1,0 +1,5 @@
+CompileFlags:
+	Add: [-Wno-vla, -ferror-limit=0]
+	Remove: [-Werror]
+Diagnostics:
+	Suppress: [anon_bitfield_qualifiers]

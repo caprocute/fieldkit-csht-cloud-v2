@@ -1,0 +1,21 @@
+{
+  "editor.formatOnSave": true,
+  "settings": {
+    "files.exclude": {
+      "**/.git": true,
+      "**/.DS_Store": true,
+      "**/node_modules": true,
+      "**/build": true
+    }
+  },
+  "search.exclude": {
+    "third-party/gcc-arm-none-eabi*": true,
+    "third-party/cmsis": true,
+    "third-party/asf4": true
+  },
+  "files.exclude": {
+    "third-party/gcc-arm-none-eabi*": true,
+    "third-party/cmsis": true,
+    "third-party/asf4": true
+  }
+}

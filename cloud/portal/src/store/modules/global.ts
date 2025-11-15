@@ -1,0 +1,50 @@
+import { DisplayStation, StationsState, DisplayProject, MappedStations } from "./stations";
+import { ClockState } from "./clock";
+import { MapState } from "./map";
+import { UserState } from "./user";
+import { LayoutState } from "./layout";
+import { ExportingState } from "./exporting";
+import { NotificationsState } from "./notifications";
+import { DiscussionState, NotesState, FieldNotesState } from "@/store";
+import { SnackbarState } from "@/store/modules/snackbar";
+import { VizState } from "@/store/modules/viz";
+import { DirtyState } from "@/store/modules/dirty";
+import { ExploreViewState } from "@/store/modules/exploreView";
+
+export interface RouteState {
+    name: string | null;
+    path: string;
+    fullPath: string;
+    meta: object;
+    params: object;
+    query: object;
+    hash: string;
+    from: RouteState;
+}
+
+export interface GlobalState {
+    readonly stations: StationsState;
+    readonly clock: ClockState;
+    readonly map: MapState;
+    readonly route: RouteState;
+    readonly user: UserState;
+    readonly exporting: ExportingState;
+    readonly layout: LayoutState;
+    readonly notifications: NotificationsState;
+    readonly notes: NotesState;
+    readonly fieldNotes: FieldNotesState;
+    readonly snackbar: SnackbarState;
+    readonly discussion: DiscussionState;
+    readonly dirty: DirtyState;
+    readonly viz: VizState;
+    readonly exploreView: ExploreViewState;
+}
+
+export interface GlobalGetters {
+    projectsById: { [index: number]: DisplayProject };
+    stationsById: { [index: number]: DisplayStation };
+    isAuthenticated: boolean;
+    isBusy: boolean;
+    mapped: MappedStations;
+    isUserTeamMemberOfStation: { (stationId: number): boolean };
+}

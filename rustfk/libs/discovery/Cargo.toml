@@ -1,0 +1,17 @@
+[package]
+name = "discovery"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies.query]
+path = "../query"
+
+[dependencies]
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true, features = ["macros"] }
+socket2 = { workspace = true }
+quick-protobuf = { workspace = true }
+varint = { workspace = true }
+hex = { workspace = true }

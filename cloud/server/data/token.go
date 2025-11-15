@@ -1,0 +1,70 @@
+package data
+
+import (
+	"crypto/rand"
+	"database/sql/driver"
+	"encoding/base64"
+	"errors"
+)
+
+var (
+	errInvalidToken = errors.New("invalid token")
+	tokenEncoding   = base64.URLEncoding.WithPadding(base64.NoPadding)
+)
+
+type Token []byte
+
+func NewToken(length int) (Token, error) {
+	t := make([]byte, length)
+	if _, err := rand.Read(t); err != nil {
+		return nil, err
+	}
+
+	return t, nil
+}
+
+// UnmarshalBinary sets the value of the Token based on a slice of bytes.
+func (t *Token) UnmarshalBinary(data []byte) error {
+	*t = make([]byte, len(data))
+	copy(*t, data)
+	return nil
+}
+
+// MarshalText returns a base64-encoded slice of bytes.
+func (t Token) MarshalText() (text []byte, err error) {
+	data := make([]byte, tokenEncoding.EncodedLen(len(t)))
+	base64.URLEncoding.Encode(data, t)
+	return data, nil
+}
+
+// UnmarshalText sets the value of the Token based on a base64-encoded slice of bytes.
+func (t *Token) UnmarshalText(text []byte) error {
+	data := make([]byte, tokenEncoding.DecodedLen(len(text)))
+	n, err := tokenEncoding.Decode(data, text)
+	if err != nil {
+		return err
+	}
+
+	*t = data[:n]
+	return nil
+}
+
+// String returns a base64-encoded string.
+func (t Token) String() string {
+	return tokenEncoding.EncodeToString(t)
+}
+
+// Scan sets the value of the Token based on an interface.
+func (id *Token) Scan(src interface{}) error {
+	data, ok := src.([]byte)
+	if !ok {
+		return errInvalidToken
+	}
+
+	return id.UnmarshalBinary(data)
+}
+
+// Value implements the driver Valuer interface.
+func (t Token) Value() (driver.Value, error) {
+	return []byte(t), nil
+}

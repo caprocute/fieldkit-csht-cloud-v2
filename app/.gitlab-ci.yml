@@ -1,0 +1,242 @@
+stages:
+  - prepare
+  - test
+  - build
+  - upload
+
+variables:
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+
+flutter:test:
+  stage: prepare
+  image: ghcr.io/cirruslabs/flutter:3.32.8
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - df -h
+    - apt-get update && apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev libsecret-1-dev libsecret-tools libsecret-1-0 && rm -rf /var/lib/apt/lists/*
+    - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    - du -h ~/.cargo
+    - cp -f env.template .env
+    - flutter clean
+    - flutter pub get
+    - flutter test
+    - df -h
+
+flutter:linux:
+  stage: prepare
+  image: ghcr.io/cirruslabs/flutter:3.32.8
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - df -h
+    - apt-get update && apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev libsecret-1-dev libsecret-tools libsecret-1-0 && rm -rf /var/lib/apt/lists/*
+    - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    - cp -f env.template .env
+    - flutter clean
+    - flutter pub get
+    - df -h
+    - flutter build linux
+    - df -h
+
+flutter:apk:
+  stage: prepare
+  image: ghcr.io/cirruslabs/flutter:3.32.8
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  variables:
+    FK_LIMIT_PLATFORMS: android-arm64
+  script:
+    - df -h
+    - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    - cp -f env.template .env
+    - flutter clean
+    - flutter pub get
+    - df -h
+    - flutter build apk --debug --target-platform=android-arm64
+    - du -hs ~/
+    - pwd
+    - du -hs .
+
+prepare:image:
+  stage: prepare
+  rules:
+    - if: $CI_PROJECT_NAMESPACE != 'fieldkit'
+      when: never
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
+  image: docker:24.0.5
+  services:
+    - name: docker:24.0.5-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_CLI_EXPERIMENTAL: enabled
+  script:
+    - echo $IMAGE_TAG
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker manifest inspect $IMAGE_TAG || true
+    - |
+      if ! docker manifest inspect $IMAGE_TAG; then
+        docker build -t $IMAGE_TAG .
+        docker push $IMAGE_TAG
+      fi
+
+test:
+  stage: test
+  needs: [prepare:image]
+  rules:
+    - if: $CI_PROJECT_NAMESPACE != 'fieldkit'
+      when: never
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
+  image: $IMAGE_TAG
+  script:
+    - cp -f env.template .env
+    - flutter test
+
+build:android:
+  stage: build
+  needs: [test]
+  rules:
+    - if: $CI_PROJECT_NAMESPACE != 'fieldkit'
+      when: never
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
+  image: $IMAGE_TAG
+  script:
+    - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | bash
+    - ln -sf $PWD/.secure_files/fk-release-key.keystore $PWD/android/app/fk-release-key.keystore
+    - ln -sf $PWD/.secure_files/key.properties $PWD/android/key.properties
+    - stat $PWD/android/key.properties
+    - stat $PWD/android/app/fk-release-key.keystore
+    - ls -alh android/app
+    - VERSION=`yq -r '.version | split("+")[0]' pubspec.yaml`
+    - BUNDLE=`yq -r '.version | split("+")[1]' pubspec.yaml`
+    - rm -f .env .env.public
+    - echo "CI_COMMIT_REF_NAME=${CI_COMMIT_REF_NAME}" > .env.public
+    - echo "CI_COMMIT_SHA=${CI_COMMIT_SHA}" >> .env.public
+    - echo "VERSION=${VERSION}" >> .env.public
+    - echo "BUNDLE_VERSION=${BUNDLE}" >> .env.public
+    - cat .env.public
+    - cp $PWD/.secure_files/app.env .env
+    - cat .env.public >> .env
+    - flutter build apk && sccache --show-stats
+    - flutter build appbundle --release && sccache --show-stats
+  artifacts:
+    name: "fk-app-android-${CI_COMMIT_REF_NAME}"
+    paths:
+      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/bundle/release/*.aab
+      - build/app/outputs/mapping/release/mapping.txt
+
+upload:android:
+  stage: upload
+  needs: [build:android]
+  rules:
+    - if: $CI_PROJECT_NAMESPACE != 'fieldkit'
+      when: never
+    - if: $CI_COMMIT_BRANCH == "main"
+  image: $IMAGE_TAG
+  script:
+    - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | bash
+    - ls -alh
+    - ls -alh android
+    - find android
+    - flutter build apk --config-only
+    - cd android && ./gradlew publishBundle
+
+.setup: &common
+  image: "ghcr.io/cirruslabs/flutter:3.32.8"
+  before_script:
+    # BEGIN Rust
+    - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup.sh
+    - sh rustup.sh -y
+    - export PATH="$HOME/.cargo/bin:$PATH"
+    - rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
+    - cargo install cargo-ndk
+    # END Rust
+
+build:ios:
+  <<: *common
+  stage: build
+  rules:
+    - if: $CI_PROJECT_NAMESPACE != 'fieldkit'
+      when: never
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
+  tags:
+    - mac-lab
+  script:
+    # BEGIN Signing
+    - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | bash
+    - export KEYCHAIN_PASSWORD=`cat .secure_files/secure-lab-mac-keychain-pw.txt`
+    - security find-identity -p codesigning
+    - security list-keychains
+    - security unlock-keychain -p ${KEYCHAIN_PASSWORD} login.keychain
+    - security show-keychain-info login.keychain || true
+    # clear old privisioning profiles (saving for when we move off our lab mac, for now we'll keep the profile on the machine)
+    # we'll need to also store the certificate this way, eventually.
+    # rm -f "$HOME/Library/MobileDevice/Provisioning Profiles/"*.mobileprovision
+    # mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+    # ln -sf "$PWD/.secure_files/ci.mobileprovision" "$HOME/Library/MobileDevice/Provisioning Profiles/ci.mobileprovision"
+    # echo "Profiles now present:" && ls -l "$HOME/Library/MobileDevice/Provisioning Profiles"
+    - security find-identity -p codesigning
+    # END Signing
+    # BEGIN flutter
+    - curl --silent -O https://storage.googleapis.com/flutter_infra_release/releases/stable/macos/flutter_macos_arm64_3.32.8-stable.zip
+    - unzip flutter_macos_arm64_3.32.8-stable.zip
+    - ls -alh
+    # END flutter
+    - VERSION=`yq -r '.version | split("+")[0]' pubspec.yaml`
+    - BUNDLE=`yq -r '.version | split("+")[1]' pubspec.yaml`
+    - rm -f .env .env.public
+    - echo "CI_COMMIT_REF_NAME=${CI_COMMIT_REF_NAME}" > .env.public
+    - echo "CI_COMMIT_SHA=${CI_COMMIT_SHA}" >> .env.public
+    - echo "VERSION=${VERSION}" >> .env.public
+    - echo "BUNDLE_VERSION=${BUNDLE}" >> .env.public
+    - cat .env.public
+    - cp $PWD/.secure_files/app.env .env
+    - cat .env.public >> .env
+    - export PATH=$PWD/flutter/bin:$PATH
+    - flutter clean
+    - if [ "$CI_COMMIT_BRANCH" == "main" ]; then OPTIONS=ExportOptionsMain.plist; else OPTIONS=ExportOptions.plist; fi
+    - flutter build ipa --export-options-plist=${OPTIONS}
+  artifacts:
+    name: "fk-app-ios-${CI_COMMIT_REF_NAME}"
+    paths:
+      - build/ios/ipa/*
+
+upload:ios:
+  stage: upload
+  needs: [build:ios]
+  rules:
+    - if: $CI_PROJECT_NAMESPACE != 'fieldkit'
+      when: never
+    - if: $CI_COMMIT_BRANCH == "main"
+  tags:
+    - mac-lab
+  script:
+    - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | bash
+    - source .secure_files/apple-store.sh
+    - VERSION=`yq -r '.version | split("+")[0]' pubspec.yaml`
+    - BUNDLE=`yq -r '.version | split("+")[1]' pubspec.yaml`
+    - xcrun altool --list-providers --username $APP_STORE_USERNAME --password $APP_STORE_PASSWORD
+    - xcrun altool --list-apps --username $APP_STORE_USERNAME --password $APP_STORE_PASSWORD
+    - xcrun altool --validate-app -f build/ios/ipa/org.fieldkit.app.ipa --type ios --username $APP_STORE_USERNAME --password $APP_STORE_PASSWORD
+    - xcrun altool --upload-package build/ios/ipa/org.fieldkit.app.ipa --type ios --username $APP_STORE_USERNAME --password $APP_STORE_PASSWORD --bundle-id $APP_STORE_BUNDLE_ID --apple-id $APP_STORE_APPLE_ID --bundle-version $BUNDLE --bundle-short-version-string $VERSION

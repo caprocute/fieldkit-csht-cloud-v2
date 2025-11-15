@@ -1,0 +1,17 @@
+{
+  "name": "fk-app-protocol",
+  "version": "0.0.1",
+  "private": true,
+  "main": "fk-app.proto.json",
+  "devDependencies": {
+    "protobufjs": "^6.8.0"
+  },
+  "scripts": {
+    "build_java": "protoc --java_out=./ *.proto",
+    "build_python": "protoc --python_out=./ *.proto",
+    "build_go": "protoc --go_out=./ *.proto",
+    "build_swift": "protoc --swift_out=./ *.proto",
+    "build_js": "protoc --js_out=./ *.proto",
+    "build_dart": "protoc --dart_out=./ *.proto"
+  }
+}

@@ -1,0 +1,59 @@
+#pragma once
+
+#include "networking/api_handler.h"
+#include "networking/module_handler.h"
+#include "networking/download_handler.h"
+#include "networking/receive_firmware_handler.h"
+#include "networking/write_memory_handler.h"
+#include "networking/logs_handler.h"
+#include "networking/file_handler.h"
+
+#include "storage/storage.h"
+
+namespace fk {
+
+class DefaultRoutes {
+private:
+    ApiHandler api_handler;
+    HttpRoute api{ "/fk/v1", &api_handler };
+
+    ReceiveFirmwareHandler receive_firmware_handler;
+    HttpRoute receive_firmware{ "/fk/v1/upload/firmware", &receive_firmware_handler };
+
+    WriteMemoryHandler write_memory_handler;
+    HttpRoute write_memory{ "/fk/v1/memory/qspi", &write_memory_handler };
+
+    DownloadLogsHandler download_handler_logs;
+    DownloadFileHandler download_handler_file;
+    DownloadHandler download_handler_data{ Storage::Data };
+    DownloadHandler download_handler_meta{ Storage::Meta };
+    HttpRoute downloads[4]{
+        { "/fk/v1/download/logs", &download_handler_logs },
+        { "/fk/v1/download/data", &download_handler_data },
+        { "/fk/v1/download/meta", &download_handler_meta },
+        { "/fk/v1/download/file", &download_handler_file },
+    };
+
+    ModuleHandler *module_handlers[MaximumNumberOfPhysicalModules];
+    HttpRoute *modules[MaximumNumberOfPhysicalModules];
+
+public:
+    void add_routes(HttpRouter &router, Pool *pool) {
+        // NOTE: Order is important here.
+        for (auto i = 0u; i < MaximumNumberOfPhysicalModules; ++i) {
+            auto path = pool->sprintf("/fk/v1/modules/%d", i);
+            module_handlers[i] = new (pool) ModuleHandler(ModulePosition::from(i));
+            modules[i] = new (pool) HttpRoute(path, module_handlers[i]);
+            router.add_route(modules[i]);
+        }
+        router.add_route(&downloads[0]);
+        router.add_route(&downloads[1]);
+        router.add_route(&downloads[2]);
+        router.add_route(&downloads[3]);
+        router.add_route(&receive_firmware);
+        router.add_route(&write_memory);
+        router.add_route(&api);
+    }
+};
+
+} // namespace fk

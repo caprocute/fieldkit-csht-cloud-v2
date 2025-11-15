@@ -1,0 +1,16 @@
+*.swp
+
+.gdb_history
+.python-setup
+
+fk/secrets.h
+fk/secrets.cpp
+
+build
+.cache
+
+compile_commands.json
+protobuf.pb
+
+env
+.env

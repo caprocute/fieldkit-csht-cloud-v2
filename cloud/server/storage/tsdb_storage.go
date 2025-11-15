@@ -1,0 +1,130 @@
+package storage
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+var (
+	MaterializedViews = []*MaterializedView{
+		{
+			Name:              "fieldkit.sensor_data_1m",
+			ShortName:         "1m",
+			BucketWidth:       time.Minute,
+			EndOffsetSQL:      "3 minutes",
+			EndOffsetDuration: time.Minute * 3,
+			RefreshWidth:      time.Hour * 24,
+		},
+		{
+			Name:              "fieldkit.sensor_data_10m",
+			ShortName:         "10m",
+			BucketWidth:       time.Minute * 10,
+			EndOffsetSQL:      "30 minutes",
+			EndOffsetDuration: time.Minute * 10 * 3,
+			RefreshWidth:      time.Hour * 24,
+		},
+		{
+			Name:              "fieldkit.sensor_data_1h",
+			ShortName:         "1h",
+			BucketWidth:       time.Hour,
+			EndOffsetSQL:      "3 hours",
+			EndOffsetDuration: time.Hour * 3,
+			RefreshWidth:      time.Hour * 24,
+		},
+		{
+			Name:              "fieldkit.sensor_data_6h",
+			ShortName:         "6h",
+			BucketWidth:       time.Hour * 6,
+			EndOffsetSQL:      "18 hours",
+			EndOffsetDuration: time.Hour * 6 * 3,
+			RefreshWidth:      time.Hour * 24,
+		},
+		{
+			Name:              "fieldkit.sensor_data_24h",
+			ShortName:         "24h",
+			BucketWidth:       time.Hour * 24,
+			EndOffsetSQL:      "72 hours",
+			EndOffsetDuration: time.Hour * 24 * 3,
+			RefreshWidth:      time.Hour * 24 * 3,
+		},
+	}
+)
+
+type MaterializedView struct {
+	Name              string
+	ShortName         string
+	BucketWidth       time.Duration
+	EndOffsetSQL      string
+	EndOffsetDuration time.Duration
+	RefreshWidth      time.Duration
+}
+
+func (mv *MaterializedView) MakeRefreshAllSQL() (string, []interface{}, error) {
+	return fmt.Sprintf("CALL refresh_continuous_aggregate('%s', NULL, NOW() - INTERVAL '%s');", mv.Name, mv.EndOffsetSQL), []interface{}{}, nil
+}
+
+func (mv *MaterializedView) MakeRefreshWindowSQL(start time.Time, end time.Time) (string, []interface{}, error) {
+	return fmt.Sprintf("CALL refresh_continuous_aggregate('%s', $1::TIMESTAMPTZ, $2::TIMESTAMPTZ);", mv.Name), []interface{}{start, end}, nil
+}
+
+func (mv *MaterializedView) TimeBucket(original time.Time) time.Time {
+	return time.Unix(0, int64(time.Duration(original.Unix())*time.Second/mv.BucketWidth*mv.BucketWidth))
+}
+
+func (mv *MaterializedView) HorizonTime(now time.Time) time.Time {
+	return now.Add(-mv.EndOffsetDuration)
+}
+
+type TimeScaleDBConfig struct {
+	Url string
+
+	pool *pgxpool.Pool
+}
+
+func (tsc *TimeScaleDBConfig) Acquire(ctx context.Context) (*pgxpool.Pool, error) {
+	if tsc.pool == nil {
+		opened, err := pgxpool.New(ctx, tsc.Url)
+		if err != nil {
+			return nil, fmt.Errorf("(tsdb) error connecting: %w", err)
+		}
+
+		tsc.pool = opened
+	}
+
+	return tsc.pool, nil
+}
+
+func (tsc *TimeScaleDBConfig) MaterializedViews() []*MaterializedView {
+	return MaterializedViews
+}
+
+func (tsc *TimeScaleDBConfig) RefreshViews(ctx context.Context) error {
+	log := Logger(ctx).Sugar()
+
+	queries := []string{
+		"CALL refresh_continuous_aggregate('fieldkit.sensor_data_1m', NULL, NOW() - INTERVAL '20 minutes');",
+		"CALL refresh_continuous_aggregate('fieldkit.sensor_data_10m', NULL, NOW() - INTERVAL '20 minutes');",
+		"CALL refresh_continuous_aggregate('fieldkit.sensor_data_1h', NULL, NOW() - INTERVAL '3 hours');",
+		"CALL refresh_continuous_aggregate('fieldkit.sensor_data_6h', NULL, NOW() - INTERVAL '21 hours');",
+		"CALL refresh_continuous_aggregate('fieldkit.sensor_data_24h', NULL, NOW() - INTERVAL '72 hours');",
+	}
+
+	pgPool, err := tsc.Acquire(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, sql := range queries {
+		log.Infow("refreshing", "sql", sql)
+
+		_, err := pgPool.Exec(ctx, sql)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

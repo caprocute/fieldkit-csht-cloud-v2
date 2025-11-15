@@ -1,0 +1,3 @@
+files:
+  - source: /**/portal/src/locales/en/*.json
+    translation: /**/portal/src/locales/%two_letters_code%/%original_file_name%

@@ -1,0 +1,141 @@
+@use "mixins";
+@use "variables";
+
+.details .details-top {
+    display: flex;
+    flex-direction: row;
+    padding-bottom: 30px;
+    line-height: 1.5;
+
+    @include mixins.bp-down(variables.$xl) {
+        flex-wrap: wrap;
+    }
+
+    @include mixins.bp-down(variables.$xs) {
+        padding-bottom: 20px;
+    }
+}
+.details .details-left {
+    padding-right: 20px;
+    flex-basis: calc(60% - 20px);
+
+    @include mixins.bp-down(variables.$md) {
+        flex: 1;
+        flex-basis: calc(50% - 20px);
+    }
+
+    @include mixins.bp-down(variables.$xs) {
+        flex-basis: 100%;
+        padding: 0;
+        margin-bottom: 15px;
+    }
+}
+.details .details-right {
+    flex-basis: 40%;
+
+    @include mixins.bp-down(variables.$md) {
+        flex-basis: 50%;
+    }
+
+    i {
+        body.floodnet & {
+            &:before {
+                color: var(--color-dark);
+            }
+        }
+    }
+}
+
+.details {
+    &-row {
+        margin-bottom: 5px;
+        font-family: variables.$font-family-light;
+        white-space: nowrap;
+        @include mixins.flex(center);
+
+        @include mixins.bp-down(variables.$xs) {
+            margin-bottom: 2px;
+        }
+
+        &.has-tooltip {
+            position: relative;
+            padding-right: 24px;
+
+            &:after {
+                content: "";
+                background: url("~@/assets/icon-tooltip.svg") no-repeat center center;
+                background-size: contain;
+                width: 14px;
+                height: 14px;
+                @include mixins.position(absolute, 50% 0 null null);
+                transform: translateY(-50%);
+            }
+        }
+
+        .icon {
+            body.floodnet & {
+                &:before {
+                    color: var(--color-dark);
+                }
+            }
+        }
+
+        span {
+            cursor: pointer;
+        }
+    }
+
+    &-icon {
+        width: 20px;
+        display: flex;
+    }
+
+    > .right {
+        line-height: 1.4;
+        display: flex;
+        flex-direction: column;
+        flex: 2;
+    }
+}
+
+.photo-container {
+    margin-bottom: 10px;
+    display: flex;
+
+    img {
+        object-fit: cover;
+        width: 100%;
+        max-height: 100%;
+    }
+}
+
+.details-team,
+.details-modules {
+    display: flex;
+    flex-wrap: wrap;
+    flex: 1;
+
+    @include mixins.bp-down(variables.$xs) {
+        flex-basis: 100%;
+    }
+}
+
+.tooltip-text {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.25s;
+    padding: 8px 16px;
+    border-radius: 2px;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.24);
+    border: solid 1px #f4f5f7;
+    background-color: #fff;
+    font-size: 14px;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    z-index: variables.$z-index-top;
+    @include mixins.position(absolute, null null calc(-100% + 10px) 50%);
+
+    @include mixins.bp-down(variables.$sm) {
+        bottom: calc(-100% + 15px);
+    }
+}

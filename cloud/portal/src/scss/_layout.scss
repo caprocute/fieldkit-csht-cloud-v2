@@ -1,0 +1,84 @@
+@use "mixins";
+@use "variables";
+
+.flex {
+    display: flex;
+
+    &-al-center {
+        align-items: center;
+    }
+
+    &-space-between {
+        justify-content: space-between;
+    }
+
+    &-wrap {
+        flex-wrap: wrap;
+    }
+
+    &.al-center {
+        align-items: center;
+    }
+}
+
+.main-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #fcfcfc;
+    text-align: left;
+    padding: 65px 87px 60px;
+
+    @include mixins.bp-down(variables.$lg) {
+        padding: 45px 45px 60px;
+        align-items: center;
+    }
+
+    @include mixins.bp-down(variables.$sm) {
+        padding: 45px 20px 30px;
+    }
+
+    @include mixins.bp-down(variables.$xs) {
+        padding: 0;
+    }
+}
+
+.container-wrap {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: 1080px;
+    text-align: left;
+    padding: 40px 90px;
+
+    @include mixins.bp-down(variables.$lg) {
+        padding: 40px 60px;
+    }
+
+    @include mixins.bp-down(variables.$md) {
+        padding: 30px 30px;
+    }
+
+    @include mixins.bp-down(variables.$xs) {
+        padding: 20px 10px;
+    }
+}
+
+.ml {
+    &-10 {
+        margin-left: 10px;
+    }
+}
+
+.h-100 {
+    height: 100%;
+}
+
+.big-map {
+    max-width: 100%;
+    padding: 0;
+}
+
+.w-100 {
+    width: 100%;
+}

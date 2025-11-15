@@ -1,0 +1,35 @@
+[package]
+name = "sync"
+version = "0.1.0"
+authors = ["Jacob Lewallen <jlewallen@gmail.com>"]
+edition = "2021"
+
+[dependencies.discovery]
+path = "../discovery"
+
+[dependencies.protos]
+path = "../protos"
+
+[dev-dependencies]
+ctor = "0.2.8"
+tempdir = "0.3.7"
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+
+[dependencies]
+anyhow = { workspace = true }
+async-trait = "0.1.79"
+backoff = { version = "0.4.0", features = ["tokio"] }
+chrono = { workspace = true }
+glob = "0.3.1"
+hex = { workspace = true }
+itertools = { workspace = true }
+lazy_static = { workspace = true }
+prost = { workspace = true }
+quick-protobuf = { workspace = true }
+range-set-blaze = { workspace = true }
+serde_json = { workspace = true }
+socket2 = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+varint = { workspace = true }

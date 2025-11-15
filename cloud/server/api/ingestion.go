@@ -1,0 +1,184 @@
+package api
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"goa.design/goa/v3/security"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
+
+	ingestion "gitlab.com/fieldkit/cloud/server/api/gen/ingestion"
+
+	"gitlab.com/fieldkit/cloud/server/backend/repositories"
+	"gitlab.com/fieldkit/cloud/server/common"
+	"gitlab.com/fieldkit/cloud/server/messages"
+)
+
+type IngestionService struct {
+	options *ControllerOptions
+}
+
+func NewIngestionService(ctx context.Context, options *ControllerOptions) *IngestionService {
+	return &IngestionService{
+		options: options,
+	}
+}
+
+func (c *IngestionService) WalkEverything(ctx context.Context, payload *ingestion.WalkEverythingPayload) (err error) {
+	message := messages.WalkEverything{}
+	if err := c.options.Publisher.Publish(ctx, &message); err != nil {
+		return nil
+	}
+	return nil
+}
+
+func (c *IngestionService) ProcessPending(ctx context.Context, payload *ingestion.ProcessPendingPayload) (err error) {
+	return nil
+}
+
+func (c *IngestionService) ProcessStation(ctx context.Context, payload *ingestion.ProcessStationPayload) (err error) {
+	return nil
+}
+
+func (c *IngestionService) ProcessStationIngestions(ctx context.Context, payload *ingestion.ProcessStationIngestionsPayload) (err error) {
+	p, err := NewPermissions(ctx, c.options).ForStationByID(int(payload.StationID))
+	if err != nil {
+		return err
+	}
+
+	if err := p.CanModify(); err != nil {
+		return err
+	}
+
+	if err := c.options.Publisher.Publish(ctx, &messages.IngestStation{
+		StationID: int32(payload.StationID),
+		UserID:    p.UserID(),
+		Verbose:   true,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *IngestionService) ProcessIngestion(ctx context.Context, payload *ingestion.ProcessIngestionPayload) (err error) {
+	log := Logger(ctx).Sugar()
+
+	ir := repositories.NewIngestionRepository(c.options.Database)
+
+	log.Infow("processing", "ingestion_id", payload.IngestionID)
+
+	i, err := ir.QueryByID(ctx, payload.IngestionID)
+	if err != nil {
+		return err
+	}
+	if i == nil {
+		return ingestion.MakeNotFound(errors.New("not found"))
+	}
+
+	p, err := NewPermissions(ctx, c.options).ForStationByDeviceID(i.DeviceID)
+	if err != nil {
+		return err
+	}
+
+	if err := p.CanModify(); err != nil {
+		return err
+	}
+
+	if id, err := ir.Enqueue(ctx, i.ID); err != nil {
+		return err
+	} else {
+		if err := c.options.Publisher.Publish(ctx, &messages.ProcessIngestion{
+			IngestionReceived: messages.IngestionReceived{
+				QueuedID:    id,
+				IngestionID: &i.ID,
+				UserID:      p.UserID(),
+				Verbose:     true,
+			},
+		}); err != nil {
+			log.Warnw("publishing", "err", err)
+		}
+	}
+
+	return nil
+}
+
+func (c *IngestionService) RefreshViews(ctx context.Context, payload *ingestion.RefreshViewsPayload) (err error) {
+	_, err = NewPermissions(ctx, c.options).Unwrap()
+	if err != nil {
+		return err
+	}
+
+	if err := c.options.Publisher.Publish(ctx, &messages.RefreshAllMaterializedViews{}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *IngestionService) Delete(ctx context.Context, payload *ingestion.DeletePayload) (err error) {
+	log := Logger(ctx).Sugar()
+
+	ir := repositories.NewIngestionRepository(c.options.Database)
+
+	log.Infow("deleting", "ingestion_id", payload.IngestionID)
+
+	i, err := ir.QueryByID(ctx, payload.IngestionID)
+	if err != nil {
+		return err
+	}
+	if i == nil {
+		return ingestion.MakeNotFound(errors.New("not found"))
+	}
+
+	p, err := NewPermissions(ctx, c.options).ForStationByDeviceID(i.DeviceID)
+	if err != nil {
+		return err
+	}
+
+	if err := p.CanModify(); err != nil {
+		return err
+	}
+
+	svc := s3.New(c.options.Session)
+
+	object, err := common.GetBucketAndKey(i.URL)
+	if err != nil {
+		return fmt.Errorf("error parsing url: %w", err)
+	}
+
+	log.Infow("deleting", "url", i.URL)
+
+	_, err = svc.DeleteObject(&s3.DeleteObjectInput{Bucket: aws.String(object.Bucket), Key: aws.String(object.Key)})
+	if err != nil {
+		return fmt.Errorf("unable to delete object %q from bucket %q, %v", object.Key, object.Bucket, err)
+	}
+
+	err = svc.WaitUntilObjectNotExists(&s3.HeadObjectInput{
+		Bucket: aws.String(object.Bucket),
+		Key:    aws.String(object.Key),
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := ir.Delete(ctx, int64(payload.IngestionID)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *IngestionService) JWTAuth(ctx context.Context, token string, scheme *security.JWTScheme) (context.Context, error) {
+	return Authenticate(ctx, common.AuthAttempt{
+		Token:        token,
+		Scheme:       scheme,
+		Key:          s.options.JWTHMACKey,
+		NotFound:     func(m string) error { return ingestion.MakeNotFound(errors.New(m)) },
+		Unauthorized: func(m string) error { return ingestion.MakeUnauthorized(errors.New(m)) },
+		Forbidden:    func(m string) error { return ingestion.MakeForbidden(errors.New(m)) },
+	})
+}

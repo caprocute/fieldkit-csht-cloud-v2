@@ -1,0 +1,32 @@
+package api
+
+import (
+	"context"
+
+	modules "gitlab.com/fieldkit/cloud/server/api/gen/modules"
+
+	"gitlab.com/fieldkit/cloud/server/backend/repositories"
+)
+
+type ModulesService struct {
+	options *ControllerOptions
+}
+
+func NewModulesService(ctx context.Context, options *ControllerOptions) *ModulesService {
+	return &ModulesService{
+		options: options,
+	}
+}
+
+func (ms *ModulesService) Meta(ctx context.Context) (*modules.MetaResult, error) {
+	r := repositories.NewModuleMetaRepository(ms.options.Database)
+
+	mm, err := r.FindAllModulesMeta(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &modules.MetaResult{
+		Object: mm,
+	}, nil
+}

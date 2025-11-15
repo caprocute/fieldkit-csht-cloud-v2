@@ -1,0 +1,190 @@
+@use "mixins.scss";
+@use "variables";
+
+.form {
+    width: 464px;
+    background-color: white;
+    text-align: center;
+    padding: 45px 80px 45px;
+    box-sizing: border-box;
+    max-width: calc(100vw - 20px);
+
+    @include mixins.bp-down(variables.$xs) {
+        padding: 15px 10px 25px;
+        width: 330px;
+    }
+
+    &--success {
+        padding-top: 58px;
+
+        @include mixins.bp-down(variables.$xs) {
+            padding-top: 28px;
+        }
+    }
+
+    &-container {
+        background-image: linear-gradient(#52b5e4, #1b80c9);
+        padding: 40px 0;
+        flex-direction: column;
+        box-sizing: border-box;
+        min-height: 100vh;
+        @include mixins.flex(center, center);
+
+        @include mixins.bp-down(variables.$xs) {
+            padding: 40px 0;
+            justify-content: flex-start;
+        }
+
+        body.floodnet & {
+            background-image: unset;
+            background-color: var(--color-dark);
+        }
+    }
+
+    &-header {
+        &-logo {
+            margin-bottom: 82px;
+            font-size: 45px;
+            display: block;
+
+            &:before {
+                color: #fff;
+            }
+
+            @include mixins.bp-down(variables.$xs) {
+                margin-bottom: 30px;
+                font-size: 25px;
+            }
+        }
+
+        &-icon {
+            margin-top: 12px;
+        }
+    }
+
+    &-title {
+        font-weight: 500;
+        font-size: 24px;
+        margin-bottom: 35px;
+
+        @include mixins.bp-down(variables.$xs) {
+            font-size: 20px;
+            margin-top: 10px;
+        }
+
+        + .form-subtitle {
+            margin: -10px 0 30px;
+
+            @include mixins.bp-down(variables.$xs) {
+                margin-top: -22px;
+            }
+        }
+
+        .form--success & {
+            @include mixins.bp-down(variables.$xs) {
+                margin-top: 20px;
+            }
+        }
+    }
+
+    &-subtitle {
+        font-weight: normal;
+        font-size: 16px;
+        line-height: 1.4;
+
+        @include mixins.bp-down(variables.$xs) {
+            font-size: 14px;
+        }
+    }
+
+    &-submit {
+        margin-top: 45px;
+        margin-bottom: 25px;
+        width: 100%;
+        max-width: 300px;
+        height: 45px;
+        background-color: var(--color-secondary);
+        border: none;
+        color: white;
+        font-size: 18px;
+        font-family: var(--font-family-bold);
+        border-radius: 3px;
+        letter-spacing: 0.1px;
+
+        @include mixins.bp-down(variables.$xs) {
+            max-width: unset;
+        }
+
+        &:disabled {
+            background: variables.$color-border;
+        }
+    }
+
+    &-link {
+        display: block;
+        cursor: pointer;
+        margin: 5px auto 0;
+        font-size: 14px;
+        max-width: 300px;
+        color: #2c3e50;
+
+        &-recover {
+            text-align: right;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+    }
+
+    &-policy {
+        font-size: 13px;
+        line-height: 1.23;
+        text-align: left;
+        margin-top: 15px;
+    }
+
+    &-group {
+        width: 100%;
+        max-width: 298px;
+        margin: 25px auto 0 auto;
+
+        ::v-deep input:-webkit-autofill::first-line {
+            font-size: 16px !important;
+        }
+    }
+
+    &-errors {
+        color: #c42c44;
+        font-size: 14px;
+        text-align: left;
+    }
+
+    .login-failed {
+        color: #c42c44;
+        font-family: var(--font-family-bold);
+        margin-top: 25px;
+    }
+}
+
+.form {
+    &-edit {
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--color-border);
+        background: white;
+        padding: 0 22px 14px;
+        width: 700px;
+        max-width: 100%;
+        position: relative;
+        text-align: left;
+
+        @include mixins.bp-down(variables.$md) {
+            max-width: 500px;
+        }
+
+        @include mixins.bp-down(variables.$xs) {
+            padding: 0 20px 14px;
+            width: 100%;
+        }
+    }
+}

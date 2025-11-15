@@ -1,0 +1,679 @@
+{
+  "fieldKit": "FieldKit",
+
+  "welcomeTitle": "Welcome!",
+  "welcomeMessage": "Our mobile app makes it easy to set up and deploy your FieldKit station.",
+  "welcomeButton": "Get Started",
+  "skipInstructions": "Skip Instructions",
+
+  "stationsTab": "Stations",
+  "dataSyncTab": "Data Sync",
+  "settingsTab": "Settings",
+  "helpTab": "Help",
+
+  "dataSyncTitle": "Data Sync",
+  "alertTitle": "Important",
+  "login": "Login",
+  "dataLoginMessage": "To upload data you need to login:",
+
+  "modulesTitle": "Modules",
+  "addModulesButton": "Add Modules",
+  "noModulesMessage": "Your station needs modules in order to complete setup, deploy, and capture data.",
+  "noModulesTitle": "No Modules Attached",
+
+  "connectStation": "Add a Station",
+  "noStationsDescription": "You have no stations. Add a station to start collecting data.",
+  "noStationsDescription2": "You have no stations. Add a station in order to calibrate modules.",
+  "noStationsWhatIsStation": "What is a FieldKit Station?",
+
+  "locationDenied": "Location permission denied",
+
+  "lastReadingLabel": " (Last Reading)",
+  "daysHoursMinutes": "days  hrs  mins",
+
+  "download": "Download",
+  "upload": "Upload",
+
+  "readingsUploadable": "{readings, plural, zero{0 Uploads}  one{1 Upload} other{{readings} Uploads}}",
+  "@readingsUploadable": {
+    "placeholders": {
+      "readings": {
+        "type": "num",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "readingsDownloadable": "{readings, plural, zero{0 Downloads}  one{1 Downloads} other{{readings} Downloads}}",
+  "@readingsDownloadable": {
+    "placeholders": {
+      "readings": {
+        "type": "num",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "downloadIncomplete": "Only {readings} of {total} downloaded.",
+  "@downloadIncomplete": {
+    "placeholders": {
+      "readings": {
+        "type": "num",
+        "format": "decimalPattern"
+      },
+      "total": {
+        "type": "num",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "downloadProgress": "{readings} Downloaded...",
+  "@downloadProgress": {
+    "placeholders": {
+      "readings": {
+        "type": "num",
+        "format": "decimalPattern"
+      },
+      "total": {
+        "type": "num",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "uploadProgress": "Uploading...",
+  "@uploadProgress": {
+    "placeholders": {
+    }
+  },
+  "readingsUploaded": "{readings, plural, zero{0 Readings Uploaded}  one{1 Reading Uploaded} other{{readings} Readings Uploaded}}",
+  "@readingsUploaded": {
+    "placeholders": {
+      "readings": {
+        "type": "num",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "readingsDownloaded": "{readings, plural, zero{0 Readings Downloaded}  one{1 Reading Downloaded} other{{readings} Readings Downloaded}}",
+  "@readingsDownloaded": {
+    "placeholders": {
+      "readings": {
+        "type": "num",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "uploading": "Uploading",
+  
+
+  "readytoDownload": "Ready to download",
+  "readytoUpload": "Ready to upload",
+
+  "syncDismissOk": "OK",
+  "syncDownloadSuccess": "Download successful!",
+  "syncUploadSuccess": "Upload successful!",
+  "syncDownloadFailed": "Error: Download Failed. \nWait a few seconds and try again.",
+  "syncUploadFailed": "Error: Upload Failed. \nConnect to the internet and try again.",
+  
+  "syncNoAuthentication": "You aren't logged in.",
+  "syncNoInternet": "No internet connection.",
+  
+  "quickTip": "Quick Tip",
+  "stationConnected": "Connected",
+  "lastConnected": "Last Connected",
+  "notConnected": "Not Connected",
+  "lastConnectedSince": "Since {date}",
+  "stationDeployed": "Station Deployed",
+  "noStationsAvailable": "No stations available",
+  "connectToStation": "Please connect to a station to continue",
+  "myStationsTitle": "My Stations",
+  "deployedAt": "Deployed",
+  "readyToDeploy": "Ready to Deploy",
+  "readyToCalibrate": "Ready to Calibrate",
+  "calibratingBusy": "Calibrating...",
+  "busyWorking": "Busy...",
+  "busyUploading": "Uploading...",
+  "busyDownloading": "Downloading...",
+  "busyUpgrading": "Upgrading...",
+  "contacting": "Contacting...",
+  "unknownStationTitle": "Unknown Station",
+  "backButtonTitle": "Back",
+  "importantNoteTitle": "Important Note: ",
+  "updateRequiredDataPage": "An update is required to sync data from this station.",
+  "connectStationAlert": "To upload data, connect to the internet.",
+  "loginStationAlert": "To upload data,",
+  "loginAndConnectStationAlert": "To upload data, connect to the internet and",
+  "loginLink": "login",
+  "deployButton": "Deploy",
+  "deployTitle": "Deploy Station",
+  "deployLocation": "Name your location",
+
+  "manageFirmwareButton": "Manage Firmware",
+  "firmwareContinue": "Continue",
+  "firmwareCancel": "Cancel",
+  "firmwareReconnectTimeout": "Reconnect Timeout",
+  "firmwareSdCardError": "SD Card Error",
+  "firmwareDismiss": "Dismiss",
+  "firmwarePrepareTitle": "Prepare for Update",
+  "firmwarePrepareTime": "This will take about 5 minutes",
+  "firmwarePrepareSd": "Ensure SD card is inserted",
+  "firmwarePreparePower": "Ensure station has power",
+  "firmwarePrepareConnection": "Keep connection stable",
+
+  "calibrationStartTimer": "Start Timer",
+  "calibrationTitle": "Calibration",
+  "calibrateButton": "Calibrate",
+  "calibrationDelete": "Delete",
+  "calibrationBack": "Back",
+  "calibrationKeepButton": "Keep",
+  "calibrationSaveButton": "Save Calibrations",
+  "calibrationPoint": "Calibration Point {step}",
+  "@calibrationPoint": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      }
+    }
+  },
+  "countdownInstructions2": "Tap the Calibrate button to record sensor value and standard value.",
+  "factory": "Factory",
+  "uncalibrated": "Uncalibrated",
+  "calibrated": "Calibrated",
+  "voltage": "Voltage",
+  "standardTitle": "Standard",
+  "waitingOnTimer": "Waiting on Timer",
+  "waitingOnReading": "Waiting for Fresh Reading",
+  "waitingOnForm": "Values Required",
+  "standardValue": "{value} Standard Value ({uom})",
+  "standardValue2": " Standard Value ({uom})",
+  "sensorValue": "Sensor Value:",
+  "oopsBugTitle": "Oops, bug?",
+  "standard": "Standard",
+
+  "calibrationDelete": "Delete",
+  "calibrationBack": "Back",
+  "countdownInstructions": "As you wait for the sensor value to stabilize, enter the standard value.",
+  "countdownInstructions2": "Tap the Calibrate button to record the sensor value and the standard value.",
+  "calibrationMessage": "Recording these values together allows us to later calibrate the sensor.",
+  "standardFieldLabel": "Standard",
+  "backAreYouSure": "Are you sure?",
+  "backWarning": "Navigating away will require starting this calibration over.",
+
+  "settingsTitle": "Settings",
+  "readingsSchedule": "Readings Schedule",
+  "scheduleUpdated": "Schedule Updated",
+  "settingsAdvanced": "Advanced Settings",
+  "httpSync": "HTTP Sync",
+  "httpSyncWarning": "HTTP Sync Warning",
+  "tailStationLogs": "Tail Station Logs",
+  "settingsGeneral": "General",
+  "settingsNameHint": "Station Name",
+  "nameConfigSuccess": "Station Name Updated.",
+  "errorMessage": "Error: {message}",
+  "@errorMessage": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsFirmware": "Firmware",
+  "settingsModules": "Modules",
+  "settingsWifi": "WiFi",
+  "settingsLora": "LoRa",
+  "settingsAutomaticUpload": "Automatic Upload Settings",
+  "forgetStation": "Forget Station",
+  "settingsEvents": "Events",
+  "settingsLoraEdit": "Edit",
+  "settingsLoraVerify": "Verify",
+  "settingsLanguage": "Language",
+  "endDeployment": "End Deployment",
+  "error": "Error",
+  "ok": "OK",
+  "save": "Save",
+  "submit": "Submit",
+  "nameErrorDescription": "Name can only contain letters, numbers, underscores, and spaces.",
+
+  "settingsExport": "Export CSV",
+  "exportStart": "Start",
+  "exportStartOver": "Start Over",
+  "exportShare": "Share",
+  "exportCompleted": "Completed",
+
+  "exportShareUnsupported": "Sharing not supported on this platform.",
+  "exportNoData": "No Data",
+  "exportPossible": "{readings} available to export.",
+  "@exportPossible": {
+    "placeholders": {
+      "readings": {
+        "type": "num",
+        "format": "decimalPattern"
+      }
+    }
+  },
+
+
+
+  "languageEnglish": "English",
+  "languageSpanish": "Español",
+
+  "eventUnknown": "Unknown Event",
+  "eventRestart": "Restart Event",
+  "eventLora": "LoRa Event",
+  "eventTime": "Time",
+  "eventCode": "Code",
+  "eventReason": "Reason",
+  "noEvents": "No Events",
+
+  "networksTitle": "WiFi Networks",
+  "networkAddButton": "Add Network",
+  "networkEditTitle": "WiFi Network",
+  "networkSaveButton": "Save",
+  "networkAutomaticUploadEnable": "Enable",
+  "networkAutomaticUploadDisable": "Disable",
+  "networkRemoveButton": "Remove",
+  "networkNoMoreSlots": "Unfortunately, there are only two WiFi network slots available.",
+  "wifiSsid": "SSID",
+  "wifiPassword": "Password",
+  "confirmRemoveNetwork": "Remove Network",
+
+  "loraBand": "Band",
+  "loraAppKey": "App Key",
+  "loraJoinEui": "Join EUI",
+  "loraDeviceEui": "Device EUI",
+  "loraDeviceAddress": "Device Address",
+  "loraNetworkKey": "Network Key",
+  "loraSessionKey": "Session Key",
+  "loraNoModule": "No LoRa module detected.",
+  "loraConfigurationTitle": "LoRa Configuration",
+
+  "hexStringValidationFailed": "Expected a valid hex string.",
+
+  "firmwareTitle": "Firmware",
+  "firmwareUpgrade": "Upgrade",
+  "firmwareSwitch": "Switch",
+  "firmwareStarting": "Starting...",
+  "firmwareUploading": "Uploading...",
+  "firmwareRestarting": "Restarting...",
+  "firmwareCompleted": "Completed",
+  "firmwareFailed": "An unexpected error occurred. Please contact support.",
+  "firmwareConnected": "Connected",
+  "firmwareNotConnected": "Not Connected",
+  "firmwareVersion": "Version: {firmwareVersion}",
+  "firmwareUpdated": "Firmware is Up to Date",
+  "firmwareNotUpdated": "Firmware is Not Up to Date",
+  "firmwareUpdate": "Update Firmware",
+  "firmwareDismiss": "OK",
+  "firmwareReleased": "Released: {firmwareReleaseDate}",
+  "@firmwareReleased": {
+    "placeholders": {
+      "firmwareReleaseDate": {
+        "type": "String"
+      }
+    }
+  },
+  "firmwareTip": "During the upgrade your station may disconnect while restarting. If so, be sure to reconnect to your station.",
+  "firmwarePrepareTitle": "Prepare For Update",
+  "firmwarePrepareTime": "This update may take several minutes.",
+  "firmwarePrepareSd": "You will need an SD card in your station to complete the update.",
+  "firmwarePreparePower": "Keep your station plugged in and close to your device or smart phone.",
+  "firmwarePrepareConnection": "Your station will restart and you might have to reconnect to the station.",
+
+  "settingsAccounts": "Accounts",
+  "accountsTitle": "Accounts",
+  "accountsAddButton": "Add an Account",
+  "accountsNoneCreatedTitle": "Looks like there are no accounts created yet",
+  "accountsNoneCreatedMessage": "Accounts are useful for updating your station information on the online portal and occasionally accessing user-specific firmware. Are you connected to the internet? Once you are, let's set up an account!",
+  "confirmRemoveAccountTitle": "Remove Account",
+
+  "accountAddTitle": "Add Account", 
+
+  "noInternetConnection": "Connect your phone to the internet to login.",
+  "accountName": "Name",
+  "accountEmail": "Email",
+  "accountPassword": "Password",
+    "accountConfirmPassword": "Confirm Password",
+  "accountConfirmPasswordMatch": "Passwords must match.",
+
+  "accountSaveButton": "Login",
+  "accountRegisterButton": "Register",
+  "accountRemoveButton": "Remove",
+  "accountRepairButton": "Login",
+  "accountRegisterLabel": "Create an account",
+  "accountDefault": "This is your default account.",
+  "accountInvalid": "Something is wrong with this account.",
+
+  "accountConnectivity": "There was an issue connecting with this account. If the issue was network related this will correct itself.",
+  "accountCreated": "Registration successful! Please check your email for verification instructions prior to logging in.",
+  "accountUpdated": "Your account has been successfully updated.",
+  "invalidCredentialsError": "The credentials you entered are incorrect. Please try again.",
+  "serverError": "There was a problem connecting to the server. Please check your connection and try again.",
+
+  "bayNumber": "Bay #{bay}",
+
+  "batteryLife": "Battery Life",
+  "memoryUsage": "Memory Used",
+
+  "forgetStation": "Forget Station",
+
+
+  "confirmClearCalibrationTitle": "Clear Calibration",
+  "confirmDelete": "Are you sure?",
+  "confirmYes": "Yes",
+  "confirmCancel": "Cancel",
+
+
+  "helpTitle": "Help",
+  "helpCheckList": "Pre-deployment Checklist",
+
+  "offlineProductGuide": "Offline Product Guide",
+  "search": "Search",
+  "enterSearchTerm": "Enter Search Term",
+  "cancel": "Cancel",
+
+  "appVersion": "App Version",
+  "errorLoadingVersion": "Error Loading App Version",
+
+  "helpUploadLogs": "Send Diagnostics",
+  "helpCreateBackup": "Create Phone Backup",
+  "reportIssue": "Report Issue",
+  "reportIssueDescription": "Describe the issue you are experiencing",
+  "reportIssueEmail": "Email Address",
+  "reportIssueSubmit": "Submit",
+  "reportIssueSubmitted": "Issue Submitted",
+  "reportIssueThankYou": "Thank you for your feedback. We'll review your report and get back to you soon.",
+  "reportIssueEmailRequired": "Please include an email",
+  "reportIssueEmailInvalid": "Please enter a valid email address",
+  "reportIssueSubmissionFailed": "Failed to submit report",
+  "reportIssueNetworkError": "Network error occurred. Please check your connection and try again.",
+  "reportIssueServerError": "Server error occurred. Please try again later.",
+  "photos": "Photos",
+  "attachPhotos": "Attach Photos",
+  "takePhoto": "Take Photo",
+  "helpBackupCreated": "Phone Backup Created",
+  "helpBackupFailed": "Phone Backup Failed",
+  "backupShareSubject": "FieldKit Backup",
+  "backupShareMessage": "FieldKit application backup.",
+  "developerBuild": "Developer Build",
+  "logsUploaded": "Logs Uploaded",
+
+  "legalTitle": "Legal",
+  "termsOfService": "Terms of Service",
+  "privacyPolicy": "Privacy Policy",
+  "licenses": "Licenses",
+
+  "modulesWaterTemp": "Water Temperature Module",
+  "modulesWaterPh": "pH Module",
+  "modulesWaterOrp": "ORP Module",
+  "modulesWaterDo": "Dissolved Oxygen Module",
+  "modulesWaterEc": "Conductivity Module",
+  "modulesWaterDepth": "Water Depth Module",
+  "modulesWeather": "Weather Module",
+  "modulesDiagnostics": "Diagnostics Module",
+  "modulesRandom": "Random Module",
+  "modulesDistance": "Distance Module",
+  "modulesUnknown": "Unknown Module",
+
+  "sensorWaterTemperature": "Water Temperature",
+  "sensorWaterPh": "pH",
+  "sensorWaterEc": "Conductivity",
+  "sensorWaterDo": "Dissolved Oxygen",
+  "sensorWaterDoPressure": "DO Pressure",
+  "sensorWaterDoTemperature": "Air Temperature",
+  "sensorWaterOrp": "ORP",
+
+  "sensorWaterDepthPressure": "Water Depth (Pressure)",
+  "sensorWaterDepthTemperature": "Water Temperature",
+
+  "sensorDiagnosticsTemperature": "Internal Temperature",
+  "sensorDiagnosticsUptime": "Uptime",
+  "sensorDiagnosticsMemory": "Memory",
+  "sensorDiagnosticsFreeMemory": "Free Memory",
+  "sensorDiagnosticsBatteryCharge": "Battery",
+  "sensorDiagnosticsBatteryVoltage": "Battery",
+
+  "sensorDiagnosticsBatteryVBus": "Battery (VBus)",
+  "sensorDiagnosticsBatteryVs": "Battery (Vs)",
+  "sensorDiagnosticsBatteryMa": "Battery (mA)",
+  "sensorDiagnosticsBatteryPower": "Battery (Power)",
+
+  "sensorDiagnosticsSolarVBus": "Solar (VBus)",
+  "sensorDiagnosticsSolarVs": "Solar (Vs)",
+  "sensorDiagnosticsSolarMa": "Solar (mA)",
+  "sensorDiagnosticsSolarPower": "Solar (Power)",
+
+  "sensorWeatherRain": "Rain",
+  "sensorWeatherWindSpeed": "Wind Speed",
+  "sensorWeatherWindDirection": "Wind Direction",
+  "sensorWeatherHumidity": "Humidity",
+  "sensorWeatherTemperature1": "Temperature 1",
+  "sensorWeatherTemperature2": "Temperature 2",
+  "sensorWeatherPressure": "Pressure",
+  "sensorWeatherWindDir": "Wind Direction",
+  "sensorWeatherWindDirMv": "Wind Direction Raw ADC",
+  "sensorWeatherWindHrMaxSpeed": "Wind Max Speed (1 hour)",
+  "sensorWeatherWindHrMaxDir": "Wind Max Direction (1 hour)",
+  "sensorWeatherWind10mMaxSpeed": "Wind Max Speed (10 min)",
+  "sensorWeatherWind10mMaxDir": "Wind Max Direction (10 min)",
+  "sensorWeatherWind2mAvgSpeed": "Wind Average Speed (2 min)",
+  "sensorWeatherWind2mAvgDir": "Wind Average Direction (2 min)",
+  "sensorWeatherRainThisHour": "Rain This Hour",
+  "sensorWeatherRainPrevHour": "Rain Previous Hour",
+
+  "sensorDistanceDistance0": "Distance 0",
+  "sensorDistanceDistance1": "Distance 1",
+  "sensorDistanceDistance2": "Distance 2",
+  "sensorDistanceCalibration": "Distance Cal",
+
+  "sensorRandomRandom0": "Random 0",
+  "sensorRandomRandom1": "Random 1",
+  "sensorRandomRandom2": "Random 2",
+  "sensorRandomRandom3": "Random 3",
+  "sensorRandomRandom4": "Random 4",
+  "sensorRandomRandom5": "Random 5",
+  "sensorRandomRandom6": "Random 6",
+  "sensorRandomRandom7": "Random 7",
+  "sensorRandomRandom8": "Random 8",
+  "sensorRandomRandom9": "Random 9",
+
+  "helpSettingsIconActive": "Help Settings Icon - active",
+  "helpSettingsIconInactive": "Help Settings Icon - inactive",
+  "helpSettingsIcon": "Help Settings Icon",
+  "accountSettingsIcon": "Account Settings Icon",
+  "languageSettingsIcon": "Language Settings Icon",
+  "legalSettingsIcon": "Legal Settings Icon",
+  "advancedSettingsIcon": "Advanced Settings Icon",
+  "stationDisconnectedIcon": "Station Disconnected Icon",
+  "noResultsFound": "No results found",
+  "previous": "Previous",
+  "next": "Next",
+
+  "stationDisconnectedTitle": "Station Disconnected",
+
+  "getHelpButton": "Get Help",
+
+  "stationConnectedMessage": "Station Connected",
+  "stationDisconnectedMessage": "Station Disconnected",
+  "pressWifiButtonAgain": "1. Press the WiFi button again",
+  "turnOnStationWifi": "2. Turn on the station's WiFi access point directly from the station settings menu",
+  "visitSupportWebsite": "3. If you're still having issues, visit ",
+
+  "unDeployStation": "Undeploy Station",
+  "unDeployConfirmation": "Are you sure you want to undeploy this station? This will clear its deployment configuration.",
+  "unDeploySuccess": "Station has been undeployed successfully",
+  "assembleStation": "Assemble Station",
+  "@assembleStation": {
+    "description": "Title for station assembly help section"
+  },
+  "stationSetupInstructions": "Station Setup Instructions",
+  "phModuleSetup": "pH Module Setup",
+  "waterTempModuleSetup": "Water Temperature Module Setup", 
+  "conductivityModuleSetup": "Conductivity Module Setup",
+  "doModuleSetup": "Dissolved Oxygen Module Setup",
+  "distanceModuleSetup": "Distance Module Setup",
+  "weatherModuleSetup": "Weather Module Setup",
+  "noModuleDescription": "No station has this type of module installed. Install this module on a station to calibrate it.",
+
+  "mapContainer": "Interactive map showing station locations and user position",
+  "mapZoomInButton": "Zoom in",
+  "mapZoomOutButton": "Zoom out",
+  "mapCenterLocationButton": "Center on my location",
+  "mapLocationMarker": "Your current location",
+  "mapStationMarker": "FieldKit station",
+  "mapGestureHint": "Use two fingers to zoom, drag to pan around the map",
+  "mapLoading": "Loading map",
+  "mapLoaded": "Map loaded successfully",
+  "locationNotAvailable": "Location not available. Please check your location permissions and try again.",
+
+  "bytesUsed": "{bytesUsed}MB of 512MB",
+
+  "buttonNext": "Next",
+  "buttonSkipThisStep": "Skip this step",
+  "buttonSkipAssemblyInstructions": "Skip Assembly Instructions",
+  "closeButton": "Close",
+  "backButton": "Back",
+
+  "minutes": "Minutes",
+  "hours": "Hours",
+  "every": "Every",
+  "to": "to",
+  "noValue": "--",
+  "moreItems": "{count} more",
+  "space": " ",
+  "lastCalibrated": "Last Calibrated",
+
+  "unitMilliseconds": "ms",
+  "unitSeconds": "sec",
+  "unitMinutes": "min",
+  "unitHours": "hr",
+  "unitDays": "days",
+  "unitMicrosiemensPerCm": "μS/cm",
+  "unitMillisiemensPerCm": "mS/cm",
+  "unitSiemensPerCm": "S/cm",
+  "unitPh": "pH",
+  "unitMillivolts": "mV",
+  "unitVolts": "V",
+  "unitCelsius": "°C",
+  "unitFahrenheit": "°F",
+  "unitKelvin": "K",
+  "unitPercent": "%",
+  "unitPpm": "ppm",
+  "unitPpb": "ppb",
+  "unitMeters": "m",
+  "unitCentimeters": "cm",
+  "unitMillimeters": "mm",
+  "unitKilometers": "km",
+  "unitInches": "in",
+  "unitFeet": "ft",
+  "unitYards": "yd",
+  "unitMiles": "mi",
+  "unitPascals": "Pa",
+  "unitHectopascals": "hPa",
+  "unitMillibars": "mbar",
+  "unitAtmospheres": "atm",
+  "unitMetersPerSecond": "m/s",
+  "unitKilometersPerHour": "km/h",
+  "unitMilesPerHour": "mph",
+  "unitDegrees": "°",
+  "unitRadians": "rad",
+  "unitLux": "lux",
+  "unitLumens": "lm",
+  "unitCandela": "cd",
+  "unitWatts": "W",
+  "unitMilliwatts": "mW",
+  "unitKilowatts": "kW",
+  "unitJoules": "J",
+  "unitCalories": "cal",
+  "unitKilocalories": "kcal",
+  "unitAmperes": "A",
+  "unitMilliamperes": "mA",
+  "unitMicroamperes": "μA",
+  "unitOhms": "Ω",
+  "unitKiloohms": "kΩ",
+  "unitMegaohms": "MΩ",
+  "unitSiemens": "S",
+  "unitMicrosiemens": "μS",
+  "unitMillisiemens": "mS",
+  "unitHertz": "Hz",
+  "unitKilohertz": "kHz",
+  "unitMegahertz": "MHz",
+  "unitGigahertz": "GHz",
+
+  "passwordShowTooltip": "Show password",
+  "passwordHideTooltip": "Hide password",
+  "mapExpandTooltip": "Expand map to full screen",
+
+  "valueRising": "Value is rising",
+  "valueFalling": "Value is falling",
+
+  "fieldKitLogo": "FieldKit Logo",
+  "welcomeImage": "Welcome illustration",
+  "accountsImage": "FieldKit station setup illustration",
+  "distanceModuleIcon": "Distance module icon",
+  "weatherModuleIcon": "Weather module icon",
+  "waterModuleIcon": "Water module icon",
+  "dataSyncIllustration": "Data sync illustration",
+  "noStationsImage": "No stations illustration",
+  "batteryIcon": "Battery icon",
+  "memoryIcon": "Memory icon",
+  "stationConnectedIcon": "Station connected icon",
+  "configureIcon": "Configure icon",
+  "globeIcon": "Globe icon",
+  "eyeIcon": "Eye icon",
+  "eyeSlashIcon": "Eye slash icon",
+  "checkmarkIcon": "Checkmark icon",
+  "alertIcon": "Alert icon",
+  "uploadIcon": "Upload Icon",
+  "downloadIcon": "Download Icon",
+  "uploadingIcon": "Uploading Icon",
+  "downloadingIcon": "Downloading Icon",
+  "syncIcon": "Sync icon",
+  "warningIcon": "Warning icon",
+  "infoIcon": "Information icon",
+  "warningErrorIcon": "Warning error icon",
+  "greenCheckmarkIcon": "Green checkmark icon",
+  "noticeIcon": "Notice icon",
+  "confirmIcon": "Confirm icon",
+  "questionMarkIcon": "Question mark icon",
+
+  "errorNavigatingToPage": "Error navigating to page: {message}",
+  "@errorNavigatingToPage": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSearching": "Error searching: {message}",
+  "@errorSearching": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+
+  "errorStartingApp": "Error initializing app.",
+  "loadingConfiguration": "Configuration",
+  "loadingEnvironment": "Environment", 
+  "loadingLocale": "Locale",
+  "syncUploading": "Uploading...",
+  "syncDownloading": "Downloading...",
+  "syncDisconnected": "Disconnected",
+  "syncNoUpload": "No Upload Available",
+  "syncNoDownload": "No Download Available",
+  "noInternetConnection": "No Internet Connection",
+  "unknownError": "Unknown Error",
+  "firmwareCheck": "Check",
+  "firmwareDismiss": "OK",
+
+  "accountEditTitle": "Edit Account",
+  "accountRegistrationFailed": "Registration failed",
+  "accountFormFail": "Form validation failed",
+  "errorInitializingApp": "Error initializing app.",
+  "stationsTabIcon": "Stations tab icon",
+  "dataSyncTabIcon": "Data sync tab icon", 
+  "settingsTabIcon": "Settings tab icon",
+  "advancedSettingsIcon": "Advanced settings icon",
+  "downloadingIcon": "Downloading icon",
+  "uploadingIcon": "Uploading icon",
+  "dataSyncImage": "Data sync illustration"
+}

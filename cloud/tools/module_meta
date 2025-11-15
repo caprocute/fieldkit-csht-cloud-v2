@@ -1,0 +1,24 @@
+id  |key            |manufacturer|kinds|version|internal|ordering|
+----+---------------+------------+-----+-------+--------+--------+
+   1|fk.water.ph    |           1|{9}  |{1}    |false   |       0|
+   2|fk.water.ec    |           1|{16} |{1}    |false   |       0|
+   3|fk.water.do    |           1|{17} |{1}    |false   |       0|
+   4|fk.water.temp  |           1|{18} |{1}    |false   |       0|
+   5|fk.water.orp   |           1|{19} |{1}    |false   |       0|
+   8|fk.water.dox   |           1|{2}  |{1}    |false   |       0|
+  12|fk.weather     |           1|{1}  |{1}    |false   |       0|
+  13|fk.weather     |           1|{1}  |{1}    |false   |       0|
+  14|fk.distance    |           1|{3}  |{1}    |false   |       0|
+  16|fk.random      |           1|{160}|{1}    |true    |       0|
+  17|fk.water       |           1|{2}  |{1}    |false   |       0|
+  18|fk.testing     |           1|{161}|{1}    |false   |       0|
+  19|wh.floodnet    |           0|{0}  |{0}    |false   |       0|
+   6|fk.water.ph    |           1|{2,4}|{1}    |false   |       0|
+   7|fk.water.ec    |           1|{2,5}|{1}    |false   |       0|
+   9|fk.water.do    |           1|{2,6}|{1}    |false   |       0|
+  10|fk.water.temp  |           1|{2,7}|{1}    |false   |       0|
+  11|fk.water.orp   |           1|{2,8}|{1}    |false   |       0|
+  20|fk.water.ms5837|           1|{10} |{1}    |false   |       0|
+  15|fk.diagnostics |           1|{161}|{1}    |true    |     100|
+1001|fk.water.temp  |           1|{18} |{1}    |false   |       0|
+1002|fk.weather     |           1|{1}  |{1}    |false   |       0|

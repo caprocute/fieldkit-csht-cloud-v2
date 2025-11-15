@@ -1,0 +1,22 @@
+name: caldor
+description: Library for generating FieldKit calibration data.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.0.5
+
+dependencies:
+  data: ^0.13.0
+  protobuf: ^3.1.0
+  fixnum: ^1.0.1
+  fk_data_protocol:
+    git:
+      url: https://gitlab.com/fieldkit/libraries/data-protocol.git
+      ref: 13d5785bdcc53ea74a2215f5149d6d576c5ac1c4
+      path: dart
+
+dev_dependencies:
+  lib: ^0.0.3
+  lints: ^5.0.0
+  test: ^1.21.0

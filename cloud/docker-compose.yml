@@ -1,0 +1,23 @@
+version: "3.7"
+services:
+  postgres:
+#    image: postgis/postgis:12-2.5-alpine
+    image: kartoza/postgis:14-3
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=fieldkit
+      - POSTGRES_USER=fieldkit
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - ./.db:/var/lib/postgresql/data
+      - ./active-schema:/docker-entrypoint-initdb.d/:ro
+
+  tsdb:
+    image: timescale/timescaledb:2.4.2-pg13
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - ./.tsdb:/var/lib/postgresql/data

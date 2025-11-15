@@ -1,0 +1,76 @@
+@use "sass:list";
+@use 'variables';
+
+@mixin placeholder ($color: #999) {
+
+    &::-webkit-input-placeholder {
+        color: $color;
+    }
+    &:-moz-placeholder {
+        color: $color;
+    }
+    &::-moz-placeholder {
+        color: $color;
+    }
+    &:-ms-input-placeholder {
+        color: $color;
+    }
+}
+
+@mixin bp-up($breakpoint) {
+
+    @media screen and (min-width: #{$breakpoint + 'px'}) {
+        @content;
+    }
+}
+
+@mixin bp-down($breakpoint) {
+
+    @media screen and (max-width: #{$breakpoint + 'px'}) {
+        @content;
+    }
+}
+
+
+@mixin flex($align: null, $justify: null) {
+
+    display: flex;
+
+    @if ($align != null) {
+        align-items: $align;
+    }
+
+    @if ($justify != null) {
+        justify-content: $justify;
+    }
+}
+
+@mixin attention($self: false) {
+
+    @if ($self != false) {
+
+        &,
+        &:hover,
+        &:active,
+        &:focus {
+            @content;
+        }
+    }
+
+    @else {
+
+        &:hover,
+        &:active,
+        &:focus {
+            @content;
+        }
+    }
+}
+
+@mixin position($position, $coordinates: null null null null) {
+    position: $position;
+    top:    list.nth($coordinates, 1);
+    right:  list.nth($coordinates, 2);
+    bottom: list.nth($coordinates, 3);
+    left:   list.nth($coordinates, 4);
+}

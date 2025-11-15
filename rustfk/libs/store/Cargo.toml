@@ -1,0 +1,22 @@
+[package]
+name = "store"
+version = "0.1.0"
+authors = ["Jacob Lewallen <jlewallen@gmail.com>"]
+edition = "2021"
+
+[dependencies.query]
+path = "../query"
+
+[features]
+bundled-sqlite = ["rusqlite/bundled"]
+
+[dependencies]
+prost = { workspace = true }
+anyhow = { workspace = true }
+rusqlite = { version = "0.31.0" }
+rusqlite_migration = "1.2.0"
+thiserror = { workspace = true }
+tracing = { workspace = true }
+chrono = { workspace = true }
+hex = { workspace = true }
+itertools = { workspace = true }

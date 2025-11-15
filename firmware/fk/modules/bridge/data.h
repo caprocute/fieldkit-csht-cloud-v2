@@ -1,0 +1,180 @@
+#pragma once
+
+#include "common.h"
+#include "collections.h"
+#include "modules/bridge/meta.h"
+#include "modules/shared/uuid.h"
+#include "modules/scanning.h"
+
+namespace fk {
+
+/**
+** Value for module ordering and ranking.
+*/
+using ModuleOrder = uint16_t;
+
+/**
+ * Default module order, right smack in the middle.
+ */
+constexpr ModuleOrder DefaultModuleOrder = UINT16_MAX / 2;
+
+/**
+ * Module order for internal modules.
+ */
+constexpr ModuleOrder ModuleOrderInternal = DefaultModuleOrder - 10;
+
+/**
+ * Module order for modules that provide calibration data other
+ * modules may use.
+ */
+constexpr ModuleOrder ModuleOrderProvidesCalibration = DefaultModuleOrder - 1;
+
+typedef struct ModuleTiming {
+    /**
+     * How long to wait after powering up the module.
+     */
+    uint32_t wake_delay{ 100 };
+
+    /**
+     * Required interval between being serviced.
+     */
+    uint32_t service_interval{ 0 };
+
+    ModuleTiming() {
+    }
+} ModuleTiming;
+
+/**
+ * Configuration information a module can provide to the OS.
+ */
+typedef struct ModuleConfiguration {
+    /**
+     * Power needs for the module.
+     */
+    ModulePower power{ ModulePower::ReadingsOnly };
+
+    /**
+     * Intervals and delays.
+     **/
+    ModuleTiming timing;
+
+    /**
+     * Preferred module servicing order. This is mostly a hint to the
+     * core when to service this module. Most modules will have an
+     * average order that effectively means they'll be serviced in
+     * physical module order.
+     */
+    ModuleOrder service_order{ DefaultModuleOrder };
+
+    /**
+     * Constructor
+     */
+    ModuleConfiguration() {
+    }
+
+    /**
+     * Constructor
+     */
+    ModuleConfiguration(ModuleOrder order) : service_order(order) {
+    }
+
+    /**
+     * Constructor
+     */
+    ModuleConfiguration(ModulePower power) : power(power) {
+    }
+
+    /**
+     * Constructor
+     */
+    ModuleConfiguration(ModulePower power, ModuleOrder order) : power(power), service_order(order) {
+    }
+} ModuleConfiguration;
+
+struct SensorReading {
+    uint32_t time;
+    optional<float> calibrated;
+    optional<float> uncalibrated;
+    optional<float> factory;
+
+    explicit SensorReading() : time(0) {
+    }
+
+    explicit SensorReading(uint32_t time, float one_value) : time(time), calibrated(one_value) {
+    }
+
+    explicit SensorReading(uint32_t time, float uncalibrated, float calibrated)
+        : time(time), calibrated(calibrated), uncalibrated(uncalibrated) {
+    }
+
+    explicit SensorReading(uint32_t time, float uncalibrated, float calibrated, float factory)
+        : time(time), calibrated(calibrated), uncalibrated(uncalibrated), factory(factory) {
+    }
+};
+
+class ModuleReadings {
+public:
+    virtual size_t size() const = 0;
+    virtual void set(int32_t i, SensorReading value) = 0;
+    virtual SensorReading get(int32_t i) const = 0;
+    virtual ModuleReadings *clone(Pool &pool) const = 0;
+};
+
+class EmptyReadings : public ModuleReadings {
+public:
+    size_t size() const override {
+        return 0;
+    }
+
+    void set(int32_t i, SensorReading value) override {
+    }
+
+    SensorReading get(int32_t i) const override {
+        return SensorReading{};
+    }
+
+    ModuleReadings *clone(Pool &pool) const override {
+        return new (pool) EmptyReadings();
+    }
+};
+
+/**
+ * Metadata for a particular sensor.
+ */
+typedef struct SensorMetadata {
+    const char *name;
+    const char *unitOfMeasure;
+    const char *uncalibratedUnitOfMeasure;
+    uint32_t flags;
+} SensorMetadata;
+
+/**
+ * Information on all the sensors attached to a module.
+ */
+typedef struct ModuleSensors {
+    size_t nsensors;
+    SensorMetadata const *sensors;
+} ModuleSensors;
+
+enum class ModuleStatus { Unknown = 0, Empty, Found, Ok, Warning, Fatal };
+
+inline const char *get_module_status_string(ModuleStatus ms) {
+    switch (ms) {
+    case ModuleStatus::Unknown:
+        return "unknown";
+    case ModuleStatus::Empty:
+        return "empty";
+    case ModuleStatus::Found:
+        return "found";
+    case ModuleStatus::Ok:
+        return "ok";
+    case ModuleStatus::Warning:
+        return "warning";
+    case ModuleStatus::Fatal:
+        return "fatal";
+    default:
+        return "unknown!";
+    }
+}
+
+} // namespace fk

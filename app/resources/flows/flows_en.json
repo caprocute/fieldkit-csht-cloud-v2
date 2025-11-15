@@ -1,0 +1,1897 @@
+{
+    "data": {
+        "flows": [
+            {
+                "id": "1",
+                "name": "onboarding",
+                "show_progress": true
+            },
+            {
+                "id": "2",
+                "name": "deploy",
+                "show_progress": true
+            },
+            {
+                "id": "3",
+                "name": "calibration",
+                "show_progress": false
+            },
+            {
+                "id": "4",
+                "name": "examples",
+                "show_progress": false
+            },
+            {
+                "id": "5",
+                "name": "no_modules",
+                "show_progress": true
+            },
+            {
+                "id": "6",
+                "name": "data_sync",
+                "show_progress": true
+            }
+        ],
+        "screens": [
+            {
+                "id": "1",
+                "name": "z.onboarding.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip this step",
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Assemble Station",
+                    "subtitle": ""
+                },
+                "simple": [
+                    {
+                        "body": "# Do you have everything?\nCheck that you have all necessary parts to assemble your FieldKit station.\n\n A) Upper Board            F) FieldKit Case\n B) Lower Board            G) Cable Plate Pack\n C) Module Base           H) Screw Packs\n D) Module Board(s)       I) Micro-USB Cable\n E) Battery",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_1_A_e65b535bb2.png",
+                                "alternativeText": "Illustration of various electronic components labeled A to E. Component A is a rectangular blue circuit board with various circuit traces. Component B is a beige-colored rectangular circuit board with more complex circuitry. Component C is a larger beige rectangular circuit board with multiple traces. Component D is a small blue rectangular device with minimal markings. Component E is a blue battery pack with a red coiled wire."
+                            },
+                            {
+                                "url": "/uploads/TI_18_9cfa25c5fc.png",
+                                "alternativeText": "Illustration showing components labeled F, G, H, and I, including a blue case (F), a beige mounting plate (G), two red connectors (H), a set of screws (H), and a red cable (I)."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "2",
+                "name": "onboarding.05",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip Assembly Instructions",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/2.%20Separate%20the%20Upper%20and%20Lower%20Boards/",
+                "header": {
+                    "title": "Assemble Station",
+                    "subtitle": ""
+                },
+                "simple": [
+                    {
+                        "body": "# Combine Upper and Lower Boards\nIf not already assembled, combine your Upper Board and Lower Board. Be sure to line up the pin headers and sockets. Then press them together firmly.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_2_A_112a78f350.jpg",
+                                "alternativeText": "Illustration showing hands aligning two circuit boards, one beige and one blue, ensuring proper connection between them."
+                            },
+                            {
+                                "url": "/uploads/TI_19_23d1c3d3b8.png",
+                                "alternativeText": "Illustration showing hands connecting a blue module with a beige module, aligning the pins on each piece for proper connection."
+                            },
+                            {
+                                "url": "/uploads/TI_2_B_9b35a3f7e6.jpg",
+                                "alternativeText": "Illustration showing hands holding and aligning two connected circuit boards, one beige and one blue, ensuring they fit together snugly."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "3",
+                "name": "onboarding.06",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip Assembly Instructions",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/3.%20Attach%20Module%20Base/",
+                "header": {
+                    "title": "Assemble Station",
+                    "subtitle": ""
+                },
+                "simple": [
+                    {
+                        "body": "# Attach Module Base\nAttach the combined Upper and Lower Boards to the Module Base. You now have your FieldKit Core.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_3_B_128f1f4de9.png",
+                                "alternativeText": "Illustration showing hands holding a beige and blue circuit board, positioning it onto a beige backing or assembly frame, finishing the connection."
+                            },
+                            {
+                                "url": "/uploads/TI_3_A_8ed4a5e981.jpg",
+                                "alternativeText": "Illustration showing hands assembling two circuit boards, one in beige with cutouts, and the other in blue with electronic components, guiding them together with a downward arrow indicating alignment and attachment."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "4",
+                "name": "onboarding.07",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip Assembly Instructions",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/6.%20Attach%20Module%20Boards/",
+                "header": {
+                    "title": "Assemble Station",
+                    "subtitle": ""
+                },
+                "simple": [
+                    {
+                        "body": "# Attach Module Boards\nAttach your individual Module Boards to the Module Base, and secure with Module Board Screws.\n\n## Use caution to avoid bending the Module Base pins, and make sure the pins never touch each other, as it could damage the board.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_4_A_e9dc955a94.jpg",
+                                "alternativeText": "Illustration of two hands assembling electronic components. One hand holds a beige circuit board with various slots, while the other hand positions two smaller blue circuit boards to be inserted into the larger board."
+                            },
+                            {
+                                "url": "/uploads/TI_4_B_ca5ad842a0.png",
+                                "alternativeText": "Illustration showing hands holding and working on a blue circuit board attached to a beige backing, using a screwdriver to secure a module on the board."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "5",
+                "name": "onboarding.08",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip Assembly Instructions",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/4.%20Secure%20Inside%20Case/",
+                "header": {
+                    "title": "Assemble Station",
+                    "subtitle": ""
+                },
+                "simple": [
+                    {
+                        "body": "# Secure Inside Case\nPlace your assembled components inside the Case. Secure with Core to Case Screws to minimize movement and risk of damage.\n\n## You'll have to temporarily lift off the Upper Board to reach one of the screw holes in the Lower Board.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_20_e6fe720726.png",
+                                "alternativeText": "An open electronic device enclosure showing internal components, including a battery pack, circuit boards, and connected wiring. The layout highlights multiple connection points on the circuit board, which are marked with red circles. The enclosure lid is open and positioned on the left."
+                            },
+                            {
+                                "url": "/uploads/TI_5_A_e5f56c0f2d.jpg",
+                                "alternativeText": " Illustration of hands assembling an electronic device inside a protective case, positioning a blue and beige circuit board within the case."
+                            },
+                            {
+                                "url": "/uploads/TI_5_B_90b1d06e88.jpg",
+                                "alternativeText": "Illustration of hands assembling an electronic device inside a protective case, using a screwdriver to secure a blue and beige circuit board within the case."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "6",
+                "name": "onboarding.09",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip Assembly Instructions",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/7.%20Attach%20Battery/",
+                "header": {
+                    "title": "Assemble Station",
+                    "subtitle": ""
+                },
+                "simple": [
+                    {
+                        "body": "# Attach Battery\nInsert the Battery cable to the top left of the Upper Board where it says “BATTERY”.\n\n## Important: Before inserting, double check you've got it right. Inserting cables into the wrong sockets can permanently damage your FieldKit.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_6_A_d90a8d0f66.jpg",
+                                "alternativeText": "Illustration of hands assembling an electronic device inside a protective case, securing the battery wire within the case."
+                            },
+                            {
+                                "url": "/uploads/TI_6_B_e3c19cdb6b.jpg",
+                                "alternativeText": " Illustration of an electronic device with blue and beige circuit boards secured inside a protective case."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "7",
+                "name": "onboarding.10",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip Assembly Instructions",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/8.%20Attach%20Button/",
+                "header": {
+                    "title": "Assemble Station",
+                    "subtitle": ""
+                },
+                "simple": [
+                    {
+                        "body": "# Attach Button\nInsert the Button cable to the top right of the Upper Board where it says “BTN”.\n\n## Important: Before inserting, double check you've got it right. Inserting cables into the wrong sockets can permanently damage your FieldKit.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_7_A_d839eb5f1c.jpg",
+                                "alternativeText": " Illustration of an electronic device with blue and beige circuit boards secured inside a protective case with battery wires being attached by a hand."
+                            },
+                            {
+                                "url": "/uploads/TI_7_B_cf99717d28.jpg",
+                                "alternativeText": " Illustration of an electronic device with blue and beige circuit boards secured inside a protective case with battery wires attached."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "8",
+                "name": "onboarding.13",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip Assembly Instructions",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/63%20Assemble%20Cable%20Plate/",
+                "header": {
+                    "title": "Assemble Station",
+                    "subtitle": ""
+                },
+                "simple": [
+                    {
+                        "body": "# Assemble Cable Plate\nAdd the cables and inserts into the glands. Screw them into the Cable Plate.\n\n## Note: Cable Plate assembly depends on your sensor and power configuration, and can be pretty involved. For detailed instructions, see [the product guide.](https://productguide.fieldkit.org/product-guide/set-up-station/#assemble-cable-plate)",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_21_1c7cdf7182.png",
+                                "alternativeText": "Illustration of hands assembling red gland connectors onto a beige panel, with one hand holding a connector and the other placing it through a hole in the panel, showing the process of securing the connectors in place."
+                            },
+                            {
+                                "url": "/uploads/TI_22_89ef0f77bf.png",
+                                "alternativeText": "Illustration showing hands assembling two red gland connectors onto a beige panel, likely part of an electrical enclosure. The hands are positioning the glands securely into place."
+                            },
+                            {
+                                "url": "/uploads/TI_23_f4df431734.png",
+                                "alternativeText": "Illustration showing hands using a screwdriver to tighten screws on two red gland connectors mounted on a beige panel, likely as part of assembling an electrical enclosure."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "9",
+                "name": "onboarding.11",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip Assembly Instructions",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/9.%20Plug%20in%20Micro-USB%20Cable%20to%20Charge%20Station/",
+                "header": {
+                    "title": "Assemble Station",
+                    "subtitle": ""
+                },
+                "simple": [
+                    {
+                        "body": "# Plug in Micro-USB Cable\nPlug in the Micro-USB cable to an external power source to charge the Battery.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_8_A_808910da96.jpg",
+                                "alternativeText": "A hand connecting a cable to a component inside an enclosure containing blue and beige circuit boards, indicating the assembly or setup of electronic equipment."
+                            },
+                            {
+                                "url": "/uploads/TI_8_B_dcb63a9526.jpg",
+                                "alternativeText": " Illustration of an electronic device with blue and beige circuit boards secured inside a protective case, with connected cables visible. The USB charging cable is plugged in."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "10",
+                "name": "onboarding.14",
+                "locale": "en_US",
+                "forward": "See Product Guide",
+                "skip": "Complete Station Assembly",
+                "guide_title": "View Product Guide for setup instructions",
+                "guide_url": "fieldkit/search/Screw%20in%20Cable%20Plate/",
+                "header": {
+                    "title": "Assemble Station",
+                    "subtitle": ""
+                },
+                "simple": [
+                    {
+                        "body": "# Attach Cable Plate to Case\nOnce you've attached your cables, inserts and glands to the Cable Plate, screw your Cable Plate onto your Case using Cable Plate Screws. \n\n## Ensure that the gasket is pressed into the groove to form a snug fit for optimum weather protection. ",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_24_6362509d17.png",
+                                "alternativeText": "Illustration of hands assembling an electronic device inside a protective case, connecting wires to red connectors and securing components to the blue and beige circuit boards."
+                            },
+                            {
+                                "url": "/uploads/TI_25_80accf62d1.png",
+                                "alternativeText": "Illustration of an open electrical enclosure with internal components connected by wires. The enclosure contains a blue battery pack and several connected electronic modules with red wire connections leading out of the enclosure through two red glands."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "11",
+                "name": "onboarding.12",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip Assembly Instructions",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/10.%20Switch%20On%20to%20Connect/",
+                "header": {
+                    "title": "Assemble Station",
+                    "subtitle": ""
+                },
+                "simple": [
+                    {
+                        "body": "# Switch Off and Leave Station to Charge\nFlip the switch to the “OFF” position. Leave Micro-USB cable plugged in until the battery reads fully charged.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_8_A_808910da96.jpg",
+                                "alternativeText": "A hand connecting a cable to a component inside an enclosure containing blue and beige circuit boards, indicating the assembly or setup of electronic equipment."
+                            },
+                            {
+                                "url": "/uploads/small_TI_15_B_NEW_x2_c6d2b7798b_OFF_b5a0e1959b.png",
+                                "alternativeText": "Illustration of a section of an electronic device with a blue circuit board, connected wires, and an on/off switch labeled at the top, switched OFF."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "17",
+                "name": "onboarding.weather.03",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip this step",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/3.%20Connect%20Rain%20Gauge/",
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Weather"
+                },
+                "simple": [
+                    {
+                        "body": "# Connect Rain Gauge\n\nTurn over the Weather Sensor Board, and insert the RJ11 jack from the Rain Gauge into the slot on the Weather Sensor Board marked “RAIN.”",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_32_ea3474ae96.png",
+                                "alternativeText": " Illustration of a hand holding a beige weather circuit board with red wires connected to it on the back side and another being attached with a hand."
+                            },
+                            {
+                                "url": "/uploads/TI_33_ba502858a1.png",
+                                "alternativeText": "Illustration of a hand holding a beige weather circuit board with red wires attached to it."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "18",
+                "name": "onboarding.weather.04",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip this step",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/4.%20Connect%20Wind%20Vane%20and%20Anemometer/",
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Weather"
+                },
+                "simple": [
+                    {
+                        "body": "# Connect Anemometer and Wind Vane\n\nInsert the RJ11 jack from the Wind Vane into the slot on the Weather Sensor Board marked “WIND.” Insert the RJ11 jack from the Anemometer into the Wind Vane so that they are connected.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_34_41fc0b20bb.png",
+                                "alternativeText": " Illustration of a hand holding a beige weather circuit board with one red wire connected to it and another being attached with a hand."
+                            },
+                            {
+                                "url": "/uploads/TI_35_77a7e23703.png",
+                                "alternativeText": " Illustration of a hand holding a beige weather circuit board with two red wires connected to it."
+                            },
+                            {
+                                "url": "/uploads/TI_63_8e5ec859d8.png",
+                                "alternativeText": "The image shows hands assembling or connecting wires to a round, blue device, part of the wind sensor, with attention to detail in wiring or securing parts in place."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "19",
+                "name": "onboarding.weather.05",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip this step",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/5.%20Place%20Stevenson%20Screen/",
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Weather"
+                },
+                "simple": [
+                    {
+                        "body": "# Place Stevenson Screen\n\nInsert the Weather Sensor Board into the Stevenson Screen. Attach the enclosed board to the Arm.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_64_69d61032ed.png",
+                                "alternativeText": "The image shows the bottom view of a cylindrical device with a screw being tightened, indicating the assembly or securing of a component inside a sensor cover."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "20",
+                "name": "onboarding.weather.06",
+                "locale": "en_US",
+                "forward": "Need more help? View Product Guide",
+                "skip": "Complete Setup",
+                "guide_title": "",
+                "guide_url": "fieldkit/search/6.%20Attach%20to%20Station/",
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Weather"
+                },
+                "simple": [
+                    {
+                        "body": "# Attach to Station\n\nMake sure that the other end of the CAT5 cable is securely inserted into the Weather Module Board.\n\n## For instructions on positioning instruments, managing cables, and exploring, visit [https://productguide.fieldkit.org/product-guide/set-up-station/#weather-module-setup](https://productguide.fieldkit.org/product-guide/set-up-station/#weather-module-setup).",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_38_5c371cef29.png",
+                                "alternativeText": "Illustration of an open electronics enclosure with a hand inside. The hand is holding a red wire that is connected to the right-side module inside the enclosure. The wire is being routed toward the bottom of the enclosure, where it will be passed through one of the red connectors at the bottom."
+                            },
+                            {
+                                "url": "/uploads/TI_39_bdd7faffff.png",
+                                "alternativeText": "Illustration of an open electronics enclosure containing several components. Inside, there is a blue battery pack, a blue circuit board, and another blue module on the right side. A red wire is connected to the module on the right and is routed through one of the red connectors at the bottom of the enclosure."
+                            },
+                            {
+                                "url": "/uploads/TI_65_2d924591e9.png",
+                                "alternativeText": "The image depicts a detailed illustration of a weather station with various sensors and instruments, such as an anemometer and a rain gauge, all connected with red wires."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "21",
+                "name": "onboarding.water.ph.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip this step",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/Collect%20the%20pH%20Probe./",
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "pH"
+                },
+                "simple": [
+                    {
+                        "body": "# Do you have everything?\n\nCollect the pH Probe.\n## The pH Module Board should already be attached to your station.\n\n## Before calibrating, examine your module board and probe cable for a CAL ID decal. All probe and module pairs that have the same CAL ID printed on them have been calibrated together in the lab and will not require calibration before use. If you have multiple probes of the same type, match the CAL ID number on the probe cable and the module board when setting up the station.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_41_ee59861b57.png",
+                                "alternativeText": "Illustration of an open electronic enclosure containing several mounted components, including a blue battery, blue and beige circuit boards, and two red connectors at the bottom of the box."
+                            },
+                            {
+                                "url": "/uploads/TI_40_c5a6a2624f.png",
+                                "alternativeText": "Illustration of a sensor device consisting of a coiled black cable, a beige probe with a red cap, and a small blue rectangular module with a red button, all laid out side by side."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "22",
+                "name": "onboarding.water.ph.02",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip this step",
+                "guide_title": "",
+                "guide_url": "fieldkit/search/Screw%20the%20pH%20Probe%20cable%20into%20the%20pH%20Module%20Board./",
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "pH"
+                },
+                "simple": [
+                    {
+                        "body": "# Attach to Station\n\nScrew the pH Probe cable into the pH Module Board.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_51_7245d5bf10.png",
+                                "alternativeText": "An illustration of an open field device case showing internal components, including a blue battery pack, circuit boards, wiring, and two red connectors on the exterior, with a white cable connected to one of the connectors."
+                            },
+                            {
+                                "url": "/uploads/TI_50_8834adfd6d.png",
+                                "alternativeText": "An illustration of an open field device case showing internal components, including a blue battery pack, circuit boards, and wiring. A hand is shown twisting a white cable to a red connector inside the case."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "24",
+                "name": "onboarding.water.ec.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip this step",
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Conductivity"
+                },
+                "simple": [
+                    {
+                        "body": "# Do you have everything?\nCollect the Conductivity Probe.\n\n## The Conductivity Module Board should already be attached to your station.\n\n## Before calibrating, examine your module board and probe cable for a CAL ID decal. All probe and module pairs that have the same CAL ID printed on them have been calibrated together in the lab and will not require calibration before use. If you have multiple probes of the same type, match the CAL ID number on the probe cable and the module board when setting up the station.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_44_d448775f78.png",
+                                "alternativeText": "Illustration showing a coiled black cable with a sensor featuring a green connector on one end, placed next to a blue electronic module with buttons and connectors."
+                            },
+                            {
+                                "url": "/uploads/TI_45_0771d4aa64.png",
+                                "alternativeText": "Illustration of an open protective case containing several electronic components, including a blue battery, a green module, and red connectors, with wiring routed within the case."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "25",
+                "name": "onboarding.water.ec.02",
+                "locale": "en_US",
+                "forward": "Calibrate Sensor",
+                "skip": "Finish and Exit",
+                "guide_title": "Need more help? View Product Guide.",
+                "guide_url": "https://www.fieldkit.org/product-guide/set-up-station/#conductivity-module-setup",
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Conductivity"
+                },
+                "simple": [
+                    {
+                        "body": "# Attach to Station\n\nScrew the Conductivity Probe cable into the Conductivity Module Board.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_46_249a8d8dd5.png",
+                                "alternativeText": "Illustration of a hand connecting a cable to a component inside an open electronics enclosure. The enclosure contains a blue battery pack on the left, a blue circuit board with red wires at the top, and another blue module on the right with a green label. The cable being connected exits through a red connector at the bottom."
+                            },
+                            {
+                                "url": "/uploads/TI_47_cb0eafa7a6.png",
+                                "alternativeText": "Illustration of an open electronics enclosure with components inside. The setup includes a blue battery pack on the left, a blue circuit board with red wires at the top, and another blue module on the right. A white cable is connected to the module on the right, exiting through a red connector at the bottom. There is a module with a green label."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "26",
+                "name": "onboarding.water.dox.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip this step",
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Dissolved Oxygen"
+                },
+                "simple": [
+                    {
+                        "body": "# Do you have everything?\nCollect the Dissolved Oxygen Probe.\n\n## The Oxygen Module Board is pre-attached to your station. Check for a CAL ID decal on the module board and probe cable. CAL ID numbers match for pre-calibrated pairs. Use matching CAL ID numbers for setup.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_48_764d104c39.png",
+                                "alternativeText": "Illustration showing a coiled black cable with a sensor featuring a yellow connector on one end, placed next to a blue electronic module with buttons and connectors."
+                            },
+                            {
+                                "url": "/uploads/TI_49_769c7512f4.png",
+                                "alternativeText": "An illustration of an open field device case showing internal components, including a blue battery pack, circuit boards, wiring, and two red connectors on the exterior."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "27",
+                "name": "onboarding.water.dox.02",
+                "locale": "en_US",
+                "forward": "Calibrate Sensor",
+                "skip": "Finish and Exit",
+                "guide_title": "Need more help? View Product Guide.",
+                "guide_url": "https://www.fieldkit.org/product-guide/set-up-station/#dissolved-oxygen-module-setup",
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Dissolved Oxygen"
+                },
+                "simple": [
+                    {
+                        "body": "# Attach to Station\nScrew the Dissolved Oxygen Probe cable into the Dissolved Oxygen Module Board.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_50_8834adfd6d.png",
+                                "alternativeText": "An illustration of an open field device case showing internal components, including a blue battery pack, circuit boards, and wiring. A hand is shown twisting a white cable to a red connector inside the case."
+                            },
+                            {
+                                "url": "/uploads/TI_51_7245d5bf10.png",
+                                "alternativeText": "An illustration of an open field device case showing internal components, including a blue battery pack, circuit boards, wiring, and two red connectors on the exterior, with a white cable connected to one of the connectors."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "29",
+                "name": "onboarding.water.temp.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip this step",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/Assemble%20Water%20Temperature%20Pack/",
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Water Temperature"
+                },
+                "simple": [
+                    {
+                        "body": "# Do you have everything?\n\nCollect the Water Temperature Probe.\n\n## The Water Temperature Module Board should already be attached to your station.\n\n## Before calibrating, examine your module board and probe cable for a CAL ID decal. All probe and module pairs that have the same CAL ID printed on them have been calibrated together in the lab and will not require calibration before use. If you have multiple probes of the same type, match the CAL ID number on the probe cable and the module board when setting up the station.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_52_6bd200df41.png",
+                                "alternativeText": "Illustration showing a coiled black cable with a sensor on one end and a separate blue electronic module with buttons and connectors."
+                            },
+                            {
+                                "url": "/uploads/TI_53_bf0f0b3bd8.png",
+                                "alternativeText": "Illustration of an open electronics enclosure containing various components. Inside the enclosure, there is a blue battery pack on the left, a blue circuit board with connected red wires at the top, and a blue rectangular module on the right side. Two red connectors are mounted at the bottom of the enclosure, with a white cable exiting through one of them."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "30",
+                "name": "onboarding.water.temp.02",
+                "locale": "en_US",
+                "forward": "Need more help? View Product Guide.",
+                "skip": "Finish and Exit",
+                "guide_title": "",
+                "guide_url": "fieldkit/search/Screw%20the%20Water%20Temperature%20Probe%20cable%20into/",
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Water Temperature"
+                },
+                "simple": [
+                    {
+                        "body": "# Attach to Station\n\nScrew the Water Temperature Probe cable into the Water Temperature Module Board.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_54_144e3748ce.png",
+                                "alternativeText": "Illustration of a hand inside an open electronics enclosure, connecting a wire to a white connector on the right side by twisting. The enclosure contains a blue battery pack on the left, a blue circuit board with connected red wires at the top, and a blue rectangular module on the right side. Two red connectors are mounted at the bottom of the enclosure, with a white cable exiting through one of them."
+                            },
+                            {
+                                "url": "/uploads/TI_55_66606bdf84.png",
+                                "alternativeText": "Illustration of an open electronics enclosure. Inside the enclosure are several electronic components, including a blue battery pack on the left, a blue circuit board with connected red wires at the top, and a blue rectangular module on the right side connected to a white cable. Two red connectors are mounted at the bottom of the enclosure, with a white cable exiting through one of them."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "31",
+                "name": "onboarding.distance.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip this step",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/Assemble%20Distance%20Pack/",
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Distance"
+                },
+                "simple": [
+                    {
+                        "body": "# Do you have everything?\nCollect the Distance Pack:\n\nA) CAT5 Cable\nB) Distance Sensor Board\nC) Ultrasonic Rangefinder     \n\n## The Distance Module Board should already be attached to your station.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_56_69c1d0dd93.png",
+                                "alternativeText": "An illustration showing three labeled components: A red cable labeled 'A,' a blue rectangular module labeled 'B,' and a blue distance probe labeled 'C.'"
+                            },
+                            {
+                                "url": "/uploads/TI_57_7fc02a0769.png",
+                                "alternativeText": "Illustration of an open field device case showing the internal components, including blue battery packs, circuit boards, and red wiring connections. The case features two red connectors at the bottom, and the components are neatly arranged within the case."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "32",
+                "name": "onboarding.distance.02",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip this step",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/2.%20Insert%20CAT5%20Cable%20into%20Distance%20Sensor%20Board/",
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Distance"
+                },
+                "simple": [
+                    {
+                        "body": "# Insert CAT5 Cable\nInsert one end of the CAT5 cable. Make sure you insert it the right way round.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_58_8615906cb3.png",
+                                "alternativeText": "Illustration showing two hands. The left hand holds a blue cylindrical component with a beige electronic piece and a blue socket attached at the top. The right hand is holding a red cable connector, positioned as if it is about to be inserted into the blue socket on the electronic piece."
+                            },
+                            {
+                                "url": "/uploads/TI_59_224561592e.png",
+                                "alternativeText": "Illustration showing two hands. The left hand holds a blue cylindrical component with a beige electronic piece and a blue socket attached at the top. The right hand is holding a red cable connector, positioned as if it is about to be inserted into the blue socket on the electronic piece."
+                            },
+                            {
+                                "url": "/uploads/TI_60_ad8e7789c5.png",
+                                "alternativeText": "Illustration showing a beige electronic component with a blue socket connected to a red cable. The component is partially inserted into a blue base with a threaded lower section."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "33",
+                "name": "onboarding.distance.03",
+                "locale": "en_US",
+                "forward": "Complete Setup",
+                "skip": "",
+                "guide_title": "",
+                "guide_url": "fieldkit/search/4.%20Attach%20Distance%20Sensor%20Board/",
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Distance"
+                },
+                "simple": [
+                    {
+                        "body": "# Attach to Station\nMake sure that the other end of the CAT5 cable is securely inserted into the Distance Module Board.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_61_d487cfcc1b.png",
+                                "alternativeText": "An illustration showing an open field device case with internal components, including blue battery packs, circuit boards, and red wiring. A hand is holding a red cable, while a blue component with attached red wiring lies outside the case, ready to be connected."
+                            },
+                            {
+                                "url": "/uploads/TI_62_9036f44b11.png",
+                                "alternativeText": "Illustration showing the inside of an open field device case with internal components, including blue battery packs, circuit boards, and red wiring connections. A red cable is partially connected, and a blue sensor with attached red cable is positioned outside the case."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "34",
+                "name": "onboarding.weather.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip this step",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/Your%20Distance%20Pack%20consists%20of%20a/",
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Weather"
+                },
+                "simple": [
+                    {
+                        "body": "# Do you have everything?\n\nCollect the Weather Pack:\n\n A) Stevenson Screen + Arm       E) Anemometer and Wind Vane + Arm\n B) Weather Sensor Board          F) Mounting Pole (a) + (b)\n C) CAT5 Cable                            G) Hose Clamps\n D) Rain Gauge + Arm                 H) Screws\n\n## The Weather Module Board should already be attached to your station.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_26_2e8af5beca.png",
+                                "alternativeText": "Illustration showing a cylindrical component (A), a rectangular circuit board (B), a small rectangular module (C), and a coiled cable (D) arranged side by side."
+                            },
+                            {
+                                "url": "/uploads/TI_27_17f8b5ff80.png",
+                                "alternativeText": "Illustration of various components, including a rectangular device with attached cables (D), an anemometer assembly (E), two cylindrical tubes (F), and a clamp (G)."
+                            },
+                            {
+                                "url": "/uploads/TI_28_c01ec2c372.png",
+                                "alternativeText": "Illustration of an open enclosure containing several electronic components, including a blue battery pack, circuit boards, and red connectors at the bottom."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "35",
+                "name": "onboarding.weather.02",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip this step",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/2.%20Insert%20CAT5%20Cable%20into%20Distance%20Sensor%20Board/",
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Weather"
+                },
+                "simple": [
+                    {
+                        "body": "# Insert CAT5 Cable\n\nInsert one end of the CAT5 cable into the Weather Sensor Board. Make sure you insert it the right way round.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_29_04490e357c.png",
+                                "alternativeText": "Illustration of hands holding a beige weather circuit board, connecting a red wire to it."
+                            },
+                            {
+                                "url": "/uploads/TI_30_fe64b4c2e8.png",
+                                "alternativeText": "Illustration of a hand holding a beige weather circuit board with a red wire connected to it."
+                            },
+                            {
+                                "url": "/uploads/TI_31_182d1a91b6.png",
+                                "alternativeText": "Illustration of hands holding a beige weather circuit board, with one hand connecting a red wire to the board."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "40",
+                "name": "onboarding.water.ph.03",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Finish and Exit",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/Make%20sure%20you%20have%203%20different%20pH%20standard%20solutions./",
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "pH"
+                },
+                "simple": [
+                    {
+                        "body": "# Three-Point Calibration\n\nMake sure you have 3 pH standard solutions. We recommend pH 4.00, 7.00 and 10.00.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_11_1_2_3_p_H_b98d65977a.png",
+                                "alternativeText": "An illustration of three bottles labeled Point 1, Point 2, and Point 3, each with different colors representing different pH levels."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "41",
+                "name": "onboarding.water.ec.03",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip",
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Conductivity"
+                },
+                "simple": [
+                    {
+                        "body": "# Three-Point Calibration\n\nMake sure you have 3 conductivity standard solutions. We recommend 1,000, 10,000, and 100,000 µS/cm.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_11_1_2_3_conductivity_a5568114a3.png",
+                                "alternativeText": "An illustration of three bottles labeled Point 1, Point 2, and Point 3, each with different colors representing different conductivity levels measured in µS/cm."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "42",
+                "name": "onboarding.water.temp.03",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip",
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Water Temperature"
+                },
+                "simple": [
+                    {
+                        "body": "# Three-Point Transfer Calibration\nMake sure you have 3 temperature sources and a standard thermometer.\n\n## We recommend using the following sources in this order: a cup of ice water (0°C), room temperature air, and a cup of boiling water (100°C).",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_74_e5319a0c87.png",
+                                "alternativeText": "Three beakers are shown with different liquids and temperatures. The first beaker on the left, labeled 'Point 1,' contains liquid with ice cubes, the middle position 'Point 2' is empty with a thermometer above it, and the third beaker on the right, labeled 'Point 3,' has a steaming liquid, with a thermometer being inserted by a hand from the right."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "43",
+                "name": "onboarding.water.dox.03",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip",
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Dissolved Oxygen"
+                },
+                "simple": [
+                    {
+                        "body": "# Three-point Transfer Calibration\n\nGather together a cup of water, an aquarium air pump, tubing and airstone, and a standard Dissolved Oxygen meter or test kit.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_66_9740ee9cb4.png",
+                                "alternativeText": "The image shows a setup with a blue device connected to a jar containing liquid, a black probe, and a small red object, with the text \"+ your standard\" indicating an additional component to be added to the jar."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "45",
+                "name": "z.onboarding.00",
+                "locale": "en_US",
+                "forward": "Get Started",
+                "skip": "Skip instructions",
+                "guide_title": "",
+                "guide_url": "",
+                "header": {
+                    "title": "Welcome!",
+                    "subtitle": null
+                },
+                "simple": [
+                    {
+                        "body": "![Logo](0:auto)\n\n![Welcome](1)\n\n# Welcome!\n\nOur mobile app makes it easy to set up and deploy your FieldKit station.",
+                        "images": [
+                            {
+                                "url": "/uploads/fieldkit_Logo_final_ac28b5ba44.png",
+                                "alternativeText": "Fieldkit logo"
+                            },
+                            {
+                                "url": "/uploads/Fieldkit_Panel_04_1500px_a9dcbe9502.png",
+                                "alternativeText": "Illustrations of people using laptops surrounded by speech bubbles, plants, and birds"
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "47",
+                "name": "onboarding.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip Assembly Instructions",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/Overview/",
+                "header": {
+                    "title": "If You Need Help",
+                    "subtitle": null
+                },
+                "simple": [
+                    {
+                        "body": "If you get stuck, use our Product Guide at fieldkit.org that goes through these steps (and more) in additional detail. \n\nYou can access all of our support resources, including the Product Guide, by clicking the  ?  icon at the upper right hand corner. ",
+                        "images": [
+                            {
+                                "url": "/uploads/product_guide_help_icon_38aad2f330.svg",
+                                "alternativeText": "An icon with a book with an exclamation mark in a circle to the left and a question mark in a circle to the right."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "48",
+                "name": "onboarding.02",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip Assembly Instructions",
+                "guide_title": "",
+                "guide_url": "fieldkit/search/1.%20Core/",
+                "header": {
+                    "title": "Assemble Station",
+                    "subtitle": null
+                },
+                "simple": [
+                    {
+                        "body": "# Do you have everything? (1/3)\nCheck that you have all necessary parts to assemble your FieldKit station.\n\nCORE\nA) Upper Board \nB) Lower Board\nC) Module Base\n\nSENSORS\nD) Module Board(s) found in each Sensor Pack",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_1_A_1021_150bb7fb93.png",
+                                "alternativeText": "An illustration depicting four different electronic components. Component A is a blue circuit board with a few lines and a small rectangular outline. Component B is a beige circuit board with several square and rectangular patterns, including a few small components and connectors. Component C is another beige circuit board with larger, more simplified patterns. Component D is a smaller blue component with a narrow rectangular shape, a module."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "49",
+                "name": "onboarding.03",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip Assembly Instructions",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/3.%20Power/",
+                "header": {
+                    "title": "Assemble Station",
+                    "subtitle": null
+                },
+                "simple": [
+                    {
+                        "body": "# Do you have everything? (2/3)\n\nPOWER\nE) Battery\nF) Micro USB Cable\nG) Solar Panel + Cable (optional)",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_1_B_e7c58a7039.png",
+                                "alternativeText": "The image displays three labeled components: E shows a blue battery pack with attached red wires, F presents a coiled red wire with connectors, and G illustrates a blue solar panel with a long red wire attached."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "50",
+                "name": "onboarding.04",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip Assembly Instructions",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/4.%20Case/",
+                "header": {
+                    "title": "Assemble Station",
+                    "subtitle": null
+                },
+                "simple": [
+                    {
+                        "body": "# Do you have everything? (3/3)\n\nCASE\nH) FieldKit Case\nI) Cable Plate Pack\n\nSTATION FASTENERS\nJ) Station Screw Packs\n\n+ Phillips screwdriver and USB wall charger (not included)",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_18_A_21_1022_47199fdf54.png",
+                                "alternativeText": "A large blue enclosure alongside smaller components, including a panel with circular cutouts, red grommets, and screws, intended for assembly and securing internal electronic components."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "51",
+                "name": "calibration.water.ph.p1.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "pH"
+                },
+                "simple": [
+                    {
+                        "body": "Place the pH Probe in a cup with the first standard and let the readings stabilize.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_13_A_p_H_9d27dc0d6f.png",
+                                "alternativeText": "Illustration of a hand holding a beige and red pH sensor device, dipping it into a clear beaker filled with liquid."
+                            },
+                            {
+                                "url": "/uploads/TI_13_B_p_H_d2c2bea9e5.png",
+                                "alternativeText": " Illustration of a beige and red pH sensor device placed in a clear beaker filled with liquid, with a black cable attached to the sensor."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "52",
+                "name": "calibration.water.ph.p2.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "pH"
+                },
+                "simple": [
+                    {
+                        "body": "# Rinse\n\nIn between calibration steps you will need to rinse your probe with water. Tap water is fine.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_12_A_p_H_8706644487.png",
+                                "alternativeText": "Illustration of hands holding a beige and red sensor device, with blue liquid being dispensed onto it from a red squeeze bottle."
+                            },
+                            {
+                                "url": "/uploads/TI_12_B_p_H_5a0aa8abd9.png",
+                                "alternativeText": "Illustration of hands holding a beige and red sensor device, with liquid to be dispensed onto it from a red squeeze bottle."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "53",
+                "name": "calibration.water.ph.p2.02",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "pH"
+                },
+                "simple": [
+                    {
+                        "body": "Place the pH Probe in a cup with the next standard and let the readings stabilize.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_13_A_p_H_9d27dc0d6f.png",
+                                "alternativeText": "Illustration of a hand holding a beige and red pH sensor device, dipping it into a clear beaker filled with liquid."
+                            },
+                            {
+                                "url": "/uploads/TI_13_B_p_H_d2c2bea9e5.png",
+                                "alternativeText": " Illustration of a beige and red pH sensor device placed in a clear beaker filled with liquid, with a black cable attached to the sensor."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "54",
+                "name": "calibration.water.ph.p3.02",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "pH"
+                },
+                "simple": [
+                    {
+                        "body": "Place the pH Probe in a cup with the next standard and let the readings stabilize.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_13_A_p_H_9d27dc0d6f.png",
+                                "alternativeText": "Illustration of a hand holding a beige and red pH sensor device, dipping it into a clear beaker filled with liquid."
+                            },
+                            {
+                                "url": "/uploads/TI_13_B_p_H_d2c2bea9e5.png",
+                                "alternativeText": " Illustration of a beige and red pH sensor device placed in a clear beaker filled with liquid, with a black cable attached to the sensor."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "55",
+                "name": "calibration.water.ec.p1.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Conductivity"
+                },
+                "simple": [
+                    {
+                        "body": "Place the Conductivity Prove in a cup with the first standard and let the readings stabilize.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_13_A_ec_d7230f1d7b.png",
+                                "alternativeText": "Illustration of a hand holding a green and black EC sensor device, dipping it into a clear beaker filled with liquid."
+                            },
+                            {
+                                "url": "/uploads/TI_13_B_ec_8cc7ee0135.png",
+                                "alternativeText": " Illustration of a black and green EC sensor device placed in a clear beaker filled with liquid, with a black cable attached to the sensor."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "56",
+                "name": "calibration.water.ec.p2.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Conductivity"
+                },
+                "simple": [
+                    {
+                        "body": "# Rinse\n\nIn between calibration steps you will need to rinse your probe with water. Tap water is fine.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_12_A_ec_97a2522c00.png",
+                                "alternativeText": " Illustration of hands holding a green and black sensor device, with liquid to be dispensed onto it from a red squeeze bottle."
+                            },
+                            {
+                                "url": "/uploads/TI_12_B_ec_ffacfe0ae0.png",
+                                "alternativeText": " Illustration of hands holding a green and black sensor device, with blue liquid being dispensed onto it from a red squeeze bottle."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "57",
+                "name": "calibration.water.ec.p2.02",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Conductivity"
+                },
+                "simple": [
+                    {
+                        "body": "Place the Conductivity Prove in a cup with the first standard and let the readings stabilize.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_13_A_ec_d7230f1d7b.png",
+                                "alternativeText": "Illustration of a hand holding a green and black EC sensor device, dipping it into a clear beaker filled with liquid."
+                            },
+                            {
+                                "url": "/uploads/TI_13_B_ec_8cc7ee0135.png",
+                                "alternativeText": " Illustration of a black and green EC sensor device placed in a clear beaker filled with liquid, with a black cable attached to the sensor."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "58",
+                "name": "calibration.water.ec.p3.02",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Conductivity"
+                },
+                "simple": [
+                    {
+                        "body": "Place the Conductivity Prove in a cup with the first standard and let the readings stabilize.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_13_A_ec_d7230f1d7b.png",
+                                "alternativeText": "Illustration of a hand holding a green and black EC sensor device, dipping it into a clear beaker filled with liquid."
+                            },
+                            {
+                                "url": "/uploads/TI_13_B_ec_8cc7ee0135.png",
+                                "alternativeText": " Illustration of a black and green EC sensor device placed in a clear beaker filled with liquid, with a black cable attached to the sensor."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "59",
+                "name": "onboarding.water.orp.01",
+                "locale": "en_US",
+                "forward": "Start Timer",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "ORP"
+                },
+                "simple": [
+                    {
+                        "body": "Place the ORP probe in a cup with the first standard.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_13_A_fc64035c11.png",
+                                "alternativeText": "Illustration of a hand holding a blue probe, inserting it into a beaker containing a liquid."
+                            },
+                            {
+                                "url": "/uploads/TI_13_B_e25343ac9c.png",
+                                "alternativeText": "Illustration of a blue probe submerged in a beaker containing a liquid, with a cable extending from the top of the probe."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "60",
+                "name": "calibration.water.orp.p2.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "ORP"
+                },
+                "simple": [
+                    {
+                        "body": "# Rinse\n\nIn between calibration steps you will need to rinse your probe with water. Tap water is fine.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_12_A_02a7dac8c0.png",
+                                "alternativeText": "Illustration of a hand holding a squeeze bottle with a long nozzle, applying a liquid to the end of a cylindrical object held by another hand on the right, with drops of liquid visibly falling from the nozzle."
+                            },
+                            {
+                                "url": "/uploads/TI_12_B_517bbeacf5.png",
+                                "alternativeText": "Illustration of a hand holding a squeeze bottle with a long nozzle, applying a liquid to a cylindrical object held by another hand on the right."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "61",
+                "name": "calibration.water.temp.p1.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Water Temperature"
+                },
+                "simple": [
+                    {
+                        "body": "Place the temperature probe and standard thermometer in a cup with ice water.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_75_e297e55cab.png",
+                                "alternativeText": "The image depicts a hand holding a red thermometer, inserting it into a beaker filled with liquid and ice cubes and the temperature probe."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "62",
+                "name": "calibration.water.temp.p2.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Water Temperature"
+                },
+                "simple": [
+                    {
+                        "body": "Place the standard thermometer and Water Temperature Probe in contact with one another on a dry surface.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_76_0c7fb8389f.png",
+                                "alternativeText": "A hand holding a red temperature meter with a long, slender metal tip of the temperature probe and a connected black cable."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "63",
+                "name": "calibration.water.temp.p3.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Water Temperature"
+                },
+                "simple": [
+                    {
+                        "body": "Place the Water Temperature Probe and standard thermometer in a cup with boiling water.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_77_1b8e30f70e.png",
+                                "alternativeText": "The image depicts a hand holding a red thermometer, inserting it into a beaker filled with boiling water and the temperature probe."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "64",
+                "name": "calibration.water.dox.p1.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Dissolved Oxygen"
+                },
+                "simple": [
+                    {
+                        "body": "If using a DO meter, place the meter and probe into warm, still water, and wait for the number on its display to stop changing. If using a DO test kit, withdraw a sample of water and test it now. Enter that number on the form in the next screen.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_68_A_691f2b80d8.png",
+                                "alternativeText": "Illustration of a setup involving a blue pump connected to a jar containing a black and yellow sensor and a red probe, with the text \"Add your standard\" above the jar. A red arrow is pointing into the jar."
+                            },
+                            {
+                                "url": "/uploads/TI_68_B_1c66c8e1b7.png",
+                                "alternativeText": "Illustration of a setup involving a blue pump connected to a jar containing a black and yellow sensor and a red probe, with the text \"Add your standard\" above the jar."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "65",
+                "name": "calibration.water.dox.p2.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Dissolved Oxygen"
+                },
+                "simple": [
+                    {
+                        "body": "If using a DO meter, place the meter and probe into water that is being aerated by the air pump, and wait for the number on its display to stop changing. If using a DO test kit, withdraw a sample of water and test it now. Enter that number on the form in the next screen.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_72_1f5a131303.png",
+                                "alternativeText": "Illustration of a blue pump connected to a jar containing a black and yellow sensor and a red probe, with lots of bubbles in the liquid and a red arrow pointing down into the jar. The text \"Add your standard\" is displayed above the jar."
+                            },
+                            {
+                                "url": "/uploads/TI_71_39fbdbadf1.png",
+                                "alternativeText": " Illustration of a blue pump connected to a jar containing a black and yellow sensor and a red probe, with bubbles in the liquid and a red arrow pointing down into the jar. The text \"Add your standard\" is displayed above the jar, and the text \"Turn to Low\" with an arrow is shown clockwise turning next to the pump."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "66",
+                "name": "calibration.water.dox.p3.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Dissolved Oxygen"
+                },
+                "simple": [
+                    {
+                        "body": "Place the probe in free air, and enter the atmospheric oxygen concentration, 20.9%, in the form on the next screen.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_70_9d33114cee.png",
+                                "alternativeText": "Illustration of a blue pump connected to a jar containing a black and yellow sensor and a red probe, with bubbles in the liquid and a red arrow pointing down into the jar. The text \"Add your standard\" is displayed above the jar."
+                            },
+                            {
+                                "url": "/uploads/TI_73_dd68fb7f11.png",
+                                "alternativeText": " Illustration of a blue pump connected to a jar containing a black and yellow sensor and a red probe, with bubbles in the liquid and a red arrow pointing down into the jar. The text \"Add your standard\" is displayed above the jar, and the text \"Turn to High\" with an arrow is shown counterclockwise turning next to the pump."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "67",
+                "name": "wifi.01",
+                "locale": "en_US",
+                "forward": "Continue",
+                "skip": "Skip Connection Instructions",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/1.%20Turn%20on%20Station%20WiFi/",
+                "header": {
+                    "title": "Connect Station",
+                    "subtitle": "FieldKit Station WiFi"
+                },
+                "simple": [
+                    {
+                        "body": "# Turn on Station Wifi\n\nYour station has an access point with its own WiFi network that's used to connect directly to your mobile device (there's no internet connectivity). \n\nPress the button to enable station Wifi.\n\n## Alternatively, use the menu on the Station screen to enable station Wifi.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_9_A_0f592cae73.jpg",
+                                "alternativeText": "Illustration of a hand hovering over pressing a red button on the side of a blue protective case."
+                            },
+                            {
+                                "url": "/uploads/TI_9_B_3119a0d5e5.jpg",
+                                "alternativeText": "Illustration of a hand pressing a red button on the side of a blue protective case."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "68",
+                "name": "wifi.02",
+                "locale": "en_US",
+                "forward": "Open WiFi Settings",
+                "skip": "Done",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/2.%20Connect%20to%20your%20Station/",
+                "header": {
+                    "title": "Connect Station",
+                    "subtitle": "FieldKit Station WiFi"
+                },
+                "simple": [
+                    {
+                        "body": "# Connect to your Station\n\nFirst, go to your mobile phone WiFi settings:\n\nANDROID\n- Pull down the menu from the top\n- Tap the \"Settings\" icon\n- Tap Network & Internet\"\n- Tap \"Wi-Fi\"\n\niOS\n- Tap the \"Settings\" icon\n- Tap \"Wi-Fi\"\n\nSecond, from the listed WiFi networks, select the station's WiFi name (as displayed on the station screen).\n\n\n## Note: The name will default to a random combination of a descriptive adjective and a name of an animal e.g. \"Friendly Squid.\"",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_10_2024_0621_ffb15b11dd.png",
+                                "alternativeText": "Illustration of an electronic device with a blue circuit board and connected wires, displaying a screen labeled \"Friendly Squid.\""
+                            },
+                            {
+                                "url": "/uploads/TI_10_2024_0621_Product_Guide_Phone_Wifi_Setting_081f6cfc2b.png",
+                                "alternativeText": "Screenshot of a Wi-Fi settings screen showing the device connected to a network named \"Friendly Squid\" with other available networks listed, including \"Wi-Fi Network\" and \"Public Wi-Fi Network.\""
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "69",
+                "name": "calibration.water.ph.p3.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "pH"
+                },
+                "simple": [
+                    {
+                        "body": "# Rinse\n\nIn between calibration steps you will need to rinse your probe with water. Tap water is fine.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_12_A_p_H_8706644487.png",
+                                "alternativeText": "Illustration of hands holding a beige and red sensor device, with blue liquid being dispensed onto it from a red squeeze bottle."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "70",
+                "name": "calibration.water.ec.p3.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "Conductivity"
+                },
+                "simple": [
+                    {
+                        "body": "# Rinse\n\nIn between calibration steps you will need to rinse your probe with water. Tap water is fine.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_12_A_ec_97a2522c00.png",
+                                "alternativeText": " Illustration of hands holding a green and black sensor device, with liquid to be dispensed onto it from a red squeeze bottle."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "71",
+                "name": "calibration.water.orp.p3.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": null,
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Set Up",
+                    "subtitle": "ORP"
+                },
+                "simple": [
+                    {
+                        "body": "# Rinse\n\nIn between calibration steps you will need to rinse your probe with water. Tap water is fine.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_12_A_02a7dac8c0.png",
+                                "alternativeText": "Illustration of a hand holding a squeeze bottle with a long nozzle, applying a liquid to the end of a cylindrical object held by another hand on the right, with drops of liquid visibly falling from the nozzle."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "72",
+                "name": "no_modules.01",
+                "locale": "en_US",
+                "forward": "Continue",
+                "skip": "Skip Modules Instructions",
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "Attach Modules",
+                    "subtitle": ""
+                },
+                "simple": [
+                    {
+                        "body": "# Switch off\n\nFlip the small switch in the top left of the Upper Board to the “OFF” position, so your FieldKit station powers, and you’re ready to attach the Module Boards.\n\nYou can do this with either the tip of your finger or your fingernail, or even the tip of your screwdriver.",
+                        "images": [
+                            {
+                                "url": "/uploads/small_TI_15_B_NEW_x2_c6d2b7798b_ON_4013a38928.png",
+                                "alternativeText": "Illustration of a section of an electronic device with a blue circuit board, connected wires, and an on/off switch labeled at the top, switched ON."
+                            },
+                            {
+                                "url": "/uploads/small_TI_15_B_NEW_x2_c6d2b7798b_OFF_b5a0e1959b.png",
+                                "alternativeText": "Illustration of a section of an electronic device with a blue circuit board, connected wires, and an on/off switch labeled at the top, switched OFF."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "73",
+                "name": "no_modules.02",
+                "locale": "en_US",
+                "forward": "Continue",
+                "skip": "Skip Modules Instructions",
+                "guide_title": null,
+                "guide_url": "fieldkit/search/6.%20Attach%20Module%20Boards/",
+                "header": {
+                    "title": "Attach Modules",
+                    "subtitle": ""
+                },
+                "simple": [
+                    {
+                        "body": "# Attach Module Boards\n\nAttach your individual Module Boards to the Module Base, and secure with Module Board Screws.\n\n## Use caution to avoid bending the Module Base pins, and make sure the pins never touch each other, as it could damage the board.\n\n## Remember to remove the small transparent yellow tape circles from the standoffs where you’ll attach your Module Board(s) to the Module Base.",
+                        "images": [
+                            {
+                                "url": "/uploads/small_TI_4_A_e9dc955a94_ff618a7209.jpg",
+                                "alternativeText": "Illustration of two hands assembling an electronic device, connecting the blue circuit board with the beige base."
+                            },
+                            {
+                                "url": "/uploads/small_TI_4_B_ca5ad842a0_61d9cc2eb0.png",
+                                "alternativeText": "Illustration of hands holding an electronic device with a blue circuit board and connected components, showing both the blue and beige sections of the device."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "74",
+                "name": "no_modules.03",
+                "locale": "en_US",
+                "forward": "Continue",
+                "skip": "Skip Modules Instructions",
+                "guide_title": "",
+                "guide_url": "fieldkit/search/10.%20Switch%20On%20to%20Connect/",
+                "header": {
+                    "title": "Attach Modules",
+                    "subtitle": ""
+                },
+                "simple": [
+                    {
+                        "body": "# Switch On\n\nFlip the small switch in the top left of the Upper Board to the “ON” position, so your FieldKit station comes to life, and prepare to reconnect.",
+                        "images": [
+                            {
+                                "url": "/uploads/small_TI_15_B_NEW_x2_c6d2b7798b_OFF_2_d87d9414e3.png",
+                                "alternativeText": "Illustration of a section of an electronic device with a blue circuit board, connected wires, and an on/off switch labeled at the top, switched OFF."
+                            },
+                            {
+                                "url": "/uploads/small_TI_15_B_NEW_x2_c6d2b7798b_ON_2_20dfcdc707.png",
+                                "alternativeText": "Illustration of a section of an electronic device with a blue circuit board, connected wires, and an on/off switch labeled at the top, switched ON."
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "75",
+                "name": "no_modules.04",
+                "locale": "en_US",
+                "forward": "Continue",
+                "skip": "Skip Modules Instructions",
+                "guide_title": "View Product Guide for full \"Connect Station\" instructions",
+                "guide_url": "https://www.fieldkit.org/product-guide/set-up-station/#connect-station",
+                "header": {
+                    "title": "Attach Modules",
+                    "subtitle": "Reconnect"
+                },
+                "simple": [
+                    {
+                        "body": "# Reconnect to your Station\n\nTurn on station WiFi by pressing the external WiFi button. Go to your mobile phone WiFi settings and select the station name displayed on the station screen. ",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_9_B_3119a0d5e5.jpg",
+                                "alternativeText": "Illustration of a hand pressing a red button on the side of a blue protective case."
+                            },
+                            {
+                                "url": "/uploads/TI_10_2024_0621_ffb15b11dd.png",
+                                "alternativeText": "Illustration of an electronic device with a blue circuit board and connected wires, displaying a screen labeled \"Friendly Squid.\""
+                            },
+                            {
+                                "url": "/uploads/TI_10_2024_0621_Product_Guide_Phone_Wifi_Setting_081f6cfc2b.png",
+                                "alternativeText": "Screenshot of a Wi-Fi settings screen showing the device connected to a network named \"Friendly Squid\" with other available networks listed, including \"Wi-Fi Network\" and \"Public Wi-Fi Network.\""
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "76",
+                "name": "data_sync.01",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip",
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "How Data Syncing Works",
+                    "subtitle": "4 Easy Steps"
+                },
+                "simple": [
+                    {
+                        "body": "# Step 1\n\nConnect to your FieldKit station to download data from your station to your mobile device.",
+                        "images": [],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "77",
+                "name": "data_sync.02",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip",
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "How Data Syncing Works",
+                    "subtitle": "4 Easy Steps"
+                },
+                "simple": [
+                    {
+                        "body": "# Step 2\n\nData files are stored on your mobile device until connected to internet WiFi.",
+                        "images": [],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "78",
+                "name": "data_sync.03",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip",
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "How Data Syncing Works",
+                    "subtitle": "4 Easy Steps"
+                },
+                "simple": [
+                    {
+                        "body": "# Step 3\n\nConnect to your internet WiFi to automatically sync data with the FieldKit protal.",
+                        "images": [
+                            {
+                                "url": "/uploads/TI_10_2024_0621_Product_Guide_Phone_Wifi_Setting_081f6cfc2b.png",
+                                "alternativeText": "Screenshot of a Wi-Fi settings screen showing the device connected to a network named \"Friendly Squid\" with other available networks listed, including \"Wi-Fi Network\" and \"Public Wi-Fi Network.\""
+                            }
+                        ],
+                        "logo": null
+                    }
+                ]
+            },
+            {
+                "id": "79",
+                "name": "data_sync.04",
+                "locale": "en_US",
+                "forward": "Next",
+                "skip": "Skip",
+                "guide_title": null,
+                "guide_url": null,
+                "header": {
+                    "title": "How Data Syncing Works",
+                    "subtitle": "4 Easy Steps"
+                },
+                "simple": [
+                    {
+                        "body": "# Step 4\n\nYou'll be able to control who can see that data from your portal page.",
+                        "images": [],
+                        "logo": null
+                    }
+                ]
+            }
+        ]
+    }
+}
