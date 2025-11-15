@@ -17,6 +17,13 @@ Hardware Simulator là một Go application mô phỏng hành vi của FieldKit 
 http://fieldkit-staging-alb-1189893191.ap-southeast-1.elb.amazonaws.com/
 ```
 
+### Database Connection (Public Endpoint)
+```
+postgres://user:password@fieldkit-staging-postgres-nlb-2e92e35ac371a189.elb.ap-southeast-1.amazonaws.com:5432/fieldkit?sslmode=disable
+```
+
+**Lưu ý**: Database được expose qua Network Load Balancer (NLB) public endpoint. Thay thế `user:password` bằng credentials thực tế.
+
 ### Credentials
 - **User**: `floodnet@test.local`
 - **Password**: `test123456` (mặc định của user floodnet@test.local trong project)
@@ -292,6 +299,486 @@ Response sẽ chứa JWT token trong field `token`.
 - `uploadIngestion()`: Upload data to ingestion API
 - `normalizeAPIURL()`: Normalize API URL format
 
+## Cấu Trúc Bản Tin và Validation
+
+### Cấu Trúc DataRecord (Protocol Buffers)
+
+Bản tin được encode bằng Protocol Buffers với cấu trúc sau:
+
+```protobuf
+DataRecord {
+  Readings {
+    Time: int64              // Unix timestamp (seconds)
+    Reading: uint64          // Reading number (bắt đầu từ 1, tăng dần)
+    Meta: uint64             // Meta record number (PHẢI tồn tại trong DB)
+    Flags: uint32            // Flags (thường là 0)
+    Location {
+      Fix: uint32            // GPS fix status (1 = fixed)
+      Time: int64            // GPS timestamp
+      Longitude: float32     // GPS longitude
+      Latitude: float32      // GPS latitude
+      Altitude: float32      // GPS altitude (meters)
+      Satellites: uint32     // Number of satellites (6-9)
+    }
+    SensorGroups [
+      {
+        Module: uint32        // Module ID (0 = main module)
+        Time: int64          // Sensor group timestamp
+        Readings [
+          {
+            Sensor: uint32   // Sensor ID (0-9)
+            Calibrated: float32  // Calibrated value (nếu có)
+            Uncalibrated: float32 // Uncalibrated value (nếu có)
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Headers Bắt Buộc Khi Upload
+
+Khi gửi bản tin lên `/ingestion` endpoint, **PHẢI** có các headers sau:
+
+| Header | Giá Trị | Mô Tả | Ví Dụ |
+|--------|---------|-------|-------|
+| `Authorization` | `Bearer {JWT_TOKEN}` | JWT token từ login | `Bearer eyJhbGc...` |
+| `Content-Type` | `application/vnd.fk.data+binary` | Content type cho binary data | `application/vnd.fk.data+binary` |
+| `Content-Length` | `{size}` | Size của body (bytes) | `1024` |
+| `Fk-DeviceId` | `{hex}` | Device ID (hex encoded) | `a1b2c3d4...` |
+| `Fk-Generation` | `{hex}` | Generation ID (hex encoded) | `e5f6g7h8...` |
+| `Fk-Type` | `data` hoặc `meta` | Loại ingestion | `data` |
+| `Fk-Blocks` | `1,{readingNum}` | Block range | `1,10` (cho data) hoặc `1,1` (cho meta) |
+
+**Lưu ý quan trọng:**
+- `Fk-DeviceId` và `Fk-Generation` phải match với `station.device_id` và `provision.generation` trong database
+- `Fk-Blocks` cho data: `"1,{reading_number}"` (ví dụ: `"1,10"` nếu reading number là 10)
+- `Fk-Blocks` cho meta: `"1,1"` (luôn là block đầu tiên)
+
+### Cách Tạo Bản Tin Đúng Chuẩn
+
+#### 1. Đảm Bảo Meta Record Tồn Tại
+
+**QUAN TRỌNG**: Mỗi data record phải reference đến một meta record đã tồn tại trong database.
+
+```go
+// ✅ ĐÚNG: Lấy meta record number từ database
+metaRecordNumber := uint64(s.StationInfo.MetaRecord.Number)
+reading := &pb.DataRecord{
+    Readings: &pb.Readings{
+        Meta: metaRecordNumber, // Sử dụng số từ DB
+        Reading: s.ReadingNum,
+        // ...
+    },
+}
+
+// ❌ SAI: Hardcode meta number
+reading := &pb.DataRecord{
+    Readings: &pb.Readings{
+        Meta: 1, // SAI - có thể không tồn tại
+        // ...
+    },
+}
+```
+
+**Kiểm tra meta record:**
+```sql
+-- Kiểm tra meta record có tồn tại không
+SELECT id, number, provision_id 
+FROM fieldkit.meta_record 
+WHERE provision_id = (
+    SELECT id FROM fieldkit.provision 
+    WHERE device_id = '\x...' AND generation = '\x...'
+)
+ORDER BY number DESC 
+LIMIT 1;
+```
+
+#### 2. Đảm Bảo Device ID và Generation Đúng
+
+```go
+// ✅ ĐÚNG: Lấy từ database
+deviceID := s.StationInfo.Station.DeviceID
+generationID := s.StationInfo.Provision.GenerationID
+
+// Encode thành hex cho header
+req.Header.Set("Fk-DeviceId", hex.EncodeToString(deviceID))
+req.Header.Set("Fk-Generation", hex.EncodeToString(generationID))
+```
+
+**Kiểm tra trong database:**
+```sql
+-- Kiểm tra station và provision
+SELECT 
+    s.id AS station_id,
+    s.device_id,
+    p.generation,
+    p.id AS provision_id
+FROM fieldkit.station s
+JOIN fieldkit.provision p ON (p.device_id = s.device_id)
+WHERE s.id = {station_id};
+```
+
+#### 3. Đảm Bảo Sensor IDs Đúng
+
+Sensors phải match với module meta trong database. Với FloodNet:
+- Module: `manufacturer=0, kind=0`
+- Sensors: 0-9 (10 sensors)
+
+```go
+// ✅ ĐÚNG: Sử dụng sensor IDs từ 0-9
+SensorGroups: []*pb.SensorGroup{
+    {
+        Module: 0, // Main module
+        Readings: []*pb.SensorAndValue{
+            {Sensor: 0, Calibrated: &pb.SensorAndValue_CalibratedValue{...}},   // depth
+            {Sensor: 1, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{...}}, // depthUnfiltered
+            {Sensor: 2, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{...}}, // distance
+            {Sensor: 3, Calibrated: &pb.SensorAndValue_CalibratedValue{...}},   // battery
+            {Sensor: 4, Calibrated: &pb.SensorAndValue_CalibratedValue{...}},   // tideFeet
+            {Sensor: 5, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{...}}, // humidity
+            {Sensor: 6, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{...}}, // pressure
+            {Sensor: 7, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{...}}, // altitude
+            {Sensor: 8, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{...}}, // temperature
+            {Sensor: 9, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{...}}, // sdError
+        },
+    },
+}
+```
+
+**Kiểm tra sensors trong database:**
+```sql
+-- Kiểm tra sensors của station
+SELECT 
+    sm.id,
+    sm.sensor_id,
+    sm.module_id,
+    m.manufacturer,
+    m.kind
+FROM fieldkit.station_module sm
+JOIN fieldkit.module m ON (m.id = sm.module_id)
+WHERE sm.station_id = {station_id}
+ORDER BY sm.sensor_id;
+```
+
+#### 4. Đảm Bảo Reading Number Tăng Dần
+
+```go
+// ✅ ĐÚNG: Reading number tăng dần, không được reset
+s.ReadingNum++ // Increment sau mỗi reading
+reading := &pb.DataRecord{
+    Readings: &pb.Readings{
+        Reading: s.ReadingNum, // Số tăng dần
+        // ...
+    },
+}
+```
+
+#### 5. Đảm Bảo Timestamp Hợp Lệ
+
+```go
+// ✅ ĐÚNG: Sử dụng Unix timestamp (seconds)
+recordTime := time.Now().In(vietnamTZ)
+reading := &pb.DataRecord{
+    Readings: &pb.Readings{
+        Time: int64(recordTime.Unix()), // Unix timestamp
+        Location: &pb.DeviceLocation{
+            Time: int64(recordTime.Unix()), // GPS time
+            // ...
+        },
+    },
+}
+```
+
+### Các Lỗi Thường Gặp và Cách Tránh
+
+#### 1. Lỗi "meta-missing"
+
+**Nguyên nhân:**
+- Data record reference đến meta record number không tồn tại trong database
+- Meta record chưa được upload trước khi upload data
+
+**Cách tránh:**
+```go
+// ✅ ĐÚNG: Luôn lấy meta number từ database
+metaRecordNumber := uint64(s.StationInfo.MetaRecord.Number)
+
+// ❌ SAI: Hardcode hoặc dùng số không tồn tại
+metaRecordNumber := 1 // Có thể không tồn tại
+```
+
+**Kiểm tra:**
+```sql
+-- Kiểm tra meta record có tồn tại không
+SELECT COUNT(*) 
+FROM fieldkit.meta_record 
+WHERE provision_id = {provision_id} 
+  AND number = {meta_number};
+```
+
+#### 2. Lỗi "missing-station"
+
+**Nguyên nhân:**
+- Device ID trong header không match với station trong database
+- Station chưa được tạo
+
+**Cách tránh:**
+```go
+// ✅ ĐÚNG: Sử dụng device_id từ database
+deviceID := s.StationInfo.Station.DeviceID
+req.Header.Set("Fk-DeviceId", hex.EncodeToString(deviceID))
+```
+
+**Kiểm tra:**
+```sql
+-- Kiểm tra station có tồn tại không
+SELECT id, name, device_id 
+FROM fieldkit.station 
+WHERE device_id = '\x{device_id_hex}';
+```
+
+#### 3. Lỗi "missing-provision"
+
+**Nguyên nhân:**
+- Generation ID không match với provision trong database
+- Provision chưa được tạo (thường do meta chưa được upload)
+
+**Cách tránh:**
+```go
+// ✅ ĐÚNG: Sử dụng generation từ database
+generationID := s.StationInfo.Provision.GenerationID
+req.Header.Set("Fk-Generation", hex.EncodeToString(generationID))
+```
+
+**Kiểm tra:**
+```sql
+-- Kiểm tra provision có tồn tại không
+SELECT id, generation 
+FROM fieldkit.provision 
+WHERE device_id = '\x{device_id}' 
+  AND generation = '\x{generation_id}';
+```
+
+#### 4. Lỗi "MalformedMetaError" hoặc "MissingSensorMetaError"
+
+**Nguyên nhân:**
+- Meta record thiếu thông tin (identity, header, sensors)
+- Sensor IDs trong data không match với sensors trong meta
+
+**Cách tránh:**
+- Đảm bảo meta record đã được upload đầy đủ trước khi upload data
+- Sử dụng đúng sensor IDs từ module meta
+
+**Kiểm tra:**
+```sql
+-- Kiểm tra meta record có đầy đủ thông tin không
+SELECT 
+    mr.id,
+    mr.number,
+    mr.provision_id,
+    sc.id AS config_id
+FROM fieldkit.meta_record mr
+LEFT JOIN fieldkit.station_configuration sc ON (sc.meta_record_id = mr.id)
+WHERE mr.provision_id = {provision_id}
+ORDER BY mr.number DESC
+LIMIT 1;
+```
+
+## Cách Kiểm Tra Bản Tin Được Xử Lý Thành Công
+
+### 1. Kiểm Tra Ingestion Queue
+
+Sau khi upload, kiểm tra bảng `ingestion_queue` để xem ingestion có được xử lý thành công không:
+
+```sql
+-- Kiểm tra trạng thái ingestion
+SELECT 
+    iq.id AS queue_id,
+    iq.ingestion_id,
+    i.type,
+    i.device_id,
+    iq.queued,
+    iq.attempted,
+    iq.completed,
+    iq.total_records,
+    iq.other_errors,
+    iq.meta_errors,
+    iq.data_errors,
+    CASE 
+        WHEN iq.completed IS NULL THEN '⏳ Pending'
+        WHEN iq.total_records > 0 AND iq.other_errors = 0 THEN '✅ Success'
+        WHEN iq.other_errors = 1 THEN '❌ Error'
+        ELSE '⚠️ Warning'
+    END AS status
+FROM fieldkit.ingestion_queue iq
+JOIN fieldkit.ingestion i ON (i.id = iq.ingestion_id)
+WHERE i.device_id = '\x{device_id_hex}'
+ORDER BY iq.id DESC
+LIMIT 10;
+```
+
+**Trạng thái thành công:**
+```
+✅ Success:
+- total_records > 0
+- other_errors = 0
+- meta_errors = 0 (hoặc NULL cho data ingestion)
+- data_errors = 0 (hoặc NULL cho meta ingestion)
+- completed IS NOT NULL
+```
+
+**Trạng thái lỗi:**
+```
+❌ Error:
+- total_records IS NULL
+- other_errors = 1
+- completed IS NOT NULL
+```
+
+### 2. Kiểm Tra Data Records Đã Được Lưu
+
+```sql
+-- Kiểm tra data records đã được lưu
+SELECT 
+    dr.id,
+    dr.number AS reading_number,
+    dr.time,
+    dr.meta_record_id,
+    mr.number AS meta_number,
+    COUNT(*) OVER () AS total_records
+FROM fieldkit.data_record dr
+JOIN fieldkit.meta_record mr ON (mr.id = dr.meta_record_id)
+JOIN fieldkit.provision p ON (p.id = dr.provision_id)
+WHERE p.device_id = '\x{device_id_hex}'
+ORDER BY dr.number DESC
+LIMIT 10;
+```
+
+### 3. Kiểm Tra Station Ingestion
+
+```sql
+-- Kiểm tra station_ingestion (được tạo khi ingestion thành công)
+SELECT 
+    si.id,
+    si.station_id,
+    si.data_ingestion_id,
+    si.meta_ingestion_id,
+    i.type,
+    i.time AS ingestion_time
+FROM fieldkit.station_ingestion si
+JOIN fieldkit.ingestion i ON (i.id = si.data_ingestion_id OR i.id = si.meta_ingestion_id)
+JOIN fieldkit.station s ON (s.id = si.station_id)
+WHERE s.device_id = '\x{device_id_hex}'
+ORDER BY si.id DESC
+LIMIT 10;
+```
+
+### 4. Kiểm Tra Lỗi Chi Tiết
+
+```sql
+-- Kiểm tra ingestion có lỗi gì
+SELECT 
+    i.id AS ingestion_id,
+    i.type,
+    i.device_id,
+    iq.total_records,
+    iq.other_errors,
+    iq.meta_errors,
+    iq.data_errors,
+    iq.completed,
+    CASE 
+        WHEN iq.other_errors = 1 THEN 'Other error (check logs)'
+        WHEN iq.meta_errors > 0 THEN 'Meta errors'
+        WHEN iq.data_errors > 0 THEN 'Data errors'
+        ELSE 'OK'
+    END AS error_type
+FROM fieldkit.ingestion i
+JOIN fieldkit.ingestion_queue iq ON (iq.ingestion_id = i.id)
+WHERE i.device_id = '\x{device_id_hex}'
+  AND iq.completed IS NOT NULL
+  AND (iq.other_errors = 1 OR iq.meta_errors > 0 OR iq.data_errors > 0)
+ORDER BY iq.completed DESC
+LIMIT 10;
+```
+
+### 5. Script Kiểm Tra Tự Động
+
+Tạo script để kiểm tra ingestion sau khi upload:
+
+```bash
+#!/bin/bash
+# check_ingestion.sh
+
+DEVICE_ID_HEX="$1"
+DB_URL="$2"
+
+if [ -z "$DEVICE_ID_HEX" ] || [ -z "$DB_URL" ]; then
+    echo "Usage: $0 <device_id_hex> <db_url>"
+    exit 1
+fi
+
+psql "$DB_URL" <<EOF
+-- Kiểm tra ingestion mới nhất
+SELECT 
+    i.id AS ingestion_id,
+    i.type,
+    i.time AS uploaded_at,
+    iq.queued,
+    iq.completed,
+    iq.total_records,
+    iq.other_errors,
+    iq.meta_errors,
+    iq.data_errors,
+    CASE 
+        WHEN iq.completed IS NULL THEN '⏳ Pending'
+        WHEN iq.total_records > 0 AND iq.other_errors = 0 THEN '✅ Success'
+        WHEN iq.other_errors = 1 THEN '❌ Error'
+        ELSE '⚠️ Warning'
+    END AS status
+FROM fieldkit.ingestion i
+JOIN fieldkit.ingestion_queue iq ON (iq.ingestion_id = i.id)
+WHERE i.device_id = decode('$DEVICE_ID_HEX', 'hex')
+ORDER BY i.id DESC
+LIMIT 5;
+EOF
+```
+
+### 6. Kiểm Tra Từ Code
+
+Sau khi upload, có thể kiểm tra response:
+
+```go
+type IngestionResponse struct {
+    ID       int64  `json:"id"`        // Ingestion ID
+    UploadID string `json:"upload_id"` // Upload ID
+}
+
+// Sau khi upload
+ingestion, err := s.uploadIngestion("data", dataFile.Bytes())
+if err != nil {
+    log.Printf("❌ Upload failed: %v", err)
+    return err
+}
+
+log.Printf("✅ Uploaded successfully: Ingestion ID=%d, UploadID=%s", 
+    ingestion.ID, ingestion.UploadID)
+
+// Sau đó có thể query database để kiểm tra status
+```
+
+### Checklist Trước Khi Upload
+
+- [ ] **Meta record đã tồn tại**: Kiểm tra `meta_record` trong database
+- [ ] **Device ID đúng**: Match với `station.device_id`
+- [ ] **Generation ID đúng**: Match với `provision.generation`
+- [ ] **Sensor IDs đúng**: Match với sensors trong module meta
+- [ ] **Reading number tăng dần**: Không được reset hoặc duplicate
+- [ ] **Timestamp hợp lệ**: Unix timestamp, không phải tương lai quá xa
+- [ ] **Headers đầy đủ**: Tất cả headers bắt buộc đã được set
+- [ ] **Content-Type đúng**: `application/vnd.fk.data+binary`
+- [ ] **JWT token hợp lệ**: Token chưa expire
+
 ## Cách Sử Dụng
 
 ### Build Tool
@@ -307,7 +794,7 @@ go build -o bin/hardware-sim cmd/hardware_sim/hardware_sim.go
 ./bin/hardware-sim \
   -api="http://fieldkit-staging-alb-1189893191.ap-southeast-1.elb.amazonaws.com" \
   -token="YOUR_JWT_TOKEN" \
-  -db="postgres://user:password@host:5432/fieldkit?sslmode=disable" \
+  -db="postgres://user:password@fieldkit-staging-postgres-nlb-2e92e35ac371a189.elb.ap-southeast-1.amazonaws.com:5432/fieldkit?sslmode=disable" \
   -station-id=1 \
   -interval=15m \
   -batch=10
@@ -319,7 +806,7 @@ go build -o bin/hardware-sim cmd/hardware_sim/hardware_sim.go
 ./bin/hardware-sim \
   -api="http://fieldkit-staging-alb-1189893191.ap-southeast-1.elb.amazonaws.com" \
   -token="YOUR_JWT_TOKEN" \
-  -db="postgres://user:password@host:5432/fieldkit?sslmode=disable" \
+  -db="postgres://user:password@fieldkit-staging-postgres-nlb-2e92e35ac371a189.elb.ap-southeast-1.amazonaws.com:5432/fieldkit?sslmode=disable" \
   -station-id=0 \
   -interval=15m \
   -batch=10
@@ -338,7 +825,7 @@ TOKEN=$(curl -s -X POST 'http://fieldkit-staging-alb-1189893191.ap-southeast-1.e
 ./bin/hardware-sim \
   -api="http://fieldkit-staging-alb-1189893191.ap-southeast-1.elb.amazonaws.com" \
   -token="$TOKEN" \
-  -db="postgres://user:password@host:5432/fieldkit?sslmode=disable" \
+  -db="postgres://user:password@fieldkit-staging-postgres-nlb-2e92e35ac371a189.elb.ap-southeast-1.amazonaws.com:5432/fieldkit?sslmode=disable" \
   -station-id=0 \
   -interval=15m \
   -batch=10
@@ -351,7 +838,7 @@ TOKEN=$(curl -s -X POST 'http://fieldkit-staging-alb-1189893191.ap-southeast-1.e
 Để chuyển đổi tool này từ Go application sang AWS Lambda function, chúng ta sẽ:
 1. Tạo Lambda function với Go runtime
 2. Sử dụng EventBridge (CloudWatch Events) để trigger theo schedule
-3. Tích hợp với RDS (PostgreSQL) qua VPC
+3. Kết nối với PostgreSQL qua public NLB endpoint (không cần VPC)
 4. Sử dụng Secrets Manager để lưu credentials
 5. Tích hợp với API Gateway hoặc gọi trực tiếp ALB
 
@@ -371,17 +858,18 @@ TOKEN=$(curl -s -X POST 'http://fieldkit-staging-alb-1189893191.ap-southeast-1.e
 │ - Handler: main.Handler                                 │
 │ - Timeout: 5 minutes                                    │
 │ - Memory: 512 MB                                        │
-│ - VPC: Attach to same VPC as RDS                        │
+│ - No VPC: Access database via public NLB endpoint      │
 └─────────────────────────────────────────────────────────┘
                     │
         ┌───────────┴───────────┐
         │                       │
         ▼                       ▼
-┌───────────────┐    ┌──────────────────────┐
-│ RDS PostgreSQL│    │ Secrets Manager      │
-│ (VPC)         │    │ - DB credentials     │
-│               │    │ - API token          │
-└───────────────┘    └──────────────────────┘
+┌──────────────────────────────┐    ┌──────────────────────┐
+│ PostgreSQL via Public NLB    │    │ Secrets Manager      │
+│ fieldkit-staging-postgres-   │    │ - DB credentials     │
+│ nlb-*.elb.amazonaws.com     │    │ - API token          │
+│ Port: 5432                    │    └──────────────────────┘
+└──────────────────────────────┘
         │
         ▼
 ┌─────────────────────────────────────────────────────────┐
@@ -558,19 +1046,12 @@ zip hardware-sim-lambda.zip bootstrap
         "logs:PutLogEvents"
       ],
       "Resource": "arn:aws:logs:*:*:*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:CreateNetworkInterface",
-        "ec2:DescribeNetworkInterfaces",
-        "ec2:DeleteNetworkInterface"
-      ],
-      "Resource": "*"
     }
   ]
 }
 ```
+
+**Lưu ý**: Không cần VPC-related permissions (ec2:CreateNetworkInterface, etc.) vì Lambda function không chạy trong VPC. Function sẽ access database và API qua public endpoints.
 
 ### Bước 4: Tạo Secrets trong Secrets Manager
 
@@ -578,20 +1059,22 @@ zip hardware-sim-lambda.zip bootstrap
 aws secretsmanager create-secret \
   --name fieldkit/hardware-sim \
   --secret-string '{
-    "database_url": "postgres://user:password@rds-endpoint:5432/fieldkit?sslmode=disable",
+    "database_url": "postgres://user:password@fieldkit-staging-postgres-nlb-2e92e35ac371a189.elb.ap-southeast-1.amazonaws.com:5432/fieldkit?sslmode=disable",
     "api_token": "YOUR_JWT_TOKEN"
   }' \
   --region ap-southeast-1
 ```
 
-**Lưu ý**: JWT token có thể được refresh tự động bằng cách:
-- Tạo Lambda function riêng để refresh token
-- Hoặc lưu user credentials và login mỗi lần chạy
+**Lưu ý**: 
+- Database URL sử dụng public NLB endpoint, không cần VPC configuration
+- JWT token có thể được refresh tự động bằng cách:
+  - Tạo Lambda function riêng để refresh token
+  - Hoặc lưu user credentials và login mỗi lần chạy
 
 ### Bước 5: Deploy Lambda Function
 
 ```bash
-# Tạo Lambda function
+# Tạo Lambda function (không cần VPC vì dùng public endpoint)
 aws lambda create-function \
   --function-name fieldkit-hardware-sim \
   --runtime provided.al2 \
@@ -600,13 +1083,17 @@ aws lambda create-function \
   --zip-file fileb://hardware-sim-lambda.zip \
   --timeout 300 \
   --memory-size 512 \
-  --vpc-config SubnetIds=subnet-xxx,subnet-yyy,SecurityGroupIds=sg-xxx \
   --environment Variables='{
     "API_URL":"http://fieldkit-staging-alb-1189893191.ap-southeast-1.elb.amazonaws.com",
-    "SECRETS_NAME":"fieldkit/hardware-sim"
+    "SECRETS_NAME":"fieldkit/hardware-sim",
+    "DB_HOST":"fieldkit-staging-postgres-nlb-2e92e35ac371a189.elb.ap-southeast-1.amazonaws.com",
+    "DB_PORT":"5432",
+    "DB_NAME":"fieldkit"
   }' \
   --region ap-southeast-1
 ```
+
+**Lưu ý**: Không cần `--vpc-config` vì database được access qua public NLB endpoint. Lambda function sẽ chạy trong default VPC với internet access để connect đến database.
 
 ### Bước 6: Tạo EventBridge Rule
 
@@ -635,23 +1122,17 @@ aws lambda add-permission \
 
 ### Bước 7: Tích Hợp Với Server Hiện Tại
 
-#### Option 1: Gọi Trực Tiếp ALB
+#### Option 1: Gọi Trực Tiếp ALB (Khuyến nghị)
 
 Lambda function gọi trực tiếp đến ALB endpoint:
-- **Pros**: Đơn giản, không cần thay đổi server
-- **Cons**: Cần public ALB hoặc VPC endpoint
+- **Pros**: Đơn giản, không cần thay đổi server, ALB đã public
+- **Cons**: None (ALB đã được expose public)
 
 #### Option 2: Tích Hợp Qua API Gateway
 
 Tạo API Gateway endpoint và tích hợp với server:
 - **Pros**: Có thể thêm authentication, rate limiting
-- **Cons**: Phức tạp hơn, cần cấu hình API Gateway
-
-#### Option 3: Sử Dụng VPC Endpoint
-
-Tạo VPC endpoint để Lambda access ALB trong VPC:
-- **Pros**: Secure, không cần public ALB
-- **Cons**: Cần VPC endpoint (chi phí)
+- **Cons**: Phức tạp hơn, cần cấu hình API Gateway, không cần thiết vì ALB đã public
 
 ### Bước 8: Cải Thiện Lambda Function
 
@@ -785,7 +1266,7 @@ Tạo custom metrics:
 - [ ] Tạo IAM role với đủ permissions
 - [ ] Tạo secrets trong Secrets Manager
 - [ ] Deploy Lambda function
-- [ ] Cấu hình VPC (nếu cần access RDS)
+- [ ] Test database connection từ Lambda (public NLB endpoint)
 - [ ] Tạo EventBridge rule
 - [ ] Test Lambda function manually
 - [ ] Enable EventBridge schedule
@@ -801,23 +1282,24 @@ Tạo custom metrics:
 - Process stations in smaller batches
 - Optimize database queries
 
-### VPC Connection Issues
+### Database Connection Issues
 
-- Kiểm tra security groups
-- Kiểm tra subnet configuration
-- Kiểm tra NAT Gateway (nếu cần internet access)
+- Kiểm tra NLB endpoint có accessible không
+- Kiểm tra security group của NLB cho phép traffic từ internet
+- Kiểm tra database credentials trong Secrets Manager
+- Test connection từ local machine trước: `psql "postgres://user:password@fieldkit-staging-postgres-nlb-2e92e35ac371a189.elb.ap-southeast-1.amazonaws.com:5432/fieldkit?sslmode=disable"`
 
 ### Secrets Manager Access
 
 - Kiểm tra IAM permissions
 - Kiểm tra secret ARN
-- Kiểm tra VPC endpoint (nếu dùng VPC)
+- Lambda function không cần VPC endpoint vì Secrets Manager có public endpoint
 
 ### API Connection Issues
 
-- Kiểm tra ALB security group
-- Kiểm tra VPC routing
-- Kiểm tra NAT Gateway
+- Kiểm tra ALB có accessible từ internet không
+- Kiểm tra ALB security group cho phép traffic từ internet
+- Test API endpoint từ local machine: `curl http://fieldkit-staging-alb-1189893191.ap-southeast-1.elb.amazonaws.com/status`
 
 ## Kết Luận
 
@@ -829,8 +1311,9 @@ Chuyển đổi Hardware Simulator từ Go application sang AWS Lambda function 
 
 Tuy nhiên, cần lưu ý:
 - Lambda có timeout limit (15 minutes)
-- VPC configuration phức tạp hơn
+- Database connection qua public endpoint (đảm bảo security group cho phép)
 - Cold start latency (có thể dùng Provisioned Concurrency)
+- Không cần VPC configuration vì dùng public endpoints cho cả database và API
 
 Với kiến trúc hiện tại của FieldKit trên AWS, việc tích hợp Lambda function sẽ seamless và không cần thay đổi server code.
 
