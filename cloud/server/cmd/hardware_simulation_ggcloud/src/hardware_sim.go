@@ -16,6 +16,7 @@ import (
 	"os/signal"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -56,6 +57,18 @@ type HardwareSimulator struct {
 	mu         sync.Mutex
 }
 
+type simulationState struct {
+	started    time.Time
+	running    atomic.Bool
+	uploads    atomic.Uint64
+	stations   int32
+	interval   time.Duration
+	batchSize  int
+	lastUpload atomic.Value // time.Time
+}
+
+var simState simulationState
+
 func main() {
 	var (
 		apiURL    = "http://fieldkit-staging-alb-1189893191.ap-southeast-1.elb.amazonaws.com"
@@ -68,6 +81,11 @@ func main() {
 		password  = flag.String("password", "test123456", "Password for auto-login")
 	)
 	flag.Parse()
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
 	// Auto-login if token not provided
 	if *token == "" {
@@ -154,9 +172,19 @@ func main() {
 		log.Fatalf("No stations to simulate")
 	}
 
+	// Start HTTP server immediately (Cloud Run readiness)
+	go startHTTPServer(port)
+
 	// Setup signal handling
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	simState.interval = *interval
+	simState.batchSize = *batchSize
+	simState.stations = int32(len(stations))
+
+	simState.started = time.Now()
+	simState.running.Store(true)
 
 	// Start simulators for each station
 	var wg sync.WaitGroup
@@ -186,13 +214,21 @@ func main() {
 			defer ticker.Stop()
 
 			// Upload immediately
-			go sim.uploadBatch(*batchSize)
+			go func() {
+				if err := sim.uploadBatch(*batchSize); err == nil {
+					simState.uploads.Add(1)
+					simState.lastUpload.Store(time.Now())
+				}
+			}()
 
 			for {
 				select {
 				case <-ticker.C:
 					if err := sim.uploadBatch(*batchSize); err != nil {
 						log.Printf("[Station %d: %s] Error uploading batch: %v", info.Station.ID, info.Station.Name, err)
+					} else {
+						simState.uploads.Add(1)
+						simState.lastUpload.Store(time.Now())
 					}
 				case sig := <-sigChan:
 					log.Printf("[Station %d: %s] Received signal: %v, shutting down...", info.Station.ID, info.Station.Name, sig)
@@ -203,6 +239,8 @@ func main() {
 	}
 
 	wg.Wait()
+	simState.running.Store(false)
+	select {} // keep process alive so Cloud Run doesn't exit
 }
 
 func loadStationInfo(ctx context.Context, station *data.Station, db *sqlxcache.DB, stationRepo *repositories.StationRepository) (*StationInfo, error) {
@@ -577,6 +615,39 @@ func (s *HardwareSimulator) uploadIngestion(dataType string, data []byte) (*Inge
 	}
 
 	return &result, nil
+}
+
+func startHTTPServer(port string) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	})
+	mux.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
+		last := ""
+		if v := simState.lastUpload.Load(); v != nil {
+			if t, ok := v.(time.Time); ok {
+				last = t.Format(time.RFC3339)
+			}
+		}
+		resp := map[string]interface{}{
+			"running":     simState.running.Load(),
+			"started_at":  simState.started.Format(time.RFC3339),
+			"stations":    simState.stations,
+			"interval":    simState.interval.String(),
+			"batch_size":  simState.batchSize,
+			"uploads":     simState.uploads.Load(),
+			"last_upload": last,
+			"version":     "sim-v1",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	})
+	addr := ":" + port
+	log.Printf("HTTP server listening on %s", addr)
+	if err := http.ListenAndServe(addr, mux); err != nil {
+		log.Fatalf("HTTP server error: %v", err)
+	}
 }
 
 type IngestionResponse struct {
