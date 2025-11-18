@@ -1,0 +1,7 @@
+bin/
+.git
+.gitignore
+*.log
+*.md
+Dockerfile
+.dockerignore
