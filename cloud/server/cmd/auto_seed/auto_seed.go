@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -9,14 +10,13 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"time"
-
-	"context"
 
 	"github.com/golang/protobuf/proto"
 	_ "github.com/lib/pq"
@@ -29,11 +29,12 @@ import (
 )
 
 const (
-	FloodNetModuleID     = 19
+	FloodNetModuleID = 19
 	// FIXED: Sử dụng giá trị từ DB (module_meta table)
 	// wh.floodnet có manufacturer=0, kinds={0}
-	FloodNetManufacturer = 0x00 // 0 (từ DB: manufacturer=0)
-	FloodNetModuleKind   = 0x00 // 0 (từ DB: kinds={0})
+	FloodNetManufacturer    = 0x00 // 0 (từ DB: manufacturer=0)
+	FloodNetModuleKind      = 0x00 // 0 (từ DB: kinds={0})
+	floodNetReadingInterval = 15 * time.Minute
 )
 
 type APIClient struct {
@@ -85,21 +86,14 @@ func main() {
 	)
 	flag.Parse()
 
-	// Database connection chỉ cần thiết nếu tạo user mới (để enable user)
-	// Nếu user đã tồn tại hoặc flag -user-exists được set, có thể bỏ qua
-	var db *sqlxcache.DB
-	if *dbURL != "" {
-		ctx := context.Background()
-		var err error
-		db, err = sqlxcache.Open(ctx, "postgres", *dbURL)
-		if err != nil {
-			log.Printf("⚠️  Warning: Failed to connect to database: %v", err)
-			log.Printf("⚠️  Database connection is optional if user already exists")
-			db = nil
-		}
-	} else if !*userExists {
-		fmt.Fprintf(os.Stderr, "Warning: -db flag is recommended for enabling newly created users\n")
-		fmt.Fprintf(os.Stderr, "If user already exists, you can use -user-exists flag to skip database connection\n")
+	if *dbURL == "" {
+		log.Fatalf("Error: -db flag is required (needed for user enablement and station location updates)")
+	}
+
+	ctx := context.Background()
+	db, err := sqlxcache.Open(ctx, "postgres", *dbURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
 	// Normalize API URL
@@ -112,9 +106,6 @@ func main() {
 	logging.Configure(false, "auto_seed")
 
 	log.Printf("📡 Using API URL: %s", normalizedAPIURL)
-
-	// ctx đã được khai báo ở trên
-	ctx := context.Background()
 
 	// Khởi tạo API client
 	apiClient := &APIClient{
@@ -202,7 +193,7 @@ func main() {
 
 	// Bước 4: Tạo stations qua API
 	log.Printf("\n🏭 Step 4: Creating %d FloodNet stations via API...", *stations)
-	stationList, err := createFloodNetStationsViaAPI(apiClient, proj.ID, *stations)
+	stationList, err := createFloodNetStationsViaAPI(apiClient, proj.ID, *stations, db)
 	if err != nil {
 		log.Fatalf("Failed to create stations: %v", err)
 	}
@@ -322,7 +313,7 @@ func createProjectViaAPI(client *APIClient, name string) (*ProjectResponse, erro
 }
 
 // createFloodNetStationsViaAPI tạo stations qua API POST /stations
-func createFloodNetStationsViaAPI(client *APIClient, projectID int32, count int) ([]*StationResponse, error) {
+func createFloodNetStationsViaAPI(client *APIClient, projectID int32, count int, db *sqlxcache.DB) ([]*StationResponse, error) {
 	stations := []*StationResponse{}
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	vietnamStations := GetRandomStations(count, rng)
@@ -338,8 +329,10 @@ func createFloodNetStationsViaAPI(client *APIClient, projectID int32, count int)
 
 		url := fmt.Sprintf("%s/stations", client.BaseURL)
 		payload := map[string]interface{}{
-			"name":     name,
-			"deviceId": hex.EncodeToString(deviceID),
+			"name":         name,
+			"deviceId":     hex.EncodeToString(deviceID),
+			"locationName": fmt.Sprintf("%s, %s", vietnamStations[i].Name, vietnamStations[i].Province),
+			"description":  fmt.Sprintf("Trạm FloodNet giám sát %s, %s (%s)", vietnamStations[i].Name, vietnamStations[i].Province, vietnamStations[i].Region),
 		}
 
 		jsonData, err := json.Marshal(payload)
@@ -395,10 +388,75 @@ func createFloodNetStationsViaAPI(client *APIClient, projectID int32, count int)
 			log.Printf("⚠️  Warning: Failed to add station %d to project %d", station.ID, projectID)
 		}
 
+		if err := updateStationLocationViaAPI(client, &station, station.VietnamStation); err != nil {
+			log.Printf("⚠️  Warning: Failed to update station %d location via API: %v", station.ID, err)
+		}
+		if err := setStationLocationInDB(db, station.ID, station.VietnamStation); err != nil {
+			log.Printf("⚠️  Warning: Failed to persist station %d location in DB: %v", station.ID, err)
+		}
+
 		stations = append(stations, &station)
 	}
 
 	return stations, nil
+}
+
+func updateStationLocationViaAPI(client *APIClient, station *StationResponse, location *VietnamStation) error {
+	if client == nil || station == nil || location == nil {
+		return nil
+	}
+
+	payload := map[string]interface{}{
+		"name":         station.Name,
+		"locationName": fmt.Sprintf("%s, %s", location.Name, location.Province),
+		"description":  fmt.Sprintf("Trạm FloodNet giám sát %s, %s (%s)", location.Name, location.Province, location.Region),
+	}
+
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	url := fmt.Sprintf("%s/stations/%d", client.BaseURL, station.ID)
+	req, err := http.NewRequest("PATCH", url, bytes.NewReader(jsonData))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.Token))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("update station location failed: status %d, body: %s", resp.StatusCode, string(body))
+	}
+
+	return nil
+}
+
+func setStationLocationInDB(db *sqlxcache.DB, stationID int32, location *VietnamStation) error {
+	if db == nil || location == nil {
+		return nil
+	}
+
+	ctx := context.Background()
+	locationName := fmt.Sprintf("%s, %s", location.Name, location.Province)
+
+	_, err := db.ExecContext(ctx, `
+		UPDATE fieldkit.station
+		SET location = ST_SetSRID(ST_MakePoint($1, $2), 4326),
+			location_name = $3,
+			place_other = $4,
+			place_native = $5
+		WHERE id = $6
+	`, location.Longitude, location.Latitude, locationName, location.Name, location.Province, stationID)
+	return err
 }
 
 // uploadStationDataViaAPI upload meta và data cho station qua API POST /ingestion
@@ -407,6 +465,15 @@ func uploadStationDataViaAPI(client *APIClient, station *StationResponse, numRea
 	deviceID, err := hex.DecodeString(station.DeviceID)
 	if err != nil {
 		return fmt.Errorf("invalid device ID: %w", err)
+	}
+
+	if station.VietnamStation != nil {
+		if err := updateStationLocationViaAPI(client, station, station.VietnamStation); err != nil {
+			log.Printf("  ⚠️  Warning: Failed to update station %d location via API: %v", station.ID, err)
+		}
+		if err := setStationLocationInDB(db, station.ID, station.VietnamStation); err != nil {
+			log.Printf("  ⚠️  Warning: Failed to persist station %d location in DB: %v", station.ID, err)
+		}
 	}
 
 	// Generate generation ID - FIXED: Dùng cùng generationID cho cả meta và data ingestion
@@ -537,7 +604,11 @@ func uploadStationDataViaAPI(client *APIClient, station *StationResponse, numRea
 	// 2. Create and upload data records
 	// Meta record number là 1 (record đầu tiên trong file meta)
 	metaRecordNumber := uint64(1)
-	startTime := time.Now().AddDate(0, 0, -7)
+	totalReadings := numReadings
+	if totalReadings <= 0 {
+		totalReadings = 1
+	}
+	startTime := time.Now().Add(-time.Duration(totalReadings-1) * floodNetReadingInterval)
 	readingNumber := uint64(1)
 
 	for i := 0; i < numReadings; i += 100 {
@@ -546,7 +617,8 @@ func uploadStationDataViaAPI(client *APIClient, station *StationResponse, numRea
 			batchSize = numReadings - i
 		}
 
-		readings := createFloodNetReadingsBatch(int64(metaRecordNumber), readingNumber, batchSize, startTime.Add(time.Duration(i)*15*time.Minute), station.VietnamStation)
+		batchStartTime := startTime.Add(time.Duration(i) * floodNetReadingInterval)
+		readings := createFloodNetReadingsBatch(int64(metaRecordNumber), readingNumber, batchSize, batchStartTime, station.VietnamStation)
 
 		dataFile := proto.NewBuffer(make([]byte, 0))
 		for _, reading := range readings {
@@ -585,6 +657,23 @@ func normalizeAPIURL(rawURL string) (string, error) {
 	}
 
 	return normalized.String(), nil
+}
+
+func clampFloat(value float32, min float32, max float32) float32 {
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+	return value
+}
+
+func sdErrorValue(r *rand.Rand) float32 {
+	if r.Float32() < 0.02 {
+		return 1.0 + r.Float32()*2.0
+	}
+	return 0.0
 }
 
 // loginAndGetToken logs in and returns JWT token
@@ -828,8 +917,15 @@ func setVisibleConfiguration(db *sqlxcache.DB, stationID int32, metaIngestionID 
 func createFloodNetReadingsBatch(metaNumber int64, startReadingNumber uint64, count int, startTime time.Time, location *VietnamStation) []*pb.DataRecord {
 	readings := make([]*pb.DataRecord, count)
 	for i := 0; i < count; i++ {
-		recordTime := startTime.Add(time.Duration(i) * 15 * time.Minute)
-		depthInches := 8.0 + float32(i%100)*0.02 // Simulate gradual change
+		recordTime := startTime.Add(time.Duration(i) * floodNetReadingInterval)
+		cycleSeconds := recordTime.Hour()*3600 + recordTime.Minute()*60 + recordTime.Second()
+		dayFraction := float64(cycleSeconds) / float64(24*3600)
+		tideEffect := float32(math.Sin(dayFraction * 2 * math.Pi))
+		randomizer := rand.New(rand.NewSource(recordTime.UnixNano()))
+		depthInches := 6.0 + tideEffect*3.0 + (randomizer.Float32()*2.0 - 1.0)
+		if depthInches < 0.2 {
+			depthInches = 0.2
+		}
 		readings[i] = createFloodNetReading(metaNumber, startReadingNumber+uint64(i), depthInches, recordTime, location)
 	}
 	return readings
@@ -844,51 +940,40 @@ func createFloodNetReading(metaNumber int64, readingNumber uint64, depthInches f
 			Reading: readingNumber,
 			Meta:    uint64(metaNumber),
 			Flags:   0,
-			Location: &pb.DeviceLocation{
-				Fix:        1,
-				Time:       int64(recordTime.Unix()),
-				// Sử dụng location từ VietnamStations
-				Longitude: func() float32 {
-					if location != nil {
-						return float32(location.Longitude)
-					}
-					return 105.8412 // Default: Hanoi
-				}(),
-				Latitude: func() float32 {
-					if location != nil {
-						return float32(location.Latitude)
-					}
-					return 21.0285 // Default: Hanoi
-				}(),
-				Altitude:   5.0,
-				Satellites: 8,
-			},
+			Location: func() *pb.DeviceLocation {
+				baseLongitude := float32(105.8412)
+				baseLatitude := float32(21.0285)
+				if location != nil {
+					baseLongitude = float32(location.Longitude)
+					baseLatitude = float32(location.Latitude)
+				}
+				longitude := baseLongitude + (mrand.Float32()-0.5)*0.02
+				latitude := baseLatitude + (mrand.Float32()-0.5)*0.02
+				altitude := 3.0 + mrand.Float32()*4.0
+				return &pb.DeviceLocation{
+					Fix:        1,
+					Time:       int64(recordTime.Unix()),
+					Longitude:  longitude,
+					Latitude:   latitude,
+					Altitude:   altitude,
+					Satellites: 7 + uint32(mrand.Intn(3)),
+				}
+			}(),
 			SensorGroups: []*pb.SensorGroup{
 				{
 					Module: 0,
 					Time:   int64(recordTime.Unix()),
 					Readings: []*pb.SensorAndValue{
-						// FIXED: Sử dụng đúng số lượng sensors từ DB (10 sensors, ordering 0-9)
-						// Sensor 0: depth (ordering=0)
 						{Sensor: 0, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: depthInches}},
-						// Sensor 1: depthUnfiltered (ordering=1)
-						{Sensor: 1, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{UncalibratedValue: depthInches + mrand.Float32()*0.5}},
-						// Sensor 2: distance (ordering=2)
-						{Sensor: 2, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{UncalibratedValue: depthInches * 25.4}},
-						// Sensor 3: battery (ordering=3)
-						{Sensor: 3, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: 70.0 + mrand.Float32()*20.0}},
-						// Sensor 4: tideFeet (ordering=4)
-						{Sensor: 4, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: 8.0 + mrand.Float32()*2.0}},
-						// Sensor 5: humidity (ordering=5)
-						{Sensor: 5, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{UncalibratedValue: 50.0 + mrand.Float32()*30.0}},
-						// Sensor 6: pressure (ordering=6)
-						{Sensor: 6, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{UncalibratedValue: 101.3 + mrand.Float32()*2.0}},
-						// Sensor 7: altitude (ordering=7)
-						{Sensor: 7, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{UncalibratedValue: 5.0}},
-						// Sensor 8: temperature (ordering=8)
-						{Sensor: 8, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{UncalibratedValue: 20.0 + mrand.Float32()*10.0}},
-						// Sensor 9: sdError (ordering=9)
-						{Sensor: 9, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{UncalibratedValue: 0.0}},
+						{Sensor: 1, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: depthInches + (mrand.Float32()-0.5)*0.8}},
+						{Sensor: 2, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: depthInches*25.4 + (mrand.Float32()-0.5)*15.0}},
+						{Sensor: 3, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: 75.0 + (mrand.Float32()-0.5)*10.0}},
+						{Sensor: 4, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: (depthInches / 12.0) + (mrand.Float32()-0.5)*0.2}},
+						{Sensor: 5, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: clampFloat(60.0+(mrand.Float32()-0.5)*25.0, 0, 100)}},
+						{Sensor: 6, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: 101.3 + (mrand.Float32()-0.5)*4.0}},
+						{Sensor: 7, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: 3.0 + mrand.Float32()*4.0}},
+						{Sensor: 8, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: 26.0 + (mrand.Float32()-0.5)*6.0}},
+						{Sensor: 9, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{UncalibratedValue: sdErrorValue(mrand)}},
 					},
 				},
 			},
