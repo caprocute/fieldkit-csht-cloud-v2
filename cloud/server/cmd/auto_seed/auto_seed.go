@@ -390,9 +390,13 @@ func createFloodNetStationsViaAPI(client *APIClient, projectID int32, count int,
 
 		if err := updateStationLocationViaAPI(client, &station, station.VietnamStation); err != nil {
 			log.Printf("⚠️  Warning: Failed to update station %d location via API: %v", station.ID, err)
+		} else {
+			log.Printf("✅ Updated station %d location via API: %s, %s", station.ID, station.VietnamStation.Name, station.VietnamStation.Province)
 		}
 		if err := setStationLocationInDB(db, station.ID, station.VietnamStation); err != nil {
-			log.Printf("⚠️  Warning: Failed to persist station %d location in DB: %v", station.ID, err)
+			log.Printf("❌ Error: Failed to persist station %d location in DB: %v", station.ID, err)
+		} else {
+			log.Printf("✅ Persisted station %d location in DB: %.6f, %.6f", station.ID, station.VietnamStation.Longitude, station.VietnamStation.Latitude)
 		}
 
 		stations = append(stations, &station)
@@ -441,14 +445,17 @@ func updateStationLocationViaAPI(client *APIClient, station *StationResponse, lo
 }
 
 func setStationLocationInDB(db *sqlxcache.DB, stationID int32, location *VietnamStation) error {
-	if db == nil || location == nil {
-		return nil
+	if db == nil {
+		return fmt.Errorf("database connection is nil")
+	}
+	if location == nil {
+		return fmt.Errorf("location is nil")
 	}
 
 	ctx := context.Background()
 	locationName := fmt.Sprintf("%s, %s", location.Name, location.Province)
 
-	_, err := db.ExecContext(ctx, `
+	result, err := db.ExecContext(ctx, `
 		UPDATE fieldkit.station
 		SET location = ST_SetSRID(ST_MakePoint($1, $2), 4326),
 			location_name = $3,
@@ -456,7 +463,20 @@ func setStationLocationInDB(db *sqlxcache.DB, stationID int32, location *Vietnam
 			place_native = $5
 		WHERE id = $6
 	`, location.Longitude, location.Latitude, locationName, location.Name, location.Province, stationID)
-	return err
+	if err != nil {
+		return fmt.Errorf("SQL execution failed: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no rows updated - station %d may not exist", stationID)
+	}
+
+	return nil
 }
 
 // uploadStationDataViaAPI upload meta và data cho station qua API POST /ingestion
@@ -470,10 +490,16 @@ func uploadStationDataViaAPI(client *APIClient, station *StationResponse, numRea
 	if station.VietnamStation != nil {
 		if err := updateStationLocationViaAPI(client, station, station.VietnamStation); err != nil {
 			log.Printf("  ⚠️  Warning: Failed to update station %d location via API: %v", station.ID, err)
+		} else {
+			log.Printf("  ✅ Updated station %d location via API: %s, %s", station.ID, station.VietnamStation.Name, station.VietnamStation.Province)
 		}
 		if err := setStationLocationInDB(db, station.ID, station.VietnamStation); err != nil {
-			log.Printf("  ⚠️  Warning: Failed to persist station %d location in DB: %v", station.ID, err)
+			log.Printf("  ❌ Error: Failed to persist station %d location in DB: %v", station.ID, err)
+		} else {
+			log.Printf("  ✅ Persisted station %d location in DB: %.6f, %.6f", station.ID, station.VietnamStation.Longitude, station.VietnamStation.Latitude)
 		}
+	} else {
+		log.Printf("  ⚠️  Warning: Station %d has no VietnamStation location data", station.ID)
 	}
 
 	// Generate generation ID - FIXED: Dùng cùng generationID cho cả meta và data ingestion
@@ -602,13 +628,15 @@ func uploadStationDataViaAPI(client *APIClient, station *StationResponse, numRea
 	}
 
 	// 2. Create and upload data records
+	// Nếu numReadings <= 0, không upload data
+	if numReadings <= 0 {
+		log.Printf("  ℹ️  Skipping data upload: numReadings = %d (must be > 0)", numReadings)
+		return nil
+	}
+
 	// Meta record number là 1 (record đầu tiên trong file meta)
 	metaRecordNumber := uint64(1)
-	totalReadings := numReadings
-	if totalReadings <= 0 {
-		totalReadings = 1
-	}
-	startTime := time.Now().Add(-time.Duration(totalReadings-1) * floodNetReadingInterval)
+	startTime := time.Now().Add(-time.Duration(numReadings-1) * floodNetReadingInterval)
 	readingNumber := uint64(1)
 
 	for i := 0; i < numReadings; i += 100 {

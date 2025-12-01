@@ -22,10 +22,10 @@ import (
 	"github.com/golang/protobuf/proto"
 	_ "github.com/lib/pq"
 
+	"gitlab.com/fieldkit/cloud/server/backend/repositories"
 	"gitlab.com/fieldkit/cloud/server/common"
 	"gitlab.com/fieldkit/cloud/server/common/sqlxcache"
 	"gitlab.com/fieldkit/cloud/server/data"
-	"gitlab.com/fieldkit/cloud/server/backend/repositories"
 	pb "gitlab.com/fieldkit/libraries/data-protocol"
 )
 
@@ -37,11 +37,11 @@ const (
 )
 
 type StationInfo struct {
-	Station      *data.Station
-	Provision    *data.Provision
-	MetaRecord   *data.MetaRecord
+	Station       *data.Station
+	Provision     *data.Provision
+	MetaRecord    *data.MetaRecord
 	Configuration *data.StationConfiguration
-	Location     *data.Location
+	Location      *data.Location
 }
 
 type HardwareSimulator struct {
@@ -49,21 +49,21 @@ type HardwareSimulator struct {
 	Token       string
 	StationInfo *StationInfo
 	Client      *http.Client
-	
+
 	// State
-	ReadingNum  uint64
-	LastUpload  time.Time
-	mu          sync.Mutex
+	ReadingNum uint64
+	LastUpload time.Time
+	mu         sync.Mutex
 }
 
 func main() {
 	var (
-		apiURL     = flag.String("api", "http://localhost:8080", "API base URL")
-		token      = flag.String("token", "", "JWT token for authentication (required)")
-		dbURL      = flag.String("db", "", "PostgreSQL connection URL (required)")
-		stationID  = flag.Int("station-id", 0, "Station ID (0 to simulate all stations)")
-		interval   = flag.Duration("interval", 15*time.Minute, "Upload interval")
-		batchSize  = flag.Int("batch", 10, "Number of readings per upload")
+		apiURL    = flag.String("api", "http://localhost:8080", "API base URL")
+		token     = flag.String("token", "", "JWT token for authentication (required)")
+		dbURL     = flag.String("db", "", "PostgreSQL connection URL (required)")
+		stationID = flag.Int("station-id", 0, "Station ID (0 to simulate all stations)")
+		interval  = flag.Duration("interval", 15*time.Minute, "Upload interval")
+		batchSize = flag.Int("batch", 10, "Number of readings per upload")
 	)
 	flag.Parse()
 
@@ -281,14 +281,14 @@ func (s *HardwareSimulator) uploadBatch(batchSize int) error {
 		// Format thời gian theo GMT+7
 		recordTime := time.Unix(reading.Readings.Time, 0).In(vietnamTZ)
 		readingJSON := map[string]interface{}{
-			"station_id":    s.StationInfo.Station.ID,
-			"station_name":  s.StationInfo.Station.Name,
-			"reading_num":   reading.Readings.Reading,
-			"meta_number":   reading.Readings.Meta,
-			"time":          recordTime.Format(time.RFC3339),
-			"time_unix":     reading.Readings.Time,
-			"time_gmt7":     recordTime.Format("2006-01-02T15:04:05+07:00"),
-			"sensor_count":  len(reading.Readings.SensorGroups[0].Readings),
+			"station_id":   s.StationInfo.Station.ID,
+			"station_name": s.StationInfo.Station.Name,
+			"reading_num":  reading.Readings.Reading,
+			"meta_number":  reading.Readings.Meta,
+			"time":         recordTime.Format(time.RFC3339),
+			"time_unix":    reading.Readings.Time,
+			"time_gmt7":    recordTime.Format("2006-01-02T15:04:05+07:00"),
+			"sensor_count": len(reading.Readings.SensorGroups[0].Readings),
 			"location": map[string]interface{}{
 				"longitude": reading.Readings.Location.Longitude,
 				"latitude":  reading.Readings.Location.Latitude,
@@ -344,11 +344,11 @@ func (s *HardwareSimulator) uploadBatch(batchSize int) error {
 
 func (s *HardwareSimulator) generateReadings(count int) []*pb.DataRecord {
 	readings := make([]*pb.DataRecord, 0, count)
-	
+
 	// Sử dụng thời gian hiện tại GMT+7 (Vietnam timezone)
 	vietnamTZ, _ := time.LoadLocation("Asia/Ho_Chi_Minh")
 	now := time.Now().In(vietnamTZ)
-	
+
 	// Tạo random seed dựa trên station ID + timestamp để mỗi station có dữ liệu khác nhau
 	// và mỗi lần chạy cũng khác nhau
 	seed := int64(s.StationInfo.Station.ID)*1000000000 + now.UnixNano()
@@ -365,22 +365,22 @@ func (s *HardwareSimulator) generateReadings(count int) []*pb.DataRecord {
 	}
 
 	// Base values cho mỗi station (khác nhau dựa trên station ID)
-	stationOffset := float32(s.StationInfo.Station.ID % 100) / 10.0 // 0-9.9 offset
-	baseDepth := 8.0 + stationOffset // Mỗi station có base depth khác nhau
-	baseBattery := 70.0 + stationOffset*2.0 // Battery level khác nhau
-	baseHumidity := 50.0 + stationOffset*3.0 // Humidity khác nhau
-	basePressure := 101.3 + stationOffset*0.1 // Pressure khác nhau
-	baseTemp := 20.0 + stationOffset*1.5 // Temperature khác nhau
+	stationOffset := float32(s.StationInfo.Station.ID%100) / 10.0 // 0-9.9 offset
+	baseDepth := 8.0 + stationOffset                              // Mỗi station có base depth khác nhau
+	baseBattery := 70.0 + stationOffset*2.0                       // Battery level khác nhau
+	baseHumidity := 50.0 + stationOffset*3.0                      // Humidity khác nhau
+	basePressure := 101.3 + stationOffset*0.1                     // Pressure khác nhau
+	baseTemp := 20.0 + stationOffset*1.5                          // Temperature khác nhau
 
 	for i := 0; i < count; i++ {
 		// Mỗi bản tin sử dụng thời gian hiện tại (GMT+7)
 		// Nếu có nhiều readings trong batch, mỗi reading cách nhau 1 giây
 		recordTime := now.Add(time.Duration(i) * time.Second)
-		
+
 		// Tạo random seed mới cho mỗi reading để đảm bảo tính ngẫu nhiên
 		readingSeed := seed + int64(i)*1000 + int64(s.ReadingNum)
 		readingRand := rand.New(rand.NewSource(readingSeed))
-		
+
 		// Simulate depth: varies with time (tide simulation) + random variation
 		hour := float32(recordTime.Hour())
 		minute := float32(recordTime.Minute())
@@ -389,7 +389,7 @@ func (s *HardwareSimulator) generateReadings(count int) []*pb.DataRecord {
 		// Thêm variation nhỏ theo phút
 		minuteVariation := 0.5 * float32(sin(float64(minute*2*3.14159/60)))
 		tideBase := baseDepth + tideVariation + minuteVariation
-		
+
 		// Add random variation and occasional "flood" events
 		var depthInches float32
 		if readingRand.Float32() < 0.05 { // 5% chance of flood event
@@ -409,7 +409,7 @@ func (s *HardwareSimulator) generateReadings(count int) []*pb.DataRecord {
 		gpsVariation := (readingRand.Float32() - 0.5) * 0.002 // ±0.001 degree variation
 		longitude := baseLongitude + gpsVariation
 		latitude := baseLatitude + gpsVariation*0.8 // Latitude variation nhỏ hơn một chút
-		
+
 		// Random altitude (thay đổi theo thời gian và random)
 		altitude := 5.0 + readingRand.Float32()*3.0 - 1.5 // 3.5-8.5 meters
 
@@ -419,64 +419,51 @@ func (s *HardwareSimulator) generateReadings(count int) []*pb.DataRecord {
 		// Generate sensor values với random variation lớn hơn
 		// Sensor 0: depth (calibrated) - đã tính ở trên
 		sensor0Depth := depthInches
-		
-		// Sensor 1: depthUnfiltered - có noise lớn hơn
-		sensor1Depth := depthInches + (readingRand.Float32()-0.5)*1.5
+
+		// Sensor 1: depthUnfiltered - có noise nhỏ hơn (match với auto_seed: depthInches + (mrand.Float32()-0.5)*0.8)
+		sensor1Depth := depthInches + (readingRand.Float32()-0.5)*0.8
 		if sensor1Depth < 0 {
 			sensor1Depth = 0.1
 		}
-		
-		// Sensor 2: distance - tính từ depth với random variation
-		sensor2Distance := depthInches * 25.4 + (readingRand.Float32()-0.5)*5.0 // mm
+
+		// Sensor 2: distance - tính từ depth với random variation lớn hơn (match với auto_seed: depthInches*25.4 + (mrand.Float32()-0.5)*15.0)
+		sensor2Distance := depthInches*25.4 + (readingRand.Float32()-0.5)*15.0 // mm (match với auto_seed)
 		if sensor2Distance < 0 {
 			sensor2Distance = 0.1
 		}
-		
+
 		// Sensor 3: battery - giảm dần theo thời gian + random variation
-		// Battery giảm nhẹ theo số readings
+		// Match với auto_seed: 75.0 + (mrand.Float32()-0.5)*10.0 = 70.0-80.0
+		// Nhưng hardware_sim có baseBattery khác nhau cho mỗi station, nên giữ logic này
 		batteryDrain := float32(s.ReadingNum) * 0.001 // Giảm 0.1% mỗi 100 readings
-		sensor3Battery := baseBattery - batteryDrain + (readingRand.Float32()-0.5)*3.0
-		if sensor3Battery < 0 {
-			sensor3Battery = 0.1
-		}
-		if sensor3Battery > 100 {
-			sensor3Battery = 100
-		}
-		
+		// Variation ±5.0 để match với auto_seed (10.0/2)
+		sensor3Battery := clampFloat(baseBattery-batteryDrain+(readingRand.Float32()-0.5)*10.0, 0, 100)
+
 		// Sensor 4: tideFeet - từ tideBase với random
 		sensor4Tide := (tideBase / 12.0) + (readingRand.Float32()-0.5)*0.2 // feet
-		
+
 		// Sensor 5: humidity - thay đổi theo thời gian + random
+		// Match với auto_seed: clampFloat(60.0+(mrand.Float32()-0.5)*25.0, 0, 100) = 47.5-72.5 (clamped)
+		// Hardware_sim có baseHumidity khác nhau cho mỗi station, nên giữ logic này
 		hourHumidity := float32(sin(float64(hour*2*3.14159/24))) * 10.0 // Variation theo giờ
-		sensor5Humidity := baseHumidity + hourHumidity + (readingRand.Float32()-0.5)*8.0
-		if sensor5Humidity < 0 {
-			sensor5Humidity = 0.1
-		}
-		if sensor5Humidity > 100 {
-			sensor5Humidity = 100
-		}
-		
-		// Sensor 6: pressure - thay đổi nhẹ theo thời gian + random
-		pressureVariation := (readingRand.Float32() - 0.5) * 3.0 // ±1.5 kPa
+		sensor5Humidity := clampFloat(baseHumidity+hourHumidity+(readingRand.Float32()-0.5)*25.0, 0, 100)
+
+		// Sensor 6: pressure - thay đổi nhẹ theo thời gian + random (match với auto_seed)
+		pressureVariation := (readingRand.Float32() - 0.5) * 4.0 // ±2.0 kPa (match với auto_seed)
 		sensor6Pressure := basePressure + pressureVariation
-		
-		// Sensor 7: altitude - random variation
-		sensor7Altitude := altitude + (readingRand.Float32()-0.5)*2.0
-		if sensor7Altitude < 0 {
-			sensor7Altitude = 0.1
-		}
-		
-		// Sensor 8: temperature - thay đổi theo giờ + random
-		hourTemp := float32(sin(float64(hour*2*3.14159/24))) * 5.0 // Variation theo giờ
-		sensor8Temp := baseTemp + hourTemp + (readingRand.Float32()-0.5)*4.0
-		
-		// Sensor 9: sdError - thỉnh thoảng có lỗi
-		var sensor9Error float32
-		if readingRand.Float32() < 0.02 { // 2% chance of error
-			sensor9Error = 1.0 + readingRand.Float32()*2.0 // 1-3 error code
-		} else {
-			sensor9Error = 0.0
-		}
+
+		// Sensor 7: altitude - random variation (match với auto_seed: 3.0 + mrand.Float32()*4.0)
+		sensor7Altitude := 3.0 + readingRand.Float32()*4.0 // 3.0-7.0 meters (match với auto_seed)
+
+		// Sensor 8: temperature - thay đổi theo giờ + random (match với auto_seed: 26.0 + (mrand.Float32()-0.5)*6.0)
+		// Hardware_sim có baseTemp khác nhau cho mỗi station, nên điều chỉnh để match range
+		hourTemp := float32(sin(float64(hour*2*3.14159/24))) * 2.0 // Variation theo giờ (nhỏ hơn)
+		// Điều chỉnh baseTemp để match với auto_seed range (26.0 ± 3.0)
+		adjustedBaseTemp := baseTemp + 6.0 // Điều chỉnh để match với auto_seed (20.0 + 6.0 = 26.0)
+		sensor8Temp := adjustedBaseTemp + hourTemp + (readingRand.Float32()-0.5)*6.0
+
+		// Sensor 9: sdError - sử dụng helper function từ auto_seed
+		sensor9Error := sdErrorValue(readingRand)
 
 		reading := &pb.DataRecord{
 			Readings: &pb.Readings{
@@ -498,15 +485,16 @@ func (s *HardwareSimulator) generateReadings(count int) []*pb.DataRecord {
 						Time:   int64(recordTime.Unix()),
 						Readings: []*pb.SensorAndValue{
 							// FIXED: Sử dụng đúng số lượng sensors từ DB (10 sensors, ordering 0-9)
+							// FIXED: Chuyển sensors 1, 2, 5, 6, 7, 8 sang Calibrated để match với auto_seed
 							{Sensor: 0, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: sensor0Depth}},
-							{Sensor: 1, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{UncalibratedValue: sensor1Depth}},
-							{Sensor: 2, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{UncalibratedValue: sensor2Distance}},
+							{Sensor: 1, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: sensor1Depth}},
+							{Sensor: 2, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: sensor2Distance}},
 							{Sensor: 3, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: sensor3Battery}},
 							{Sensor: 4, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: sensor4Tide}},
-							{Sensor: 5, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{UncalibratedValue: sensor5Humidity}},
-							{Sensor: 6, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{UncalibratedValue: sensor6Pressure}},
-							{Sensor: 7, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{UncalibratedValue: sensor7Altitude}},
-							{Sensor: 8, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{UncalibratedValue: sensor8Temp}},
+							{Sensor: 5, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: sensor5Humidity}},
+							{Sensor: 6, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: sensor6Pressure}},
+							{Sensor: 7, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: sensor7Altitude}},
+							{Sensor: 8, Calibrated: &pb.SensorAndValue_CalibratedValue{CalibratedValue: sensor8Temp}},
 							{Sensor: 9, Uncalibrated: &pb.SensorAndValue_UncalibratedValue{UncalibratedValue: sensor9Error}}, // sdError
 						},
 					},
@@ -523,7 +511,7 @@ func (s *HardwareSimulator) generateReadings(count int) []*pb.DataRecord {
 
 func (s *HardwareSimulator) uploadIngestion(dataType string, data []byte) (*IngestionResponse, error) {
 	url := fmt.Sprintf("%s/ingestion", s.APIURL)
-	
+
 	req, err := http.NewRequest("POST", url, bytes.NewReader(data))
 	if err != nil {
 		return nil, err
@@ -536,7 +524,7 @@ func (s *HardwareSimulator) uploadIngestion(dataType string, data []byte) (*Inge
 	req.Header.Set("Fk-DeviceId", hex.EncodeToString(s.StationInfo.Station.DeviceID))
 	req.Header.Set("Fk-Generation", hex.EncodeToString(s.StationInfo.Provision.GenerationID))
 	req.Header.Set("Fk-Type", dataType)
-	
+
 	// For meta, blocks should be "1,1" (first block, last block)
 	// For data, blocks should be "1,<reading_number>"
 	blocksValue := fmt.Sprintf("1,%d", s.ReadingNum)
@@ -555,7 +543,7 @@ func (s *HardwareSimulator) uploadIngestion(dataType string, data []byte) (*Inge
 	defer resp.Body.Close()
 
 	bodyBytes, _ := io.ReadAll(resp.Body)
-	
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("upload failed: status %d, body: %s, url: %s", resp.StatusCode, string(bodyBytes), url)
 	}
@@ -605,4 +593,23 @@ func normalizeAPIURL(rawURL string) (string, error) {
 	}
 
 	return normalized.String(), nil
+}
+
+// clampFloat giới hạn giá trị trong khoảng min-max (helper function từ auto_seed)
+func clampFloat(value float32, min float32, max float32) float32 {
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+	return value
+}
+
+// sdErrorValue tạo giá trị error cho sensor 9 (helper function từ auto_seed)
+func sdErrorValue(r *rand.Rand) float32 {
+	if r.Float32() < 0.02 {
+		return 1.0 + r.Float32()*2.0
+	}
+	return 0.0
 }
