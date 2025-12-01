@@ -1,0 +1,466 @@
+\section{Hướng Dẫn Triển Khai Sản Phẩm}
+
+\subsection{Giới Thiệu}
+
+Chương này trình bày hướng dẫn chi tiết và toàn diện về cách triển khai sản phẩm FieldKit Cloud, bao gồm các bước cài đặt, cấu hình và chạy ứng dụng trong cả môi trường phát triển local và môi trường production trên đám mây. Quá trình triển khai một hệ thống phức tạp như FieldKit Cloud đòi hỏi sự hiểu biết về nhiều công nghệ và công cụ khác nhau, từ containerization với Docker đến cloud infrastructure với AWS.
+
+Việc triển khai được chia thành hai phần chính: triển khai local cho mục đích phát triển và testing, và triển khai trên đám mây cho môi trường production. Mỗi phần có các yêu cầu và quy trình riêng, nhưng đều tuân theo các nguyên tắc chung về containerization, configuration management, và best practices. Chương này cung cấp hướng dẫn step-by-step cho cả hai scenarios, với các ví dụ cụ thể và giải thích chi tiết về lý do của mỗi bước.
+
+Quá trình triển khai FieldKit Cloud được thiết kế để đảm bảo tính nhất quán giữa các môi trường khác nhau, từ development đến production. Điều này được thực hiện thông qua việc sử dụng Docker containers cho tất cả các services, cho phép "build once, run anywhere". Các configuration được quản lý thông qua environment variables và secrets management, đảm bảo tính bảo mật và linh hoạt.
+
+\subsection{Yêu Cầu Hệ Thống}
+
+\subsubsection{Yêu Cầu Phần Cứng (Local Development)}
+\begin{itemize}
+    \item CPU: tối thiểu 4 cores (khuyến nghị 8 cores)
+    \item RAM: tối thiểu 8GB (khuyến nghị 16GB)
+    \item Ổ cứng: tối thiểu 50GB dung lượng trống (cho Docker images và data)
+    \item Network: Kết nối internet ổn định để pull images và dependencies
+\end{itemize}
+
+\subsubsection{Yêu Cầu Phần Mềm}
+\begin{itemize}
+    \item Hệ điều hành: Linux/Windows/macOS
+    \item Docker: Version 19.03.12 trở lên
+    \item Docker Compose: Version 1.29 trở lên
+    \item Go: Version 1.17 trở lên (cho backend development)
+    \item Node.js: Version 12.18.1 trở lên (cho frontend development)
+    \item Yarn hoặc npm: Để quản lý frontend dependencies
+    \item Git: Để clone repository
+    \item AWS CLI: Version 2 trở lên (cho cloud deployment)
+    \item jq: Để xử lý JSON trong deployment scripts
+\end{itemize}
+
+\subsection{Cài Đặt Môi Trường Phát Triển}
+
+\subsubsection{Cài Đặt Dependencies}
+
+\textbf{Clone repository:}
+\begin{lstlisting}[language=bash, caption=Clone repository]
+git clone https://github.com/caprocute/fieldkit-csht-cloud-v2
+cd cloud
+\end{lstlisting}
+
+\textbf{Cài đặt Go dependencies:}
+\begin{lstlisting}[language=bash, caption=Cài đặt Go dependencies]
+cd server
+go mod download
+\end{lstlisting}
+
+\textbf{Cài đặt Node.js dependencies:}
+\begin{lstlisting}[language=bash, caption=Cài đặt Node.js dependencies]
+cd portal
+yarn install
+# hoặc
+npm install
+\end{lstlisting}
+
+\textbf{Cài đặt Charting service dependencies:}
+\begin{lstlisting}[language=bash, caption=Cài đặt Charting dependencies]
+cd charting
+npm install
+\end{lstlisting}
+
+\subsubsection{Cấu Hình Biến Môi Trường}
+
+Tạo file \texttt{portal/src/secrets.ts} từ template:
+\begin{lstlisting}[language=bash, caption=Tạo secrets file]
+cp portal/src/secrets.ts.template portal/src/secrets.ts
+\end{lstlisting}
+
+Cấu hình biến môi trường cho local development (trong \texttt{docker-compose.yml} hoặc \texttt{.env}):
+\begin{lstlisting}[language=bash, caption=Cấu hình biến môi trường]
+# Database
+POSTGRES_DB=fieldkit
+POSTGRES_USER=fieldkit
+POSTGRES_PASSWORD=your_password
+
+# Server
+FIELDKIT_ADDR=:80
+FIELDKIT_HTTP_SCHEME=http
+FIELDKIT_PORTAL_ROOT=/portal
+FIELDKIT_POSTGRES_URL=postgresql://fieldkit:password@postgres:5432/fieldkit
+FIELDKIT_TIME_SCALE_URL=postgresql://postgres:password@timescale:5432/fk
+\end{lstlisting}
+
+\subsection{Triển Khai Cơ Sở Dữ Liệu}
+
+Việc triển khai cơ sở dữ liệu là bước đầu tiên và quan trọng nhất trong quá trình setup hệ thống FieldKit Cloud. Hệ thống sử dụng hai database riêng biệt: PostgreSQL với PostGIS extension cho dữ liệu quan hệ và TimescaleDB cho dữ liệu time-series. Cả hai database đều được containerized và có thể chạy trên cùng một máy local hoặc trên các containers riêng biệt trong môi trường production.
+
+Quá trình triển khai database bắt đầu với việc khởi động các database containers sử dụng Docker Compose. Docker Compose là một công cụ cho phép định nghĩa và chạy multi-container Docker applications. File \texttt{docker-compose.yml} chứa định nghĩa cho tất cả các services bao gồm PostgreSQL, TimescaleDB, và các services khác. Lệnh \texttt{docker-compose up -d} khởi động các containers ở chế độ detached (chạy nền), cho phép terminal tiếp tục sử dụng được trong khi containers đang chạy. Flag \texttt{-d} là viết tắt của "detached mode".
+
+Sau khi các database containers đã được khởi động, bước tiếp theo là chạy database migrations. Migrations là các scripts SQL được version control, cho phép quản lý schema database một cách có hệ thống. Mỗi migration file chứa các thay đổi schema như tạo bảng, thêm cột, hoặc tạo indexes. Hệ thống migration cho phép apply các thay đổi theo thứ tự và có thể rollback nếu cần. Script \texttt{run-migrations-local.sh} tự động detect và chạy tất cả các migration files chưa được apply, đảm bảo database schema luôn đồng bộ với code.
+
+Việc verify database connection là bước quan trọng để đảm bảo database đã được setup đúng cách và có thể truy cập được. Lệnh \texttt{psql} là PostgreSQL command-line client, cho phép kết nối và thực thi queries trên database. Lệnh \texttt{SELECT version()} trả về version của PostgreSQL đang chạy, giúp confirm rằng database đã được khởi động thành công và có thể truy cập được.
+
+\textbf{Chạy Docker Compose để khởi động databases:}
+\begin{lstlisting}[language=bash, caption=Khởi động databases với Docker Compose]
+docker-compose up -d postgres timescale
+\end{lstlisting}
+
+Lệnh này sẽ pull các Docker images cần thiết (nếu chưa có), tạo và khởi động các containers cho PostgreSQL và TimescaleDB. Containers sẽ chạy ở chế độ background, và logs có thể được xem bằng lệnh \texttt{docker-compose logs -f postgres timescale}.
+
+\textbf{Chạy database migrations:}
+\begin{lstlisting}[language=bash, caption=Chạy migrations]
+# Sử dụng migration tool
+./deployment/run-migrations-local.sh
+
+# Hoặc chạy trực tiếp
+docker-compose run --rm migrations
+\end{lstlisting}
+
+Script \texttt{run-migrations-local.sh} tự động detect environment (local), kết nối đến database, và chạy tất cả các migration files chưa được apply. Script sử dụng migration tool được viết bằng Go, đảm bảo migrations được chạy theo đúng thứ tự và có error handling tốt.
+
+\textbf{Xác minh kết nối database:}
+\begin{lstlisting}[language=bash, caption=Kiểm tra kết nối database]
+docker-compose exec postgres psql -U fieldkit -d fieldkit -c "SELECT version();"
+\end{lstlisting}
+
+Lệnh này kết nối đến PostgreSQL container và thực thi một query đơn giản để verify connection. Nếu thành công, sẽ hiển thị version của PostgreSQL. Có thể thử các queries khác như \texttt{SELECT COUNT(*) FROM information\_schema.tables;} để kiểm tra số lượng bảng đã được tạo sau khi chạy migrations.
+
+\subsection{Triển Khai Backend Services}
+
+\subsubsection{Chạy Server Service (Local)}
+
+\textbf{Build và chạy server:}
+\begin{lstlisting}[language=bash, caption=Build và chạy server]
+# Build server binary
+cd server
+make build
+
+# Hoặc sử dụng script
+./run-server.sh
+\end{lstlisting}
+
+Server sẽ chạy ở \texttt{http://localhost:8080} và serve cả API và Portal.
+
+\subsubsection{Chạy Charting Service (Local)}
+
+\textbf{Chạy charting service:}
+\begin{lstlisting}[language=bash, caption=Chạy charting service]
+cd charting
+npm run dev
+# hoặc
+./run-charting.sh
+\end{lstlisting}
+
+Charting service sẽ chạy ở \texttt{http://localhost:3000}.
+
+\subsection{Triển Khai Frontend}
+
+\textbf{Development mode:}
+\begin{lstlisting}[language=bash, caption=Chạy Portal ở development mode]
+cd portal
+yarn serve
+# hoặc
+npm run serve
+\end{lstlisting}
+
+\textbf{Production build:}
+\begin{lstlisting}[language=bash, caption=Build Portal cho production]
+cd portal
+yarn build
+# hoặc
+npm run build
+\end{lstlisting}
+
+Build output sẽ được tạo trong thư mục \texttt{portal/dist/}, sau đó được copy vào Docker image khi build server image.
+
+\subsection{Triển Khai Trên Đám Mây}
+
+\subsubsection{Cấu Hình Tài Khoản Đám Mây}
+
+\textbf{Prerequisites:}
+\begin{itemize}
+    \item AWS account với appropriate permissions
+    \item AWS CLI đã được cài đặt và cấu hình
+    \item AWS credentials đã được setup (\texttt{aws configure})
+    \item Docker đã được cài đặt và đang chạy
+\end{itemize}
+
+\textbf{Cấu hình AWS credentials:}
+\begin{lstlisting}[language=bash, caption=Cấu hình AWS]
+aws configure
+# Nhập AWS Access Key ID
+# Nhập AWS Secret Access Key
+# Chọn region (ví dụ: us-east-1)
+# Chọn output format (json)
+\end{lstlisting}
+
+\subsubsection{Triển Khai Infrastructure}
+
+Triển khai infrastructure trên AWS là một quá trình phức tạp đòi hỏi setup nhiều components khác nhau theo đúng thứ tự. Quá trình này được tự động hóa thông qua các bash scripts để đảm bảo tính nhất quán và giảm thiểu lỗi do thao tác thủ công. Mỗi script được thiết kế để idempotent, nghĩa là có thể chạy nhiều lần mà không gây ra side effects, giúp dễ dàng retry khi có lỗi.
+
+Bước đầu tiên trong việc setup infrastructure là cấu hình IAM (Identity and Access Management) roles và policies. IAM là dịch vụ quản lý quyền truy cập của AWS, cho phép kiểm soát ai có thể truy cập vào tài nguyên nào và thực hiện hành động gì. Script \texttt{setup-iam-policy.sh} tạo các IAM policies cần thiết cho deployment, bao gồm quyền truy cập ECR (để push/pull images), ECS (để create/update services), Secrets Manager (để read secrets), và CloudWatch Logs (để write logs). Script \texttt{setup-ecs-roles.sh} tạo các IAM roles cho ECS tasks, bao gồm task execution role (để pull images và write logs) và task role (để access AWS services từ trong containers). Các roles này tuân theo nguyên tắc least privilege, chỉ cấp quyền tối thiểu cần thiết.
+
+Bước thứ hai là tạo các ECR repositories để lưu trữ Docker container images. ECR là AWS Elastic Container Registry, một dịch vụ Docker registry được quản lý hoàn toàn. Mỗi service trong FieldKit Cloud có một repository riêng: server (chứa Go backend và Vue.js frontend), charting (chứa Node.js charting service), và migrations (chứa database migration tool). Việc tách riêng repositories giúp quản lý versions độc lập và có thể apply different lifecycle policies cho mỗi service. Mỗi repository được cấu hình với image scanning tự động để phát hiện vulnerabilities và lifecycle policies để tự động xóa images cũ.
+
+Bước thứ ba là setup AWS Secrets Manager để lưu trữ các thông tin nhạy cảm như database credentials và session keys. Secrets Manager là một dịch vụ quản lý secrets an toàn, với encryption at rest và in transit, và automatic rotation. Script \texttt{setup-database-secrets.sh} tạo các secrets cho PostgreSQL và TimescaleDB connection URLs và passwords. Script \texttt{setup-session-key.sh} tạo session encryption key được sử dụng để encrypt session data. Tất cả secrets được lưu trữ với naming convention \texttt{fieldkit/<ENV>/...} để dễ quản lý và có thể có different values cho different environments.
+
+Bước thứ tư là tạo các ECS clusters. ECS cluster là một logical grouping của ECS tasks và services. FieldKit Cloud sử dụng hai clusters riêng biệt: một cho application services (server, charting) và một cho database services (PostgreSQL, TimescaleDB). Việc tách riêng clusters giúp quản lý resources độc lập và có thể apply different scaling policies. Mỗi cluster được đặt tên với pattern \texttt{fieldkit-<ENV>-<TYPE>} để dễ identify.
+
+Bước thứ năm là setup các Load Balancers. Application Load Balancer (ALB) được sử dụng để route HTTP/HTTPS traffic đến server service, trong khi Network Load Balancer (NLB) được sử dụng để expose PostgreSQL database (cho development/testing purposes). Script \texttt{setup-load-balancer.sh} tạo ALB với target group, listener, và security groups. Script \texttt{setup-postgres-public.sh} tạo NLB để expose PostgreSQL, với security groups chỉ cho phép traffic từ whitelisted IPs.
+
+\textbf{Bước 1: Thiết lập IAM roles và policies}
+\begin{lstlisting}[language=bash, caption=Thiết lập IAM]
+./deployment/setup-iam-policy.sh
+./deployment/setup-ecs-roles.sh
+\end{lstlisting}
+
+Các scripts này tạo các IAM resources cần thiết với proper permissions. Scripts sử dụng AWS CLI để tạo policies và roles, và output các ARNs (Amazon Resource Names) để sử dụng trong các bước tiếp theo.
+
+\textbf{Bước 2: Tạo ECR repositories}
+\begin{lstlisting}[language=bash, caption=Tạo ECR repositories]
+aws ecr create-repository --repository-name hieuhk_fieldkit/server
+aws ecr create-repository --repository-name hieuhk_fieldkit/charting
+aws ecr create-repository --repository-name hieuhk_fieldkit/migrations
+\end{lstlisting}
+
+Mỗi repository được tạo với image scanning enabled và lifecycle policy để tự động xóa images cũ hơn 30 ngày (có thể customize). Repositories được tạo trong cùng AWS region để minimize latency khi pull images.
+
+\textbf{Bước 3: Thiết lập Secrets Manager}
+\begin{lstlisting}[language=bash, caption=Thiết lập secrets]
+./deployment/setup-database-secrets.sh <ENV>
+./deployment/setup-session-key.sh <ENV>
+\end{lstlisting}
+
+Scripts này tạo secrets với random passwords (cho databases) và random keys (cho session encryption). Secrets được encrypt với AWS KMS và chỉ có thể được access bởi IAM roles được chỉ định.
+
+\textbf{Bước 4: Tạo ECS clusters}
+\begin{lstlisting}[language=bash, caption=Tạo ECS clusters]
+aws ecs create-cluster --cluster-name fieldkit-<ENV>-app
+aws ecs create-cluster --cluster-name fieldkit-<ENV>-db-v1
+\end{lstlisting}
+
+Clusters được tạo với default settings. Có thể customize capacity providers, container insights, và logging settings sau khi tạo.
+
+\textbf{Bước 5: Thiết lập Load Balancers}
+\begin{lstlisting}[language=bash, caption=Thiết lập load balancers]
+./deployment/setup-load-balancer.sh <ENV>
+./deployment/setup-postgres-public.sh <ENV>
+\end{lstlisting}
+
+Scripts này tạo load balancers với proper security groups, target groups, và listeners. ALB được cấu hình với health checks để chỉ route traffic đến healthy targets.
+
+\subsubsection{Triển Khai Ứng Dụng}
+
+Sau khi infrastructure đã được setup, bước tiếp theo là build và deploy các ứng dụng. Quá trình này được thực hiện theo thứ tự cụ thể để đảm bảo dependencies được đáp ứng: databases phải được deploy trước application services, và migrations phải được chạy trước khi application services có thể hoạt động đúng cách.
+
+Bước đầu tiên là build và push Docker images lên ECR. Script \texttt{build-and-push.sh} thực hiện multi-stage Docker builds cho tất cả services. Multi-stage builds giúp tạo ra images nhỏ gọn hơn bằng cách chỉ include runtime dependencies, không include build tools và source code. Mỗi image được tag với version number (được truyền vào như parameter) và environment tag (latest cho environment cụ thể). Images được push lên ECR repositories tương ứng. Quá trình build có thể mất vài phút tùy thuộc vào kích thước của codebase và số lượng dependencies.
+
+Bước thứ hai là deploy database services. Script \texttt{deploy-database.sh} tạo ECS task definitions và services cho PostgreSQL và TimescaleDB. Task definitions định nghĩa container images, CPU/memory requirements, environment variables, và secrets. Services quản lý số lượng tasks đang chạy và đảm bảo luôn có đủ healthy tasks. Database services được deploy trước vì application services cần kết nối đến databases khi khởi động. Script đợi cho đến khi databases đã healthy (pass health checks) trước khi tiếp tục.
+
+Bước thứ ba là chạy database migrations. Script \texttt{run-migrations.sh} chạy migration tool như một ECS task one-time (không phải service). Task này kết nối đến database, kiểm tra migration status, và apply các migrations chưa được apply. Script đợi cho đến khi migrations hoàn thành thành công. Nếu migrations fail, script sẽ exit với error code, và deployment process sẽ dừng lại để có thể investigate và fix issues.
+
+Bước thứ tư là deploy application services. Script \texttt{create-ecs-services.sh} tạo ECS services cho server và charting services nếu chưa tồn tại. Script \texttt{deploy-server.sh} update existing service với new task definition (new image version). ECS thực hiện rolling update: start new tasks với new version, đợi chúng pass health checks, sau đó stop old tasks. Quá trình này đảm bảo zero downtime deployment. Script monitor deployment progress và đợi cho đến khi tất cả tasks đã được update thành công.
+
+Bước cuối cùng là verify deployment. Việc này bao gồm kiểm tra service status trong ECS console hoặc qua AWS CLI, và test health check endpoint. Health check endpoint \texttt{/status} trả về status của server và các dependencies (databases). Nếu health check pass, có nghĩa là deployment đã thành công và service đã sẵn sàng nhận traffic.
+
+\textbf{Bước 1: Build và push Docker images}
+\begin{lstlisting}[language=bash, caption=Build và push images]
+./deployment/build-and-push.sh <VERSION> <ENV>
+\end{lstlisting}
+
+Script này thực hiện các bước sau:
+\begin{itemize}
+    \item Build Docker images cho server, charting, và migrations sử dụng multi-stage builds
+    \item Tag images với version number (ví dụ: v1.0.0) và environment tag (ví dụ: staging-latest)
+    \item Authenticate với ECR sử dụng AWS CLI
+    \item Push images lên ECR repositories tương ứng
+    \item Output image URIs để sử dụng trong các bước tiếp theo
+\end{itemize}
+
+Quá trình build có thể mất 5-10 phút tùy thuộc vào kích thước codebase và network speed. Script sử dụng Docker build cache để speed up subsequent builds.
+
+\textbf{Bước 2: Triển khai database services}
+\begin{lstlisting}[language=bash, caption=Triển khai databases]
+./deployment/deploy-database.sh <ENV>
+\end{lstlisting}
+
+Script này tạo hoặc update ECS task definitions và services cho PostgreSQL và TimescaleDB. Script đợi cho đến khi services đã stable và tất cả tasks đã pass health checks. Health checks sử dụng \texttt{pg\_isready} command để verify database connectivity.
+
+\textbf{Bước 3: Chạy database migrations}
+\begin{lstlisting}[language=bash, caption=Chạy migrations]
+./deployment/run-migrations.sh <ENV>
+\end{lstlisting}
+
+Script này chạy migration tool như một ECS task one-time. Task kết nối đến database, check migration status, và apply pending migrations. Script output migration logs và exit với success code nếu tất cả migrations thành công.
+
+\textbf{Bước 4: Triển khai application services}
+\begin{lstlisting}[language=bash, caption=Triển khai applications]
+./deployment/create-ecs-services.sh <ENV>
+./deployment/deploy-server.sh <VERSION> <ENV>
+\end{lstlisting}
+
+Script \texttt{create-ecs-services.sh} tạo ECS services nếu chưa tồn tại. Script \texttt{deploy-server.sh} update service với new task definition. ECS thực hiện rolling update để đảm bảo zero downtime. Script monitor deployment và đợi completion.
+
+\textbf{Bước 5: Xác minh triển khai}
+\begin{lstlisting}[language=bash, caption=Xác minh triển khai]
+# Kiểm tra service status
+aws ecs describe-services --cluster fieldkit-<ENV>-app --services fieldkit-server
+
+# Kiểm tra health check
+curl http://<ALB-DNS>/status
+\end{lstlisting}
+
+Lệnh đầu tiên kiểm tra service status trong ECS, bao gồm số lượng running tasks, desired count, và deployment status. Lệnh thứ hai test health check endpoint. Response nên trả về JSON với status "ok" và thông tin về databases.
+
+\subsection{Triển Khai Module Giả Lập Trên Google Cloud Platform}
+
+Module giả lập dữ liệu được triển khai trên Google Cloud Platform, sử dụng Cloud Run và Cloud Scheduler. Quá trình triển khai bao gồm các bước sau:
+
+\subsubsection{Cấu Hình Google Cloud}
+
+\textbf{Bước 1: Setup Google Cloud Project}
+\begin{lstlisting}[language=bash, caption=Setup GCP project]
+# Cài đặt Google Cloud SDK
+# Tạo project mới hoặc chọn project hiện có
+gcloud projects create fieldkit-simulator
+gcloud config set project fieldkit-simulator
+
+# Enable required APIs
+gcloud services enable run.googleapis.com
+gcloud services enable cloudscheduler.googleapis.com
+gcloud services enable artifactregistry.googleapis.com
+\end{lstlisting}
+
+\textbf{Bước 2: Build và Push Container Image}
+\begin{lstlisting}[language=bash, caption=Build và push image lên GCR]
+# Build Docker image
+docker build -t gcr.io/fieldkit-simulator/simulator:latest .
+
+# Authenticate với GCR
+gcloud auth configure-docker
+
+# Push image
+docker push gcr.io/fieldkit-simulator/simulator:latest
+\end{lstlisting}
+
+\textbf{Bước 3: Deploy lên Cloud Run}
+\begin{lstlisting}[language=bash, caption=Deploy lên Cloud Run]
+gcloud run deploy simulator \
+  --image gcr.io/fieldkit-simulator/simulator:latest \
+  --platform managed \
+  --region asia-southeast1 \
+  --allow-unauthenticated \
+  --set-env-vars "API_URL=https://fieldkit-api.example.com" \
+  --set-env-vars "API_KEY=your-api-key"
+\end{lstlisting}
+
+\textbf{Bước 4: Setup Cloud Scheduler}
+\begin{lstlisting}[language=bash, caption=Setup Cloud Scheduler]
+gcloud scheduler jobs create http simulator-job \
+  --schedule="*/5 * * * *" \
+  --uri="https://simulator-xxx.run.app" \
+  --http-method=POST \
+  --time-zone="Asia/Ho_Chi_Minh"
+\end{lstlisting}
+
+\subsubsection{Cấu Hình và Testing}
+
+Module được cấu hình thông qua environment variables trong Cloud Run:
+\begin{itemize}
+    \item \texttt{API\_URL}: URL của FieldKit Cloud API endpoint
+    \item \texttt{API\_KEY}: API key để authenticate với FieldKit Cloud
+    \item \texttt{STATION\_ID}: ID của station để simulate
+    \item \texttt{INTERVAL}: Interval giữa các lần generate data
+    \item \texttt{SENSOR\_TYPE}: Loại sensor cần simulate
+\end{itemize}
+
+Sau khi deploy, có thể test bằng cách manually trigger Cloud Run service hoặc đợi Cloud Scheduler trigger. Logs có thể được xem trong Cloud Logging để verify module hoạt động đúng.
+
+\subsection{Link Source Code}
+
+Source code của sản phẩm được lưu trữ tại:
+\begin{itemize}
+    \item \textbf{GitHub Repository}: \url{https://github.com/caprocute/fieldkit-csht-cloud-v2}
+    \item \textbf{Documentation}: Xem thêm trong \texttt{README.md} và \texttt{ARCHITECTURE.md}
+    \item \textbf{Deployment Scripts}: Tất cả scripts nằm trong thư mục \texttt{deployment/}
+    \item \textbf{Simulator Module}: Code của simulator module nằm trong \texttt{server/cmd/floodnet-simulator/}
+\end{itemize}
+
+\subsection{CI/CD Pipeline}
+
+Hiện tại, deployment của FieldKit Cloud được thực hiện thủ công thông qua các bash scripts. Mặc dù các scripts này đã được tối ưu hóa và có error handling tốt, quá trình deployment vẫn yêu cầu manual intervention và có thể mất thời gian. Trong tương lai, hệ thống có thể được tích hợp với các CI/CD platforms để tự động hóa hoàn toàn quá trình từ code commit đến production deployment.
+
+CI/CD (Continuous Integration/Continuous Deployment) là một practice quan trọng trong software development hiện đại, cho phép tự động hóa việc testing, building, và deploying code. Điều này giúp giảm thiểu lỗi do human error, tăng tốc độ delivery, và đảm bảo tính nhất quán giữa các environments. Có nhiều CI/CD platforms có thể được sử dụng, mỗi platform có ưu nhược điểm riêng.
+
+GitLab CI/CD là một lựa chọn phổ biến, đặc biệt nếu code repository được host trên GitLab. GitLab CI/CD sử dụng file \texttt{.gitlab-ci.yml} để định nghĩa pipeline. Pipeline có thể được chia thành các stages như build, test, và deploy. Mỗi stage có thể có nhiều jobs chạy song song. GitLab CI/CD tích hợp tốt với Docker và có thể dễ dàng authenticate với AWS để push images lên ECR và deploy lên ECS. Pipeline có thể được cấu hình để chỉ chạy tests trên mọi commit, nhưng chỉ deploy khi merge vào main branch hoặc khi tạo release tag.
+
+GitHub Actions là một lựa chọn khác, đặc biệt nếu code repository được host trên GitHub. GitHub Actions sử dụng YAML files trong thư mục \texttt{.github/workflows/} để định nghĩa workflows. Tương tự GitLab CI/CD, GitHub Actions có thể chạy tests, build images, và deploy. GitHub Actions có marketplace với nhiều actions có sẵn để tích hợp với AWS, giúp dễ dàng setup authentication và deploy. Workflows có thể được trigger bởi nhiều events như push, pull request, hoặc manual dispatch.
+
+Quy trình deployment tự động sẽ hoạt động như sau: Khi developer push code lên repository, CI/CD pipeline sẽ tự động trigger. Pipeline đầu tiên sẽ chạy automated tests bao gồm unit tests, integration tests, và có thể cả end-to-end tests. Nếu tests pass, pipeline sẽ tiếp tục build Docker images. Images được build với tags dựa trên commit hash và branch name. Sau khi build thành công, images được push lên ECR. Pipeline sau đó sẽ update ECS task definitions với new image URIs và trigger deployment. ECS sẽ thực hiện rolling update để deploy new version. Nếu có database migrations, pipeline sẽ chạy migration tool như một ECS task. Cuối cùng, pipeline sẽ verify deployment bằng cách test health check endpoint. Nếu bất kỳ bước nào fail, pipeline sẽ dừng lại và notify team qua email hoặc Slack.
+
+\textbf{GitLab CI/CD:}
+\begin{itemize}
+    \item Automated testing khi có commit mới: Pipeline tự động chạy test suite trên mọi commit để đảm bảo code quality
+    \item Automated build và push images khi merge vào main branch: Chỉ build và deploy khi code được merge vào main branch, đảm bảo chỉ stable code được deploy
+    \item Automated deployment đến staging/production environments: Có thể có separate pipelines cho staging và production, với approval gates cho production
+\end{itemize}
+
+\textbf{GitHub Actions:}
+\begin{itemize}
+    \item Tương tự GitLab CI/CD với workflows được định nghĩa trong YAML files
+    \item Integration với AWS sử dụng OIDC (OpenID Connect) để authenticate mà không cần store credentials
+    \item Support cho matrix builds để test trên multiple versions của dependencies
+\end{itemize}
+
+\textbf{Quy trình Deployment Tự Động:}
+\begin{enumerate}
+    \item Developer push code lên repository: Trigger có thể là push vào bất kỳ branch nào hoặc chỉ specific branches
+    \item CI/CD pipeline tự động trigger: Pipeline được start bởi webhook từ Git provider
+    \item Chạy automated tests: Bao gồm unit tests, integration tests, và có thể cả linting và security scanning
+    \item Build Docker images: Sử dụng Docker buildx để build multi-platform images nếu cần
+    \item Push images lên ECR: Images được tag với commit hash và branch name để dễ track
+    \item Update ECS task definitions: Tạo new task definition revision với new image URIs
+    \item Deploy new tasks với rolling update: ECS tự động thực hiện rolling update để đảm bảo zero downtime
+    \item Chạy database migrations (nếu có): Migration tool được chạy như ECS task one-time
+    \item Xác minh deployment thành công: Test health check endpoint và có thể cả smoke tests
+\end{enumerate}
+
+\subsection{Troubleshooting}
+
+\textbf{Vấn đề: ECS tasks không start được}
+\begin{itemize}
+    \item Kiểm tra task definition có đúng không: \texttt{aws ecs describe-task-definition --task-definition <TASK-DEF>}
+    \item Kiểm tra IAM roles có đủ permissions không
+    \item Kiểm tra CloudWatch Logs để xem error messages
+    \item Kiểm tra security groups có cho phép traffic không
+\end{itemize}
+
+\textbf{Vấn đề: Không thể pull images từ ECR}
+\begin{itemize}
+    \item Kiểm tra ECR repository permissions
+    \item Kiểm tra ECS task execution role có quyền pull images không
+    \item Verify AWS credentials
+\end{itemize}
+
+\textbf{Vấn đề: Database connection failed}
+\begin{itemize}
+    \item Kiểm tra database secrets trong Secrets Manager
+    \item Kiểm tra security groups cho phép traffic từ application services
+    \item Kiểm tra database service đang chạy: \texttt{aws ecs describe-services --cluster fieldkit-<ENV>-db-v1}
+\end{itemize}
+
+\textbf{Vấn đề: ALB health checks failing}
+\begin{itemize}
+    \item Kiểm tra \texttt{/status} endpoint có hoạt động không
+    \item Kiểm tra security groups cho phép traffic từ ALB
+    \item Kiểm tra target group health: \texttt{aws elbv2 describe-target-health --target-group-arn <TG-ARN>}
+\end{itemize}
+
+\textbf{Useful Commands:}
+\begin{lstlisting}[language=bash, caption=Các lệnh hữu ích]
+# Xem logs
+aws logs tail /ecs/fieldkit-server --follow
+
+# Xem service status
+aws ecs describe-services --cluster fieldkit-<ENV>-app --services fieldkit-server
+
+# Restart service
+aws ecs update-service --cluster fieldkit-<ENV>-app --service fieldkit-server --force-new-deployment
+
+# Xem task logs
+aws ecs describe-tasks --cluster fieldkit-<ENV>-app --tasks <TASK-ID>
+\end{lstlisting}
+

@@ -1,0 +1,122 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+\usepackage{times}
+\usepackage{geometry}
+\geometry{a4paper, margin=2.5cm}
+\usepackage{setspace}
+\singlespacing
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+% Package mermaid - Lưu ý: Trên Overleaf có thể cần export mermaid sang PNG/SVG trước
+% Hoặc sử dụng package tikz để vẽ sơ đồ thay thế
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Cấu hình hyperref
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=black,
+    urlcolor=blue,
+    citecolor=blue,
+    pdftitle={Báo Cáo Cuối Kỳ},
+    pdfauthor={Nhóm Sinh Viên}
+}
+
+% Cấu hình listings
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1
+}
+
+% Tiêu đề và thông tin
+\title{Báo Cáo Cuối Kỳ\\[0.5cm]
+\large Phát Triển Sản Phẩm Trên Nền Tảng Đám Mây\\[0.3cm]
+\large FieldKit Cloud: Nền Tảng IoT Trên AWS}
+\author{
+Hoàng Khắc Hiếu (24025241)\\
+Nguyễn Chí Đông (24025121)\\
+Nguyễn Đức Hào (24025240)\\
+Nguyễn Thành Công (24025012)
+}
+\date{\today}
+
+\begin{document}
+
+% Trang bìa
+\input{cover}
+
+% Trang title (có thể bỏ nếu chỉ dùng cover)
+% \maketitle
+% \newpage
+
+% Tóm tắt
+\input{chapters/tom-tat}
+\newpage
+
+% Mục lục
+\tableofcontents
+\newpage
+\listoffigures
+\newpage
+
+% Cấu trúc chuẩn theo yêu cầu:
+% 1. Tóm tắt (đã có ở trên)
+% 2. Giới thiệu và bối cảnh nghiên cứu
+% 3. Mục tiêu
+% 4. Phương pháp
+% 5. Kết quả chính
+% 6. Phân tích và thảo luận
+% 7. Kết luận và khuyến nghị
+
+% Phần 1: Giới thiệu và bối cảnh nghiên cứu
+\input{chapters/vai-tro}
+\newpage
+
+\input{chapters/gioi-thieu}
+\newpage
+
+\input{chapters/khao-sat}
+\newpage
+
+% Phần 2: Phương pháp nghiên cứu và phát triển
+\input{chapters/dich-vu-cloud}
+\newpage
+
+\input{chapters/simulator-gcp}
+\newpage
+
+\input{chapters/so-sanh}
+\newpage
+
+\input{chapters/kien-truc}
+\newpage
+
+% Phần 3: Kết quả chính
+\input{chapters/trien-khai}
+\newpage
+
+% Phần 4: Phân tích và thảo luận
+\input{chapters/danh-gia}
+\newpage
+
+% Tài liệu tham khảo
+\bibliographystyle{ieeetr}
+\bibliography{references}
+
+\end{document}
+
+                                                                                                                                                                                                                                                                        

@@ -1,0 +1,107 @@
+\section{Module Giả Lập Dữ Liệu Trên Google Cloud Platform}
+
+\subsection{Giới Thiệu}
+
+Module giả lập dữ liệu là một thành phần quan trọng trong hệ thống FieldKit Cloud, được phát triển và triển khai trên Google Cloud Platform (GCP). Module này có nhiệm vụ tạo ra dữ liệu cảm biến giả lập một cách thực tế và gửi đến hệ thống FieldKit Cloud để phục vụ cho việc testing, development, và demonstration. Việc sử dụng Google Cloud Platform cho module này cho phép tận dụng các dịch vụ cloud hiện đại của Google và đảm bảo tính độc lập với infrastructure chính của hệ thống được triển khai trên AWS.
+
+Trong bối cảnh phát triển và testing hệ thống IoT, việc có dữ liệu thực tế từ các thiết bị cảm biến thật thường gặp nhiều khó khăn. Các thiết bị có thể không sẵn có, cần được đặt ở các vị trí cụ thể, hoặc chi phí để setup và maintain có thể cao. Module giả lập dữ liệu giải quyết vấn đề này bằng cách tạo ra dữ liệu cảm biến giả lập với các đặc điểm giống như dữ liệu thực tế, bao gồm patterns theo thời gian, noise, và các events ngẫu nhiên. Điều này cho phép developers và testers có thể test hệ thống một cách toàn diện mà không cần thiết bị thật.
+
+\subsection{Bối Cảnh Và Lý Do Sử Dụng Google Cloud Platform}
+
+Việc lựa chọn Google Cloud Platform cho module giả lập dữ liệu được đưa ra dựa trên nhiều yếu tố. Thứ nhất, việc sử dụng một cloud provider khác với AWS (nơi hệ thống chính được triển khai) giúp chứng minh tính linh hoạt của kiến trúc FieldKit Cloud và khả năng tích hợp với các hệ thống từ nhiều cloud providers khác nhau. Điều này phù hợp với mục tiêu của dự án là tạo ra một giải pháp không bị vendor lock-in.
+
+Thứ hai, Google Cloud Platform cung cấp các dịch vụ phù hợp cho việc chạy các workloads như data generation và simulation. Các dịch vụ như Cloud Run (serverless containers), Cloud Functions (serverless functions), và Compute Engine (VMs) đều có thể được sử dụng để chạy simulator. Cloud Run đặc biệt phù hợp vì nó cho phép chạy containers một cách serverless, tự động scale, và chỉ trả tiền cho thời gian thực sự sử dụng.
+
+Thứ ba, Google Cloud Platform có pricing competitive và có free tier generous cho các dự án nghiên cứu và development. Điều này giúp giảm chi phí cho việc testing và development. Ngoài ra, GCP có nhiều regions trên toàn thế giới, cho phép deploy simulator gần với hệ thống chính để giảm latency.
+
+\subsection{Kiến Trúc Module Giả Lập}
+
+Module giả lập dữ liệu được thiết kế với kiến trúc đơn giản nhưng hiệu quả. Module chạy như một service độc lập, có thể được deploy trên Google Cloud Run hoặc Cloud Functions. Service này định kỳ generate dữ liệu cảm biến giả lập và gửi đến FieldKit Cloud thông qua RESTful API. 
+
+Kiến trúc của module bao gồm các thành phần chính: data generation engine (động cơ tạo dữ liệu), scheduling system (hệ thống lập lịch), và API client (client gọi API). Data generation engine sử dụng các algorithms để tạo ra dữ liệu cảm biến với các patterns thực tế như trends, seasonality, và noise. Scheduling system đảm bảo dữ liệu được gửi định kỳ theo intervals được cấu hình. API client xử lý việc gửi dữ liệu đến FieldKit Cloud với proper authentication và error handling.
+
+Module được thiết kế để có thể simulate nhiều loại sensors khác nhau, mỗi loại có các đặc điểm riêng. Ví dụ, sensor đo mực nước (floodnet) có patterns khác với sensor đo nhiệt độ. Module có thể được cấu hình để simulate một hoặc nhiều sensors cùng lúc, và có thể scale để generate large volumes of data khi cần thiết.
+
+\subsection{Các Dịch Vụ Google Cloud Được Sử Dụng}
+
+\subsubsection{Google Cloud Run}
+
+Google Cloud Run là dịch vụ serverless container platform của Google, cho phép chạy containers mà không cần quản lý infrastructure. Cloud Run tự động scale containers dựa trên số lượng requests và chỉ tính phí cho thời gian thực sự sử dụng. Đối với module giả lập dữ liệu, Cloud Run là lựa chọn lý tưởng vì:
+
+\begin{itemize}
+    \item \textbf{Serverless}: Không cần quản lý servers, Cloud Run tự động quản lý infrastructure
+    \item \textbf{Auto-scaling}: Tự động scale dựa trên demand, có thể scale về zero khi không sử dụng
+    \item \textbf{Pay-per-use}: Chỉ trả tiền cho CPU và memory thực sự sử dụng, không trả cho idle time
+    \item \textbf{Container-based}: Sử dụng Docker containers, dễ dàng package và deploy
+    \item \textbf{HTTP/HTTPS support}: Hỗ trợ HTTP requests, phù hợp cho việc gọi API
+\end{itemize}
+
+Module giả lập được đóng gói trong Docker container và deploy lên Cloud Run. Container có thể được trigger bởi HTTP requests hoặc Cloud Scheduler để chạy định kỳ. Khi được trigger, container generate dữ liệu và gửi đến FieldKit Cloud, sau đó tự động shutdown để tiết kiệm chi phí.
+
+\subsubsection{Cloud Scheduler}
+
+Cloud Scheduler là dịch vụ cron job của Google Cloud, cho phép schedule các tasks để chạy định kỳ. Đối với module giả lập, Cloud Scheduler được sử dụng để trigger Cloud Run service định kỳ (ví dụ, mỗi 5 phút) để generate và gửi dữ liệu. Cloud Scheduler hỗ trợ cron expressions linh hoạt và có thể được cấu hình để chạy với tần suất bất kỳ.
+
+\subsubsection{Cloud Functions (Tùy chọn)}
+
+Cloud Functions là dịch vụ serverless functions của Google Cloud, cho phép chạy code mà không cần quản lý servers. Cloud Functions có thể được sử dụng như một alternative cho Cloud Run nếu logic của simulator đơn giản và không cần full container. Tuy nhiên, trong trường hợp này, Cloud Run được chọn vì cần nhiều dependencies và có thể cần chạy long-running processes.
+
+\subsubsection{Cloud Logging}
+
+Cloud Logging là dịch vụ logging của Google Cloud, tự động collect logs từ các dịch vụ GCP. Module giả lập sử dụng Cloud Logging để log các events như data generation, API calls, và errors. Logs có thể được query và analyze để monitor performance và debug issues.
+
+\subsection{Thiết Kế Và Triển Khai Module}
+
+\subsubsection{Data Generation Engine}
+
+Data generation engine là core component của module, chịu trách nhiệm tạo ra dữ liệu cảm biến giả lập. Engine sử dụng các algorithms và models để tạo ra dữ liệu với các đặc điểm thực tế:
+
+\textbf{Time-Series Patterns:} Dữ liệu được generate với các patterns theo thời gian như trends (xu hướng), seasonality (tính mùa vụ), và cycles (chu kỳ). Ví dụ, dữ liệu nhiệt độ có thể có trend tăng dần trong ngày và giảm dần trong đêm, với seasonality theo mùa.
+
+\textbf{Realistic Values:} Dữ liệu được generate trong các ranges thực tế dựa trên loại sensor. Ví dụ, sensor đo mực nước (floodnet) có thể generate values trong range 7-12 inches, với base level 8.5-9.5 inches và variations do thủy triều và mưa.
+
+\textbf{Noise và Randomness:} Dữ liệu bao gồm noise và randomness để giống với dữ liệu thực tế. Noise được thêm vào bằng cách sử dụng random variations nhỏ, và các events ngẫu nhiên (như mưa) được simulate với probabilities.
+
+\textbf{Continuity:} Dữ liệu được generate với tính liên tục, nghĩa là mỗi giá trị mới được tính dựa trên giá trị trước đó và các factors như time elapsed và events. Điều này đảm bảo dữ liệu có tính realistic và không có jumps đột ngột không hợp lý.
+
+\subsubsection{API Integration}
+
+Module tích hợp với FieldKit Cloud thông qua RESTful API. Module gửi dữ liệu đến endpoint \texttt{/ingestion} của FieldKit Cloud với proper authentication. API calls được thực hiện với error handling và retry logic để đảm bảo reliability. Module cũng có thể verify data đã được lưu bằng cách query API sau khi gửi.
+
+\subsubsection{Configuration và Flexibility}
+
+Module được thiết kế với tính linh hoạt cao, cho phép cấu hình nhiều parameters như:
+\begin{itemize}
+    \item Loại sensor cần simulate
+    \item Tần suất gửi dữ liệu (interval)
+    \item Số lượng sensors cùng lúc
+    \item Patterns và ranges của dữ liệu
+    \item API endpoint và authentication
+\end{itemize}
+
+Configuration có thể được thực hiện thông qua environment variables hoặc configuration files, cho phép dễ dàng thay đổi behavior mà không cần rebuild container.
+
+\subsection{Triển Khai Trên Google Cloud Platform}
+
+\subsubsection{Build và Push Container Image}
+
+Module được đóng gói trong Docker container và push lên Google Container Registry (GCR) hoặc Artifact Registry. Quá trình build sử dụng multi-stage builds để tạo ra image nhỏ gọn. Image được tag với version và push lên GCR.
+
+\subsubsection{Deploy lên Cloud Run}
+
+Sau khi image đã được push, service được deploy lên Cloud Run với các cấu hình như CPU, memory, concurrency, và timeout. Service được cấu hình với environment variables cho API endpoint, authentication, và các parameters khác. Cloud Run tự động tạo HTTPS endpoint cho service.
+
+\subsubsection{Setup Cloud Scheduler}
+
+Cloud Scheduler được setup để trigger Cloud Run service định kỳ. Job được cấu hình với cron expression (ví dụ, \texttt{*/5 * * * *} để chạy mỗi 5 phút), target là Cloud Run service URL, và HTTP method là POST. Scheduler có thể được pause hoặc resume khi cần.
+
+\subsubsection{Monitoring và Logging}
+
+Cloud Logging tự động collect logs từ Cloud Run service. Logs có thể được query để monitor performance, debug issues, và analyze data generation patterns. Cloud Monitoring có thể được setup để track metrics như number of requests, latency, và errors.
+
+\subsection{Kết Quả Và Đánh Giá}
+
+Module giả lập dữ liệu đã được triển khai thành công trên Google Cloud Platform và đã chứng minh hiệu quả trong việc generate và gửi dữ liệu đến FieldKit Cloud. Module có thể generate hàng nghìn data points mỗi ngày với patterns thực tế, giúp testing và development hệ thống một cách toàn diện.
+
+Việc sử dụng Google Cloud Platform cho module này đã chứng minh tính linh hoạt của kiến trúc FieldKit Cloud, cho thấy hệ thống có thể tích hợp với services từ nhiều cloud providers khác nhau. Điều này phù hợp với mục tiêu của dự án là tạo ra một giải pháp không bị vendor lock-in và có thể được triển khai trên nhiều platforms khác nhau.
+

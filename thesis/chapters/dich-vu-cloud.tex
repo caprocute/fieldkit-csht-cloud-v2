@@ -1,0 +1,295 @@
+\section{Giới Thiệu Các Dịch Vụ Đám Mây Đã Chọn}
+
+\subsection{Giới Thiệu Chung}
+
+Chương này trình bày các dịch vụ đám mây đã được lựa chọn để phát triển sản phẩm, bao gồm các dịch vụ từ nhà cung cấp đám mây chính.
+
+\subsection{AWS ECS (Elastic Container Service)}
+
+\subsubsection{Tổng Quan}
+
+AWS ECS (Elastic Container Service) là một dịch vụ container orchestration được quản lý hoàn toàn bởi Amazon Web Services, cho phép chạy và quản lý các ứng dụng containerized trên AWS mà không cần phải quản lý infrastructure phức tạp. ECS được thiết kế để đơn giản hóa việc chạy, scale, và quản lý các containerized applications trên quy mô lớn. Dịch vụ này hỗ trợ cả EC2 launch type (chạy containers trên EC2 instances mà người dùng tự quản lý) và Fargate launch type (serverless containers, AWS tự động quản lý infrastructure).
+
+ECS hoạt động dựa trên khái niệm clusters, services, và tasks. Một cluster là một logical grouping của tasks hoặc services. Một service cho phép chạy và duy trì một số lượng tasks được chỉ định trong một cluster. Một task là một instance của một task definition, bao gồm một hoặc nhiều containers chạy cùng nhau trên cùng một host. Task definition là một blueprint cho ứng dụng, mô tả các containers nào sẽ chạy, resources nào sẽ được sử dụng, và cách chúng tương tác với nhau.
+
+Trong dự án FieldKit Cloud, ECS được sử dụng với Fargate launch type để chạy các services một cách serverless, loại bỏ hoàn toàn việc phải quản lý EC2 instances. Fargate tự động quản lý việc provisioning, scaling, và patching của infrastructure, cho phép nhóm phát triển tập trung vào việc xây dựng ứng dụng thay vì quản lý servers. Các services được triển khai trên ECS bao gồm:
+
+\begin{itemize}
+    \item \textbf{Server service}: Chứa cả Go backend API và Vue.js frontend Portal, được đóng gói trong một Docker image duy nhất. Service này xử lý tất cả HTTP requests, serve static files cho Portal, và thực hiện các business logic.
+    
+    \item \textbf{Charting service}: Một microservice độc lập sử dụng Node.js để generate charts và visualizations từ dữ liệu time-series. Service này được tách riêng để có thể scale độc lập và không ảnh hưởng đến performance của main server.
+    
+    \item \textbf{PostgreSQL database service}: Database chính để lưu trữ metadata và dữ liệu quan hệ. Service này chạy PostgreSQL với PostGIS extension để hỗ trợ geographic data.
+    
+    \item \textbf{TimescaleDB service}: Database chuyên biệt cho time-series data, được tối ưu hóa để xử lý các queries trên dữ liệu time-series với volume lớn.
+\end{itemize}
+
+\subsubsection{Tính Năng Chính}
+
+ECS Fargate cung cấp nhiều tính năng mạnh mẽ để quản lý containerized applications:
+
+\textbf{Fargate Launch Type:} Đây là tính năng quan trọng nhất của ECS trong dự án này. Fargate loại bỏ hoàn toàn việc phải quản lý EC2 instances, server provisioning, patching, và capacity planning. AWS tự động quản lý tất cả infrastructure, bao gồm server provisioning, OS patching, và network configuration. Điều này giảm đáng kể operational overhead và cho phép nhóm phát triển tập trung vào việc xây dựng ứng dụng. Fargate tự động chọn instance types phù hợp dựa trên CPU và memory requirements được chỉ định trong task definition.
+
+\textbf{Auto Scaling:} ECS hỗ trợ auto-scaling dựa trên CloudWatch metrics như CPU utilization, memory utilization, hoặc custom metrics. Khi CPU hoặc memory vượt quá ngưỡng được cấu hình, ECS tự động tăng số lượng tasks. Tương tự, khi utilization giảm xuống dưới ngưỡng, ECS tự động giảm số lượng tasks để tiết kiệm chi phí. Auto-scaling policies có thể được cấu hình với min/max capacity và target tracking để đảm bảo hệ thống luôn có đủ capacity để xử lý traffic nhưng không lãng phí tài nguyên.
+
+\textbf{Service Discovery:} ECS tích hợp với AWS Cloud Map để cung cấp service discovery tự động. Khi một service được tạo, nó tự động đăng ký với Cloud Map, và các services khác có thể discover và kết nối đến nó bằng tên service thay vì IP addresses. Điều này đặc biệt hữu ích trong microservices architecture, nơi các services cần giao tiếp với nhau. Service discovery tự động cập nhật khi services scale up hoặc down.
+
+\textbf{Health Checks:} ECS tự động thực hiện health checks trên containers để đảm bảo chúng đang chạy đúng cách. Health checks có thể được cấu hình ở cả container level (container health check) và service level (ELB health check). Nếu một container fail health check, ECS tự động stop và restart nó. Nếu một task fail health check nhiều lần, ECS tự động replace nó với một task mới. Điều này đảm bảo high availability của services.
+
+\textbf{Load Balancing Integration:} ECS tích hợp seamlessly với Application Load Balancer (ALB) và Network Load Balancer (NLB). Khi tasks được start, chúng tự động đăng ký với target groups của load balancer. Khi tasks stop, chúng tự động được deregister. Load balancer tự động route traffic đến healthy tasks và loại bỏ unhealthy tasks khỏi rotation. Điều này đảm bảo traffic được phân phối đều và chỉ đến các tasks đang healthy.
+
+\textbf{Secrets Management:} ECS tích hợp với AWS Secrets Manager để inject secrets vào containers một cách an toàn. Secrets có thể được reference trong task definition, và ECS tự động retrieve và inject chúng vào containers như environment variables. Secrets được encrypt at rest và in transit, và access được control bởi IAM. Điều này loại bỏ việc phải hardcode credentials trong code hoặc Docker images.
+
+\textbf{CloudWatch Logs Integration:} Tất cả logs từ containers tự động được gửi đến CloudWatch Logs, nơi chúng có thể được search, filter, và analyze. Logs được group theo service và có thể được retain theo policies được cấu hình. CloudWatch Logs Insights cho phép query logs bằng SQL-like syntax để tìm kiếm patterns, errors, hoặc performance issues.
+
+\textbf{Rolling Updates:} Khi cập nhật một service với version mới, ECS thực hiện rolling update để đảm bảo zero downtime. ECS start các tasks mới với version mới, đợi chúng pass health checks, sau đó stop các tasks cũ. Quá trình này được thực hiện gradually để đảm bảo luôn có đủ tasks đang chạy để xử lý traffic. Nếu rolling update fail, ECS tự động rollback về version cũ.
+
+\subsubsection{Lý Do Lựa Chọn}
+
+\begin{itemize}
+    \item \textbf{Serverless Experience}: Fargate loại bỏ việc quản lý EC2 instances, giảm overhead operations
+    \item \textbf{Cost Effective}: Chỉ trả tiền cho resources thực sự sử dụng, không cần trả cho idle instances
+    \item \textbf{High Availability}: Tự động phân phối tasks across multiple availability zones
+    \item \textbf{Easy Integration}: Tích hợp tốt với các dịch vụ AWS khác (ALB, Secrets Manager, CloudWatch)
+    \item \textbf{Docker Native}: Hỗ trợ Docker containers trực tiếp, không cần học thêm công nghệ mới
+    \item \textbf{Security}: Tasks chạy trong isolated environment với IAM roles riêng
+\end{itemize}
+
+\subsection{AWS ECR (Elastic Container Registry)}
+
+\subsubsection{Tổng Quan}
+
+AWS ECR là một dịch vụ Docker container registry được quản lý hoàn toàn, cho phép lưu trữ, quản lý, và deploy Docker container images. ECR tích hợp chặt chẽ với ECS để đơn giản hóa workflow từ build đến deploy.
+
+Trong dự án, ECR được sử dụng để lưu trữ các container images:
+\begin{itemize}
+    \item \texttt{hieuhk\_fieldkit/server}: Server và Portal application
+    \item \texttt{hieuhk\_fieldkit/charting}: Charting service
+    \item \texttt{hieuhk\_fieldkit/migrations}: Database migration tool
+\end{itemize}
+
+\subsubsection{Tính Năng Chính}
+
+\begin{itemize}
+    \item \textbf{Private Registry}: Lưu trữ images riêng tư với IAM-based access control
+    \textbf{Image Versioning}: Hỗ trợ tags và image versioning
+    \item \textbf{Security Scanning}: Tự động scan images để phát hiện vulnerabilities
+    \item \textbf{Lifecycle Policies}: Tự động xóa images cũ để tiết kiệm chi phí
+    \item \textbf{High Availability}: Images được replicate across multiple availability zones
+    \item \textbf{Integration với ECS}: Pull images trực tiếp từ ECR trong ECS tasks
+    \item \textbf{Docker CLI Compatible}: Sử dụng Docker CLI quen thuộc để push/pull images
+\end{itemize}
+
+\subsubsection{Lý Do Lựa Chọn}
+
+\begin{itemize}
+    \item \textbf{Seamless Integration}: Tích hợp hoàn hảo với ECS, không cần cấu hình thêm
+    \item \textbf{Security}: IAM-based access control và image scanning
+    \item \textbf{Cost Effective}: Chỉ trả cho storage thực sự sử dụng
+    \item \textbf{Reliability}: High availability và durability
+    \item \textbf{Version Control}: Dễ dàng quản lý versions và rollback nếu cần
+\end{itemize}
+
+\subsection{AWS Application Load Balancer (ALB)}
+
+\subsubsection{Tổng Quan}
+
+AWS ALB là một load balancer ở layer 7 (application layer) của OSI model, hoạt động ở HTTP/HTTPS level. ALB phân phối traffic đến multiple targets (EC2 instances, containers, IP addresses) dựa trên content của request.
+
+Trong FieldKit Cloud, ALB được sử dụng để:
+\begin{itemize}
+    \item Phân phối HTTP/HTTPS traffic đến Server service
+    \item Health checking để đảm bảo chỉ route traffic đến healthy targets
+    \item SSL/TLS termination
+    \item Path-based routing (có thể mở rộng trong tương lai)
+\end{itemize}
+
+\subsubsection{Tính Năng Chính}
+
+\begin{itemize}
+    \item \textbf{Application Layer Load Balancing}: Hoạt động ở HTTP/HTTPS level, hiểu được content của request
+    \item \textbf{Health Checks}: Tự động kiểm tra sức khỏe targets và loại bỏ unhealthy targets
+    \item \textbf{SSL/TLS Termination}: Xử lý SSL certificates và decryption
+    \item \textbf{Path-based Routing}: Route requests dựa trên URL path
+    \item \textbf{Host-based Routing}: Route requests dựa trên host header
+    \item \textbf{Sticky Sessions}: Hỗ trợ session affinity nếu cần
+    \item \textbf{High Availability}: Tự động phân phối across multiple availability zones
+    \item \textbf{Integration với ECS}: Tự động đăng ký/deregister ECS tasks
+\end{itemize}
+
+\subsubsection{Lý Do Lựa Chọn}
+
+\begin{itemize}
+    \item \textbf{High Availability}: Đảm bảo service luôn available ngay cả khi một số tasks fail
+    \item \textbf{Auto Scaling Support}: Tự động route traffic đến new tasks khi scale up
+    \item \textbf{Health Checks}: Tự động phát hiện và loại bỏ unhealthy instances
+    \item \textbf{SSL/TLS Management}: Đơn giản hóa việc quản lý certificates
+    \item \textbf{Cost Effective}: Chỉ trả cho giờ sử dụng, không cần reserved capacity
+\end{itemize}
+
+\subsection{AWS Network Load Balancer (NLB)}
+
+\subsubsection{Tổng Quan}
+
+AWS NLB là một load balancer ở layer 4 (transport layer), hoạt động ở TCP/UDP level. NLB được tối ưu hóa cho hiệu năng cao và độ trễ thấp, phù hợp cho các ứng dụng cần throughput cao.
+
+Trong FieldKit Cloud, NLB được sử dụng để:
+\begin{itemize}
+    \item Expose PostgreSQL database service ra internet (cho development/testing)
+    \item Load balance TCP connections đến PostgreSQL instances
+    \item Preserve source IP addresses của clients
+\end{itemize}
+
+\subsubsection{Tính Năng Chính}
+
+\begin{itemize}
+    \item \textbf{Transport Layer Load Balancing}: Hoạt động ở TCP/UDP level, không hiểu application protocol
+    \item \textbf{Low Latency}: Độ trễ thấp, phù hợp cho database connections
+    \item \textbf{High Throughput}: Hỗ trợ hàng triệu requests mỗi giây
+    \item \textbf{Source IP Preservation}: Giữ nguyên source IP của clients
+    \item \textbf{Static IP Addresses}: Có thể sử dụng static IP cho NLB
+    \item \textbf{Zone-aware Load Balancing}: Phân phối traffic dựa trên availability zones
+    \item \textbf{Health Checks}: TCP-level health checks
+\end{itemize}
+
+\subsubsection{Lý Do Lựa Chọn}
+
+\begin{itemize}
+    \item \textbf{Database Access}: Phù hợp cho việc expose database service với TCP protocol
+    \item \textbf{Low Latency}: Quan trọng cho database connections
+    \item \textbf{Source IP Preservation}: Hữu ích cho security và logging
+    \item \textbf{High Performance}: Có thể xử lý nhiều connections đồng thời
+\end{itemize}
+
+\subsection{AWS Secrets Manager}
+
+\subsubsection{Tổng Quan}
+
+AWS Secrets Manager là một dịch vụ để lưu trữ và quản lý secrets một cách an toàn, bao gồm database credentials, API keys, và các thông tin nhạy cảm khác. Secrets Manager tự động rotate secrets và cung cấp encryption at rest và in transit.
+
+Trong FieldKit Cloud, Secrets Manager được sử dụng để lưu trữ:
+\begin{itemize}
+    \item PostgreSQL connection URLs và passwords
+    \item TimescaleDB connection URLs và passwords
+    \item Session encryption keys
+    \item Các API keys và credentials khác
+\end{itemize}
+
+\subsubsection{Tính Năng Chính}
+
+\begin{itemize}
+    \item \textbf{Encryption}: Encryption at rest và in transit
+    \item \textbf{Automatic Rotation}: Tự động rotate secrets theo lịch định kỳ
+    \item \textbf{Fine-grained Access Control}: IAM-based access control
+    \item \textbf{Audit Logging}: CloudTrail integration để audit access
+    \item \textbf{Versioning}: Lưu trữ multiple versions của secrets
+    \item \textbf{Integration}: Tích hợp với RDS, ECS, Lambda, và các dịch vụ khác
+    \item \textbf{Cross-region Replication}: Có thể replicate secrets across regions
+\end{itemize}
+
+\subsubsection{Lý Do Lựa Chọn}
+
+\begin{itemize}
+    \item \textbf{Security}: Encryption và access control mạnh mẽ
+    \textbf{Automatic Rotation}: Giảm rủi ro bảo mật với automatic rotation
+    \item \textbf{Integration với ECS}: ECS tasks có thể tự động retrieve secrets
+    \item \textbf{Audit Trail}: Có thể track ai đã access secrets khi nào
+    \item \textbf{Best Practice}: Tuân thủ security best practices
+\end{itemize}
+
+\subsection{AWS CloudWatch Logs}
+
+\subsubsection{Tổng Quan}
+
+AWS CloudWatch Logs là một dịch vụ để thu thập, monitor, và lưu trữ logs từ các ứng dụng và services. CloudWatch Logs cung cấp centralized logging, log retention policies, và tích hợp với các dịch vụ monitoring khác.
+
+Trong FieldKit Cloud, CloudWatch Logs được sử dụng để:
+\begin{itemize}
+    \item Lưu trữ logs từ tất cả ECS services (Server, Charting, PostgreSQL, TimescaleDB)
+    \item Centralized logging để dễ dàng debug và monitor
+    \item Log retention policies để quản lý chi phí
+    \item Tích hợp với CloudWatch Metrics và Alarms
+\end{itemize}
+
+\subsubsection{Tính Năng Chính}
+
+\begin{itemize}
+    \item \textbf{Centralized Logging}: Tập trung logs từ nhiều sources
+    \item \textbf{Log Retention}: Cấu hình retention policies (1 day đến vô hạn)
+    \item \textbf{Search và Filter}: Tìm kiếm và filter logs bằng CloudWatch Logs Insights
+    \item \textbf{Real-time Monitoring}: Stream logs real-time
+    \item \textbf{Integration}: Tích hợp với ECS, Lambda, EC2, và các dịch vụ khác
+    \item \textbf{Export}: Export logs đến S3 hoặc Kinesis
+    \item \textbf{Alarms}: Tạo alarms dựa trên log patterns
+\end{itemize}
+
+\subsubsection{Lý Do Lựa Chọn}
+
+\begin{itemize}
+    \item \textbf{Centralized Management}: Dễ dàng quản lý logs từ tất cả services
+    \item \textbf{Integration với ECS}: ECS tự động gửi logs đến CloudWatch
+    \item \textbf{Search Capabilities}: Dễ dàng tìm kiếm và filter logs
+    \item \textbf{Cost Effective}: Pay-per-GB stored và ingested
+    \item \textbf{Retention Policies}: Tự động xóa logs cũ để tiết kiệm chi phí
+\end{itemize}
+
+\subsection{Google Cloud Platform - Module Giả Lập Dữ Liệu}
+
+Mặc dù hệ thống chính FieldKit Cloud được triển khai trên AWS, một phần quan trọng của hệ thống - module giả lập dữ liệu - được triển khai trên Google Cloud Platform. Việc sử dụng GCP cho module này chứng minh tính linh hoạt của kiến trúc và khả năng tích hợp với các cloud providers khác nhau.
+
+\subsubsection{Google Cloud Run}
+
+Google Cloud Run là dịch vụ serverless container platform của Google, tương tự như AWS ECS Fargate nhưng với một số khác biệt quan trọng. Cloud Run được sử dụng để chạy module giả lập dữ liệu vì:
+
+\begin{itemize}
+    \item \textbf{Request-based Scaling}: Cloud Run scale dựa trên số lượng requests, có thể scale về zero khi không có requests, giúp tiết kiệm chi phí
+    \item \textbf{HTTP/HTTPS Native}: Cloud Run được tối ưu hóa cho HTTP workloads, phù hợp cho việc gọi API
+    \item \textbf{Simple Deployment}: Deploy đơn giản chỉ cần push container image và cấu hình service
+    \item \textbf{Pay-per-request}: Chỉ trả tiền cho thời gian xử lý requests, không trả cho idle time
+    \item \textbf{Global Distribution}: Có thể deploy ở nhiều regions để giảm latency
+\end{itemize}
+
+\subsubsection{Cloud Scheduler}
+
+Cloud Scheduler là dịch vụ cron job của Google Cloud, được sử dụng để trigger Cloud Run service định kỳ để generate và gửi dữ liệu. Cloud Scheduler hỗ trợ cron expressions linh hoạt và có thể được cấu hình để chạy với tần suất bất kỳ, từ mỗi phút đến mỗi tháng.
+
+\subsubsection{Container Registry và Artifact Registry}
+
+Google Container Registry (GCR) hoặc Artifact Registry được sử dụng để lưu trữ Docker container images cho module giả lập. Artifact Registry là dịch vụ mới hơn và được khuyến nghị sử dụng, với các tính năng như vulnerability scanning và fine-grained access control.
+
+\subsubsection{Lý Do Lựa Chọn Google Cloud cho Module Giả Lập}
+
+Việc sử dụng Google Cloud Platform cho module giả lập dữ liệu được quyết định dựa trên các yếu tố sau:
+
+\begin{itemize}
+    \item \textbf{Tính Độc Lập}: Module giả lập là một component độc lập, không cần tích hợp sâu với infrastructure chính. Việc deploy trên GCP chứng minh tính linh hoạt của kiến trúc.
+    \item \textbf{Chi Phí}: Cloud Run có pricing competitive và có free tier, phù hợp cho testing và development workloads.
+    \item \textbf{Đơn Giản}: Cloud Run đơn giản hơn so với ECS cho use case này, vì chỉ cần chạy container khi được trigger, không cần long-running service.
+    \item \textbf{Học Tập}: Việc sử dụng cả AWS và GCP cho phép nhóm học hỏi và so sánh các dịch vụ từ cả hai nhà cung cấp.
+\end{itemize}
+
+\subsection{Cách Tích Hợp Các Dịch Vụ}
+
+Các dịch vụ AWS được tích hợp với nhau trong FieldKit Cloud theo kiến trúc sau:
+
+\begin{enumerate}
+    \item \textbf{Container Images}: Docker images được build và push lên ECR
+    \item \textbf{Container Orchestration}: ECS pull images từ ECR và chạy containers
+    \item \textbf{Load Balancing}: ALB route HTTP traffic đến Server service, NLB route TCP traffic đến PostgreSQL
+    \item \textbf{Secrets Management}: ECS tasks retrieve secrets từ Secrets Manager khi khởi động
+    \item \textbf{Logging}: Tất cả ECS tasks gửi logs đến CloudWatch Logs
+    \item \textbf{Service Discovery}: ECS services tự động discover nhau thông qua service names
+    \item \textbf{Health Checks}: ALB và NLB thực hiện health checks và chỉ route traffic đến healthy tasks
+\end{enumerate}
+
+Module giả lập trên Google Cloud Platform tích hợp với hệ thống chính thông qua:
+
+\begin{enumerate}
+    \item \textbf{API Integration}: Module gọi RESTful API của FieldKit Cloud để gửi dữ liệu
+    \item \textbf{Authentication}: Module sử dụng API keys hoặc JWT tokens để authenticate với FieldKit Cloud
+    \item \textbf{Network}: Module kết nối đến FieldKit Cloud qua internet, sử dụng HTTPS để đảm bảo bảo mật
+    \item \textbf{Scheduling}: Cloud Scheduler trigger Cloud Run service định kỳ để generate và gửi dữ liệu
+\end{enumerate}
+
+Kiến trúc này đảm bảo tính khả dụng cao, khả năng mở rộng, và bảo mật cho hệ thống FieldKit Cloud, đồng thời chứng minh tính linh hoạt trong việc tích hợp với các cloud providers khác nhau.
+

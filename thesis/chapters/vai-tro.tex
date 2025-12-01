@@ -1,0 +1,81 @@
+\section{Bảng Phân Chia Vai Trò Của Các Thành Viên Trong Nhóm}
+
+Bảng \ref{tab:vai-tro} mô tả vai trò và trách nhiệm của từng thành viên trong nhóm.
+
+\begin{table}[H]
+\centering
+\caption{Bảng phân chia vai trò các thành viên}
+\label{tab:vai-tro}
+\begin{tabular}{|p{3.5cm}|p{2.5cm}|p{7cm}|}
+\hline
+\textbf{Thành viên} & \textbf{Mã số} & \textbf{Vai trò và trách nhiệm chính} \\
+\hline
+Hoàng Khắc Hiếu & 24025241 & DevOps/Cloud Engineer - Triển khai hệ thống lên AWS \\
+\hline
+Nguyễn Chí Đông & 24025121 & Full-stack Developer - Phát triển Portal và Backend \\
+\hline
+Nguyễn Đức Hào & 24025240 & Full-stack Developer - Phát triển Portal và Backend \\
+\hline
+Nguyễn Thành Công & 24025012 & Backend Developer - Xây dựng module giả lập dữ liệu trên Google Cloud \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Chi Tiết Phân Công Công Việc}
+
+\textbf{Hoàng Khắc Hiếu (24025241) - DevOps/Cloud Engineer:}
+\begin{itemize}
+    \item Thiết kế và triển khai hạ tầng AWS (ECS, ECR, ALB, NLB, VPC)
+    \item Cấu hình Docker containers và multi-stage builds cho các services
+    \item Thiết lập và quản lý ECS clusters cho application và database services
+    \item Cấu hình Application Load Balancer (ALB) và Network Load Balancer (NLB)
+    \item Quản lý AWS Secrets Manager cho database credentials và session keys
+    \item Cấu hình CloudWatch Logs cho centralized logging
+    \item Viết các deployment scripts và automation tools (bash scripts)
+    \item Thiết lập IAM roles và policies cho ECS tasks
+    \item Tối ưu hóa chi phí và hiệu năng của cloud infrastructure
+    \item Troubleshooting và monitoring hệ thống trên AWS
+    \item Đảm bảo high availability và auto-scaling cho các services
+\end{itemize}
+
+\textbf{Nguyễn Chí Đông (24025121) - Full-stack Developer:}
+\begin{itemize}
+    \item Phát triển RESTful API sử dụng Go (Golang) và framework Goa
+    \item Phát triển giao diện người dùng Portal sử dụng Vue.js và TypeScript
+    \item Thiết kế và triển khai logic nghiệp vụ cho hệ thống IoT
+    \item Tích hợp với PostgreSQL và TimescaleDB để lưu trữ dữ liệu
+    \item Xây dựng các endpoint cho ingestion, query và quản lý dữ liệu cảm biến
+    \item Xử lý authentication và authorization cho API
+    \item Xây dựng các Vue.js components tái sử dụng cho Portal
+    \item Tích hợp frontend với backend API để hiển thị và quản lý dữ liệu
+    \item Tối ưu hóa hiệu năng database queries và data processing
+    \item Tối ưu hóa trải nghiệm người dùng (UX) và giao diện (UI)
+\end{itemize}
+
+\textbf{Nguyễn Đức Hào (24025240) - Full-stack Developer:}
+\begin{itemize}
+    \item Phát triển RESTful API sử dụng Go (Golang) và framework Goa
+    \item Phát triển giao diện người dùng Portal sử dụng Vue.js và TypeScript
+    \item Thiết kế và triển khai các tính năng quản lý projects, stations, và sensors
+    \item Xây dựng các API endpoints cho data query và visualization
+    \item Tích hợp Charting service với Portal để hiển thị biểu đồ
+    \item Xử lý internationalization (i18n) cho đa ngôn ngữ (English, Spanish, Vietnamese)
+    \item Phát triển các tính năng visualization cho dữ liệu cảm biến
+    \item Tối ưu hóa performance của frontend application
+    \item Xử lý error handling và user feedback
+    \item Testing và debugging các tính năng frontend và backend
+\end{itemize}
+
+\textbf{Nguyễn Thành Công (24025012) - Backend Developer:}
+\begin{itemize}
+    \item Xây dựng module giả lập dữ liệu (simulator) trên Google Cloud Platform
+    \item Phát triển service để generate và gửi dữ liệu cảm biến giả lập
+    \item Tích hợp simulator với hệ thống FieldKit Cloud để test data ingestion
+    \item Thiết kế và triển khai logic để simulate các loại sensors khác nhau
+    \item Xử lý data generation với các patterns thực tế (time-series patterns)
+    \item Tối ưu hóa performance của simulator để có thể generate large volumes
+    \item Testing và validation dữ liệu giả lập với hệ thống thực tế
+    \item Documentation cho simulator module và cách sử dụng
+    \item Hỗ trợ testing và development bằng cách cung cấp test data
+\end{itemize}
+

@@ -1,0 +1,111 @@
+\section{Khảo Sát Tổng Quan Về Các Nghiên Cứu Liên Quan}
+
+\subsection{Giới Thiệu}
+
+Chương này trình bày tổng quan về các nghiên cứu, bài báo tạp chí, báo cáo khoa học tại hội thảo, và sản phẩm công nghệ giống hoặc gần giống với sản phẩm FieldKit Cloud định phát triển. Việc khảo sát các nghiên cứu và sản phẩm liên quan là một bước quan trọng trong quá trình phát triển, giúp nhóm nghiên cứu hiểu rõ các giải pháp hiện có, học hỏi từ những điểm mạnh của chúng, và tránh những hạn chế mà các giải pháp đó gặp phải.
+
+Theo phương pháp nghiên cứu trong lĩnh vực công nghệ thông tin, việc khảo sát tài liệu (literature review) không chỉ giúp xác định khoảng trống trong nghiên cứu mà còn cung cấp cơ sở lý thuyết và thực tiễn cho việc phát triển giải pháp mới. Trong bối cảnh của dự án này, việc khảo sát các nền tảng IoT và hệ thống quản lý dữ liệu cảm biến hiện có giúp nhóm xác định được các yêu cầu chức năng, các thách thức kỹ thuật, và các best practices trong lĩnh vực này.
+
+Các sản phẩm và nghiên cứu được khảo sát bao gồm cả các giải pháp thương mại và mã nguồn mở, từ các công ty lớn như Amazon, Microsoft, Google đến các dự án cộng đồng. Mỗi giải pháp được phân tích dựa trên các tiêu chí như kiến trúc hệ thống, công nghệ sử dụng, khả năng mở rộng, hiệu năng, chi phí, và tính dễ sử dụng. Kết quả của việc khảo sát này sẽ được sử dụng để định hướng thiết kế và phát triển FieldKit Cloud.
+
+\subsection{Các Nghiên Cứu Liên Quan}
+
+\subsubsection{ThingSpeak - Nền Tảng Phân Tích IoT}
+
+\textbf{Thông tin chung:}
+\begin{itemize}
+    \item \textbf{Nhà phát triển}: MathWorks, một công ty hàng đầu trong lĩnh vực phần mềm toán học và kỹ thuật
+    \item \textbf{Năm phát hành}: 2010, là một trong những nền tảng IoT sớm nhất trên thị trường
+    \item \textbf{Loại}: Nền tảng IoT dựa trên đám mây, mã nguồn mở một phần
+\end{itemize}
+
+ThingSpeak là một nền tảng IoT được phát triển bởi MathWorks, công ty nổi tiếng với phần mềm MATLAB. Nền tảng này được thiết kế để thu thập, lưu trữ, và phân tích dữ liệu từ các thiết bị IoT một cách đơn giản và dễ tiếp cận. ThingSpeak sử dụng kiến trúc RESTful API, cho phép các thiết bị IoT gửi dữ liệu lên cloud thông qua các HTTP requests đơn giản. Nền tảng này đặc biệt phổ biến trong cộng đồng giáo dục và nghiên cứu nhờ tính đơn giản và miễn phí cho mục đích cá nhân và giáo dục.
+
+Một trong những điểm mạnh nổi bật của ThingSpeak là sự tích hợp sâu với MATLAB, một công cụ phân tích dữ liệu mạnh mẽ. Người dùng có thể sử dụng MATLAB để phân tích dữ liệu từ ThingSpeak, thực hiện các phép tính toán học phức tạp, và tạo các mô hình dự đoán. Tuy nhiên, điều này cũng tạo ra một rào cản đối với những người dùng không quen thuộc với MATLAB. Nền tảng hỗ trợ nhiều loại thiết bị IoT phổ biến như Arduino, Raspberry Pi, và các board vi điều khiển khác, với các thư viện và ví dụ mã nguồn phong phú.
+
+Về mặt hạn chế, ThingSpeak gặp phải một số vấn đề quan trọng. Thứ nhất, nền tảng có giới hạn về khả năng mở rộng. Mỗi channel (kênh dữ liệu) chỉ có thể lưu trữ một số lượng dữ liệu nhất định, và khi số lượng thiết bị tăng lên, việc quản lý nhiều channels trở nên phức tạp. Thứ hai, ThingSpeak không được tối ưu hóa đặc biệt cho dữ liệu time-series lớn. Khi query dữ liệu trong một khoảng thời gian dài, hiệu năng có thể giảm đáng kể. Thứ ba, giao diện người dùng của ThingSpeak còn khá đơn giản và không cung cấp nhiều tính năng visualization nâng cao. Cuối cùng, nền tảng thiếu các tính năng quản lý phức tạp như multi-tenancy, project management, và fine-grained access control.
+
+Khi so sánh với FieldKit Cloud, ThingSpeak có ưu điểm là đơn giản và dễ sử dụng, đặc biệt phù hợp cho các dự án nhỏ và prototyping. Tuy nhiên, FieldKit Cloud được thiết kế để giải quyết các hạn chế của ThingSpeak bằng cách sử dụng kiến trúc microservices linh hoạt hơn, tích hợp TimescaleDB để tối ưu hóa xử lý dữ liệu time-series, và cung cấp giao diện người dùng hiện đại hơn với Vue.js. FieldKit Cloud cũng hỗ trợ các tính năng quản lý phức tạp hơn như multi-project support, geographic data với PostGIS, và fine-grained permissions.
+
+\subsubsection{InfluxDB Cloud - Nền Tảng Cơ Sở Dữ Liệu Time-Series}
+
+\textbf{Thông tin chung:}
+\begin{itemize}
+    \item \textbf{Nhà phát triển}: InfluxData, một công ty chuyên về time-series data và monitoring
+    \item \textbf{Năm phát hành}: InfluxDB được phát hành lần đầu vào năm 2013, và InfluxDB Cloud (dịch vụ managed) được ra mắt vào năm 2019
+    \item \textbf{Loại}: Cơ sở dữ liệu time-series dưới dạng dịch vụ (Database as a Service)
+\end{itemize}
+
+InfluxDB Cloud là một nền tảng cơ sở dữ liệu chuyên biệt được thiết kế đặc biệt để xử lý dữ liệu time-series, một loại dữ liệu phổ biến trong các ứng dụng IoT, monitoring, và analytics. Khác với các cơ sở dữ liệu quan hệ truyền thống, InfluxDB được tối ưu hóa từ đầu để xử lý các luồng dữ liệu theo thời gian với khối lượng lớn. Nền tảng này sử dụng một kiến trúc lưu trữ đặc biệt với Time-Structured Merge Tree (TSM), một cấu trúc dữ liệu được thiết kế để tối ưu hóa cả write và read operations trên dữ liệu time-series.
+
+Một trong những điểm mạnh nổi bật của InfluxDB là hiệu năng cao trong việc ghi và đọc dữ liệu time-series. Theo các benchmark công khai, InfluxDB có thể xử lý hàng trăm nghìn writes mỗi giây trên một single node, và có thể scale lên hàng triệu writes mỗi giây với cluster setup. Nền tảng cũng hỗ trợ các tính năng nâng cao như downsampling tự động (giảm độ phân giải của dữ liệu cũ để tiết kiệm không gian lưu trữ) và retention policies (tự động xóa dữ liệu cũ theo chính sách được định nghĩa). InfluxDB tích hợp tốt với các công cụ visualization phổ biến như Grafana, cho phép tạo các dashboard phức tạp và đẹp mắt.
+
+Tuy nhiên, InfluxDB Cloud cũng có một số hạn chế đáng kể. Thứ nhất, chi phí có thể trở nên cao khi scale lớn. Mô hình pricing của InfluxDB Cloud dựa trên số lượng dữ liệu được ingest và lưu trữ, và với các ứng dụng IoT quy mô lớn, chi phí có thể lên đến hàng nghìn USD mỗi tháng. Thứ hai, InfluxDB sử dụng một query language riêng gọi là Flux, một ngôn ngữ functional được thiết kế đặc biệt cho time-series queries. Mặc dù Flux mạnh mẽ và linh hoạt, nó có learning curve khá dốc, đặc biệt đối với những người quen với SQL. Thứ ba, InfluxDB không được thiết kế để xử lý dữ liệu quan hệ phức tạp với nhiều foreign keys và joins. Cuối cùng, việc sử dụng InfluxDB Cloud tạo ra vendor lock-in, vì dữ liệu và ứng dụng bị ràng buộc với nền tảng của InfluxData.
+
+Khi so sánh với FieldKit Cloud, InfluxDB Cloud có ưu điểm là một giải pháp chuyên biệt và tối ưu cho time-series data, với hiệu năng cao và các tính năng nâng cao. Tuy nhiên, FieldKit Cloud sử dụng một approach khác: thay vì sử dụng một database chuyên biệt, FieldKit Cloud sử dụng TimescaleDB, một extension của PostgreSQL. Điều này cho phép FieldKit Cloud có được cả lợi ích của time-series database (thông qua TimescaleDB) và relational database (thông qua PostgreSQL), cho phép lưu trữ cả metadata quan hệ và dữ liệu time-series trong cùng một hệ thống. Ngoài ra, FieldKit Cloud cung cấp một giải pháp full-stack hoàn chỉnh bao gồm backend API, frontend portal, và visualization services, thay vì chỉ là một database service như InfluxDB Cloud.
+
+\subsubsection{AWS IoT Core - Nền Tảng IoT Được Quản Lý}
+
+\textbf{Thông tin chung:}
+\begin{itemize}
+    \item \textbf{Nhà phát triển}: Amazon Web Services (AWS), nhà cung cấp dịch vụ đám mây lớn nhất thế giới
+    \item \textbf{Năm phát hành}: 2015, là một phần của hệ sinh thái AWS IoT
+    \item \textbf{Loại}: Nền tảng IoT được quản lý hoàn toàn (Fully Managed IoT Platform)
+\end{itemize}
+
+AWS IoT Core là một dịch vụ được quản lý hoàn toàn bởi Amazon Web Services, được thiết kế để kết nối hàng tỷ thiết bị IoT với đám mây AWS một cách an toàn và đáng tin cậy. Dịch vụ này là một phần của hệ sinh thái AWS IoT rộng lớn, bao gồm các dịch vụ như AWS IoT Device Management, AWS IoT Analytics, và AWS IoT Greengrass. AWS IoT Core cung cấp một MQTT broker được quản lý hoàn toàn, cho phép các thiết bị IoT giao tiếp với cloud sử dụng giao thức MQTT (Message Queuing Telemetry Transport), một giao thức nhẹ và hiệu quả được thiết kế đặc biệt cho các thiết bị có tài nguyên hạn chế.
+
+Một trong những điểm mạnh nổi bật nhất của AWS IoT Core là khả năng mở rộng cực lớn. Theo tài liệu của AWS, dịch vụ có thể hỗ trợ hàng tỷ thiết bị và hàng nghìn tỷ messages mỗi tháng. Điều này được thực hiện thông qua kiến trúc phân tán và tự động scale của AWS. AWS IoT Core cũng tích hợp sâu với các dịch vụ AWS khác như Lambda (serverless computing), S3 (object storage), DynamoDB (NoSQL database), và Kinesis (streaming data), cho phép xây dựng các giải pháp IoT phức tạp và mạnh mẽ. Bảo mật là một ưu tiên hàng đầu của AWS IoT Core, với hỗ trợ cho device certificates, mutual TLS authentication, và fine-grained access control thông qua AWS IoT Policies.
+
+Tuy nhiên, AWS IoT Core cũng có những hạn chế đáng kể. Thứ nhất, chi phí có thể trở nên rất cao khi số lượng messages tăng lên. AWS tính phí \$1.00 cho mỗi triệu messages, và với các ứng dụng IoT quy mô lớn có thể gửi hàng triệu messages mỗi ngày, chi phí có thể lên đến hàng nghìn USD mỗi tháng. Thứ hai, việc setup và cấu hình AWS IoT Core có thể rất phức tạp, đặc biệt đối với những người mới bắt đầu. Cần phải hiểu về MQTT protocol, device certificates, IoT rules, và cách tích hợp với các dịch vụ AWS khác. Thứ ba, việc sử dụng AWS IoT Core tạo ra vendor lock-in mạnh mẽ, vì toàn bộ kiến trúc phụ thuộc vào hệ sinh thái AWS. Cuối cùng, AWS IoT Core chỉ là một phần của kiến trúc, không cung cấp giao diện quản lý dữ liệu tích hợp sẵn. Người dùng cần phải tự xây dựng frontend, backend API, và các thành phần khác.
+
+Khi so sánh với FieldKit Cloud, AWS IoT Core có ưu điểm là một dịch vụ được quản lý hoàn toàn với khả năng mở rộng cực lớn và tích hợp sâu với hệ sinh thái AWS. Tuy nhiên, FieldKit Cloud được thiết kế với một approach khác: thay vì chỉ là một dịch vụ trong một hệ sinh thái lớn, FieldKit Cloud cung cấp một giải pháp hoàn chỉnh bao gồm backend API, frontend portal, và visualization services. Điều này giúp người dùng có thể bắt đầu sử dụng ngay mà không cần phải xây dựng nhiều thành phần từ đầu. Ngoài ra, mặc dù FieldKit Cloud hiện tại được triển khai trên AWS, kiến trúc của nó linh hoạt hơn và có thể được triển khai trên các cloud provider khác như Azure hoặc Google Cloud Platform, giúp tránh vendor lock-in.
+
+\subsection{So Sánh Tổng Quan}
+
+% Bảng so sánh các nghiên cứu/sản phẩm với sản phẩm của nhóm
+\begin{table}[H]
+\centering
+\caption{So sánh các nghiên cứu/sản phẩm liên quan}
+\label{tab:so-sanh-nghien-cuu}
+\begin{tabular}{|p{2.5cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|}
+\hline
+\textbf{Tính năng} & \textbf{ThingSpeak} & \textbf{InfluxDB Cloud} & \textbf{AWS IoT Core} & \textbf{FieldKit Cloud} \\
+\hline
+Data Ingestion & Có (REST API) & Có (HTTP/Line Protocol) & Có (MQTT/HTTP) & Có (REST API) \\
+\hline
+Time-Series DB & Hạn chế & Chuyên biệt & Không (cần tích hợp) & Có (TimescaleDB) \\
+\hline
+Relational DB & Không & Không & Không & Có (PostgreSQL) \\
+\hline
+Web Portal & Cơ bản & Có (Chronograf) & Không & Có (Vue.js SPA) \\
+\hline
+Visualization & Cơ bản & Tốt & Không & Có (Charting Service) \\
+\hline
+Multi-tenancy & Hạn chế & Có & Có & Có (Projects) \\
+\hline
+Geographic Data & Hạn chế & Hạn chế & Không & Có (PostGIS) \\
+\hline
+Open Source & Một phần & Một phần & Không & Có (toàn bộ) \\
+\hline
+Cloud Provider & MathWorks & InfluxData & AWS & AWS (có thể thay đổi) \\
+\hline
+Cost Model & Freemium & Pay-per-use & Pay-per-message & Pay-per-resource \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Kết Luận}
+
+Qua việc khảo sát chi tiết các nghiên cứu và sản phẩm liên quan trong lĩnh vực IoT và quản lý dữ liệu cảm biến, nhóm nghiên cứu đã rút ra được nhiều bài học quan trọng và áp dụng chúng vào việc thiết kế và phát triển FieldKit Cloud. Việc phân tích các giải pháp hiện có không chỉ giúp xác định các best practices mà còn giúp tránh những pitfalls mà các giải pháp đó đã gặp phải.
+
+Từ việc nghiên cứu ThingSpeak, nhóm học được tầm quan trọng của việc thiết kế API đơn giản và dễ sử dụng. ThingSpeak thành công một phần nhờ vào RESTful API đơn giản của nó, cho phép người dùng nhanh chóng tích hợp thiết bị IoT mà không cần kiến thức chuyên sâu. FieldKit Cloud đã áp dụng bài học này bằng cách thiết kế RESTful API với cấu trúc rõ ràng, tuân thủ các chuẩn REST, và cung cấp documentation đầy đủ với các ví dụ cụ thể. API được thiết kế với các endpoints có tên mô tả rõ ràng, sử dụng HTTP methods đúng cách, và trả về responses với format JSON nhất quán.
+
+Từ việc nghiên cứu InfluxDB Cloud, nhóm nhận ra sự cần thiết của việc sử dụng database chuyên biệt cho dữ liệu time-series. InfluxDB chứng minh rằng các database quan hệ truyền thống không đủ để xử lý hiệu quả các workload time-series với volume lớn. Tuy nhiên, thay vì sử dụng một database hoàn toàn riêng biệt như InfluxDB, FieldKit Cloud đã chọn một approach khác: sử dụng TimescaleDB, một extension của PostgreSQL. Điều này cho phép FieldKit Cloud có được cả lợi ích của time-series database (thông qua TimescaleDB) và relational database (thông qua PostgreSQL), cho phép lưu trữ cả metadata quan hệ và dữ liệu time-series trong cùng một hệ thống, giảm complexity và tăng tính nhất quán của dữ liệu.
+
+Từ việc nghiên cứu AWS IoT Core, nhóm học được tầm quan trọng của khả năng mở rộng và tích hợp với các dịch vụ cloud. AWS IoT Core chứng minh rằng một hệ thống IoT quy mô lớn cần được thiết kế với khả năng mở rộng từ đầu, và cần tích hợp tốt với các dịch vụ cloud để tận dụng các tính năng như auto-scaling, load balancing, và monitoring. FieldKit Cloud đã áp dụng bài học này bằng cách thiết kế với kiến trúc microservices trên AWS, sử dụng ECS Fargate cho container orchestration, ALB cho load balancing, và CloudWatch cho monitoring. Kiến trúc này cho phép hệ thống tự động scale khi có tải cao và tích hợp seamlessly với các dịch vụ AWS khác.
+
+FieldKit Cloud có những điểm khác biệt quan trọng so với các giải pháp được khảo sát. Thứ nhất, FieldKit Cloud là một giải pháp full-stack hoàn chỉnh, không chỉ là một database service hay một API service, mà bao gồm cả backend API, frontend portal, và visualization services. Điều này giúp người dùng có thể bắt đầu sử dụng ngay mà không cần phải xây dựng nhiều thành phần từ đầu. Thứ hai, FieldKit Cloud sử dụng hybrid database approach, kết hợp PostgreSQL và TimescaleDB để tận dụng ưu điểm của cả hai loại database. Thứ ba, FieldKit Cloud là open-source và có thể được triển khai trên nhiều cloud provider, giúp tránh vendor lock-in. Thứ tư, FieldKit Cloud sử dụng modern tech stack với Go, Vue.js, Docker, và microservices architecture, đảm bảo hiệu năng cao và dễ bảo trì. Cuối cùng, FieldKit Cloud tích hợp PostGIS để hỗ trợ dữ liệu địa lý và spatial queries, một tính năng quan trọng cho các ứng dụng IoT với các trạm cảm biến phân tán địa lý.
+
+Những khác biệt này giúp FieldKit Cloud phù hợp hơn với các use cases cần một giải pháp toàn diện, có thể tùy biến, và không phụ thuộc vào một nhà cung cấp cụ thể. Đặc biệt, FieldKit Cloud phù hợp với các dự án nghiên cứu, các tổ chức có ngân sách hạn chế, và các ứng dụng cần tính linh hoạt cao trong việc tùy biến và mở rộng.
+

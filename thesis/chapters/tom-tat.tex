@@ -1,0 +1,12 @@
+\section*{Tóm Tắt}
+
+Nghiên cứu này trình bày quá trình phát triển và triển khai FieldKit Cloud, một nền tảng IoT để thu thập, lưu trữ và phân tích dữ liệu từ các thiết bị cảm biến môi trường. Hệ thống được xây dựng với kiến trúc microservices, triển khai trên nền tảng đám mây AWS sử dụng các dịch vụ ECS Fargate, Application Load Balancer, Network Load Balancer, Secrets Manager và CloudWatch Logs. Ngoài ra, module giả lập dữ liệu được triển khai trên Google Cloud Platform sử dụng Cloud Run và Cloud Scheduler, chứng minh tính linh hoạt của kiến trúc trong việc tích hợp với nhiều cloud providers.
+
+Phương pháp nghiên cứu bao gồm so sánh và đánh giá các dịch vụ đám mây từ các nhà cung cấp khác nhau, thiết kế kiến trúc hệ thống với hybrid database approach, và đánh giá hiệu năng thông qua các bài kiểm thử. Hệ thống sử dụng PostgreSQL với PostGIS extension cho dữ liệu quan hệ và TimescaleDB cho dữ liệu time-series. Backend API được phát triển bằng Go (Golang) và frontend Portal sử dụng Vue.js.
+
+Kết quả đánh giá cho thấy hệ thống có thể xử lý ổn định với 50-100 người dùng đồng thời, đạt throughput khoảng 500 requests/giây cho các API queries, và có khả năng tự động mở rộng thông qua ECS auto-scaling. Hệ thống đã được triển khai thành công trên AWS với tính khả dụng cao và khả năng chịu lỗi tốt.
+
+Nghiên cứu đóng góp vào việc áp dụng các công nghệ cloud computing hiện đại trong phát triển nền tảng IoT, đồng thời cung cấp một giải pháp open-source có thể tùy biến cho các ứng dụng giám sát môi trường.
+
+\textbf{Từ khóa:} IoT, Cloud Computing, Microservices, AWS, Google Cloud Platform, Time-Series Database, Container Orchestration, Data Simulation
+

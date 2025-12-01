@@ -1,0 +1,161 @@
+\section{Giới Thiệu Về Sản Phẩm}
+
+\subsection{Bối Cảnh Nghiên Cứu}
+
+Internet of Things (IoT) đang trở thành một trong những công nghệ quan trọng nhất trong thời đại số hóa hiện nay. Theo báo cáo của Gartner, số lượng thiết bị IoT kết nối trên toàn cầu dự kiến sẽ đạt hơn 25 tỷ vào năm 2030, tạo ra một thị trường trị giá hàng nghìn tỷ USD. Việc kết nối các thiết bị cảm biến với internet không chỉ cho phép thu thập và phân tích dữ liệu theo thời gian thực mà còn mở ra nhiều ứng dụng đột phá trong các lĩnh vực như giám sát môi trường, nông nghiệp thông minh, quản lý tài nguyên, và đô thị thông minh.
+
+Trong lĩnh vực giám sát môi trường, IoT đóng vai trò quan trọng trong việc thu thập dữ liệu về chất lượng không khí, nhiệt độ, độ ẩm, áp suất, và các thông số môi trường khác từ các trạm cảm biến phân tán địa lý. Dữ liệu này không chỉ giúp các nhà nghiên cứu hiểu rõ hơn về biến đổi khí hậu mà còn hỗ trợ các cơ quan quản lý đưa ra các quyết định chính sách dựa trên dữ liệu thực tế. Tuy nhiên, việc xây dựng một nền tảng IoT hoàn chỉnh để xử lý loại dữ liệu này đòi hỏi nhiều thách thức kỹ thuật phức tạp.
+
+Thách thức đầu tiên là xử lý khối lượng lớn dữ liệu time-series. Mỗi trạm cảm biến có thể gửi hàng trăm hoặc hàng nghìn readings mỗi ngày, và với hàng trăm trạm cảm biến, hệ thống cần xử lý hàng triệu records mỗi ngày. Dữ liệu time-series có đặc điểm là volume lớn, write-heavy, và cần được query theo các time ranges khác nhau. Các database quan hệ truyền thống như MySQL hoặc PostgreSQL thông thường không được tối ưu hóa cho loại workload này, dẫn đến hiệu năng kém khi xử lý queries trên dữ liệu time-series lớn.
+
+Thách thức thứ hai là đảm bảo tính khả dụng cao (High Availability). Hệ thống IoT cần hoạt động 24/7 để thu thập dữ liệu liên tục. Bất kỳ downtime nào cũng có thể dẫn đến mất mát dữ liệu quan trọng. Điều này đòi hỏi hệ thống phải có khả năng tự động phục hồi từ lỗi, tự động scale khi có tải cao, và có cơ chế backup và disaster recovery.
+
+Thách thức thứ ba là khả năng mở rộng (Scalability). Khi số lượng thiết bị IoT tăng lên, hệ thống cần có khả năng mở rộng để xử lý thêm traffic và data. Điều này đòi hỏi kiến trúc hệ thống phải được thiết kế với horizontal scaling in mind, sử dụng các patterns như microservices, load balancing, và distributed databases.
+
+Cloud computing đã trở thành giải pháp tối ưu để giải quyết các thách thức này. Các nhà cung cấp cloud như Amazon Web Services (AWS), Microsoft Azure, và Google Cloud Platform (GCP) cung cấp infrastructure linh hoạt, có thể mở rộng, và được quản lý hoàn toàn. Các dịch vụ như container orchestration (ECS, Kubernetes), managed databases, load balancers, và auto-scaling giúp giảm đáng kể complexity trong việc xây dựng và vận hành hệ thống IoT quy mô lớn.
+
+Nghiên cứu này tập trung vào việc phát triển FieldKit Cloud, một nền tảng IoT được triển khai trên AWS, sử dụng các dịch vụ cloud hiện đại để xử lý dữ liệu từ các thiết bị cảm biến môi trường. Nghiên cứu không chỉ tập trung vào việc xây dựng một hệ thống hoạt động được mà còn đánh giá và so sánh các lựa chọn công nghệ khác nhau, phân tích hiệu năng, và đưa ra các best practices cho việc phát triển nền tảng IoT trên cloud.
+
+\subsection{Tổng Quan Sản Phẩm}
+
+FieldKit Cloud là một nền tảng IoT (Internet of Things) toàn diện được thiết kế để thu thập, lưu trữ, quản lý và phân tích dữ liệu từ các thiết bị cảm biến môi trường. Hệ thống được xây dựng với kiến trúc microservices hiện đại, chạy trên nền tảng đám mây AWS, đảm bảo khả năng mở rộng cao và độ tin cậy. Kiến trúc microservices cho phép hệ thống được chia thành các services độc lập, mỗi service có thể được phát triển, triển khai, và scale riêng biệt, giúp tăng tính linh hoạt và dễ bảo trì của hệ thống.
+
+Sản phẩm bao gồm các thành phần chính được thiết kế để làm việc cùng nhau một cách seamless:
+
+\textbf{Backend Server:} RESTful API được phát triển bằng Go (Golang), một ngôn ngữ lập trình được thiết kế đặc biệt cho hiệu năng cao và khả năng xử lý concurrent requests. Go được chọn vì khả năng compile thành binary nhỏ gọn, hiệu năng runtime cao, và built-in support cho concurrency thông qua goroutines. Backend server cung cấp các endpoint để quản lý stations (trạm cảm biến), sensors (cảm biến), projects (dự án), và dữ liệu cảm biến. API được thiết kế theo RESTful principles, sử dụng HTTP methods (GET, POST, PUT, DELETE) để thực hiện các operations CRUD (Create, Read, Update, Delete). API cũng hỗ trợ authentication và authorization để đảm bảo chỉ những users được phép mới có thể truy cập và thao tác với dữ liệu.
+
+\textbf{Frontend Portal:} Single Page Application (SPA) được xây dựng bằng Vue.js, một progressive JavaScript framework hiện đại. Vue.js được chọn vì tính đơn giản, hiệu năng cao, và ecosystem phong phú. Portal cung cấp giao diện trực quan và user-friendly để người dùng tương tác với hệ thống. Portal sử dụng Vue Router để quản lý navigation, Vuex để quản lý state, và Axios để giao tiếp với backend API. Giao diện được thiết kế responsive để hoạt động tốt trên cả desktop và mobile devices. Portal cũng hỗ trợ internationalization (i18n) với các ngôn ngữ English, Spanish, và Vietnamese.
+
+\textbf{Charting Service:} Dịch vụ độc lập sử dụng Node.js để tạo các biểu đồ và visualization từ dữ liệu time-series. Service này được tách riêng để tránh ảnh hưởng đến performance của main server khi generate charts, vì việc tạo charts có thể tốn nhiều CPU và memory. Charting service sử dụng Vega, một declarative language để tạo visualizations, và Canvas API để render charts thành images. Service này có thể được scale độc lập dựa trên demand cho chart generation.
+
+\textbf{Database Layer:} Hệ thống sử dụng hybrid database approach, kết hợp PostgreSQL với PostGIS extension cho dữ liệu quan hệ và TimescaleDB cho dữ liệu time-series. PostgreSQL được sử dụng để lưu trữ metadata như thông tin users, projects, stations, và sensors. PostGIS extension cho phép lưu trữ và query geographic data, rất quan trọng cho IoT applications vì các trạm cảm biến thường có location information. TimescaleDB là một extension của PostgreSQL được tối ưu hóa đặc biệt cho time-series data, với các tính năng như automatic partitioning, compression, và continuous aggregates.
+
+\textbf{Cloud Infrastructure:} Hệ thống chính được triển khai trên AWS với ECS Fargate cho container orchestration, Application Load Balancer (ALB) cho HTTP/HTTPS load balancing, Network Load Balancer (NLB) cho TCP load balancing đến database, Secrets Manager cho quản lý credentials, và CloudWatch Logs cho centralized logging. Ngoài ra, module giả lập dữ liệu được triển khai trên Google Cloud Platform sử dụng Cloud Run (serverless containers) và Cloud Scheduler (cron jobs), chứng minh tính linh hoạt của kiến trúc trong việc tích hợp với nhiều cloud providers. Tất cả các services được chạy trong Docker containers để đảm bảo consistency giữa development và production environments.
+
+Hệ thống hỗ trợ nhiều loại cảm biến môi trường như nhiệt độ, độ ẩm, áp suất, chất lượng không khí (PM2.5, PM10, CO2, NO2, O3), và có khả năng mở rộng để tích hợp thêm các loại cảm biến khác trong tương lai. Mỗi loại sensor có thể có các parameters khác nhau, và hệ thống được thiết kế để linh hoạt trong việc định nghĩa và xử lý các sensor types mới.
+
+\subsection{Lý Do Phát Triển Sản Phẩm}
+
+\subsubsection{Nhu Cầu Thực Tế}
+
+Trong bối cảnh biến đổi khí hậu và ô nhiễm môi trường ngày càng nghiêm trọng trên toàn cầu, việc thu thập và phân tích dữ liệu môi trường trở nên vô cùng quan trọng và cấp thiết. Theo báo cáo của Tổ chức Y tế Thế giới (WHO), ô nhiễm không khí là nguyên nhân gây ra hơn 7 triệu ca tử vong sớm mỗi năm trên toàn thế giới. Việc giám sát chất lượng không khí và các thông số môi trường khác đã trở thành một nhu cầu cấp thiết không chỉ cho các tổ chức nghiên cứu và cơ quan quản lý mà còn cho cả cộng đồng.
+
+Các tổ chức nghiên cứu khoa học cần một nền tảng để thu thập dữ liệu từ các trạm cảm biến được đặt tại nhiều địa điểm khác nhau, có thể cách xa hàng trăm hoặc hàng nghìn kilomet. Dữ liệu này cần được thu thập liên tục, lưu trữ an toàn, và có thể được truy vấn và phân tích một cách hiệu quả. Ví dụ, một dự án nghiên cứu về biến đổi khí hậu có thể cần thu thập dữ liệu nhiệt độ và độ ẩm từ hàng trăm trạm cảm biến trên khắp một khu vực địa lý rộng lớn trong nhiều năm.
+
+Cơ quan quản lý môi trường cần các công cụ để giám sát chất lượng không khí, nước, và đất trong khu vực quản lý của họ. Dữ liệu này cần được cập nhật theo thời gian thực hoặc gần thời gian thực để có thể đưa ra các cảnh báo kịp thời khi có vấn đề về môi trường. Ví dụ, khi mức độ PM2.5 vượt quá ngưỡng an toàn, hệ thống cần có khả năng gửi cảnh báo đến người dân trong khu vực đó.
+
+Các cá nhân và cộng đồng cũng ngày càng quan tâm đến chất lượng môi trường xung quanh họ. Với sự phát triển của công nghệ, các thiết bị cảm biến môi trường đã trở nên rẻ hơn và dễ tiếp cận hơn, cho phép các cá nhân tự thiết lập các trạm giám sát của riêng mình. Tuy nhiên, họ cần một nền tảng để lưu trữ, quản lý, và chia sẻ dữ liệu này với cộng đồng.
+
+Các nhu cầu cụ thể bao gồm:
+
+\begin{itemize}
+    \item \textbf{Thu thập dữ liệu từ nhiều trạm cảm biến phân tán địa lý}: Hệ thống cần có khả năng nhận dữ liệu từ các thiết bị IoT được đặt tại các địa điểm khác nhau, có thể cách xa hàng trăm kilomet. Các thiết bị này có thể kết nối qua internet, cellular network, hoặc các phương thức khác. Hệ thống cần xử lý các vấn đề như network latency, connection drops, và data validation.
+    
+    \item \textbf{Lưu trữ và quản lý khối lượng lớn dữ liệu time-series}: Mỗi trạm cảm biến có thể gửi hàng trăm readings mỗi ngày, và với hàng trăm trạm, hệ thống cần xử lý hàng triệu records mỗi ngày. Dữ liệu này cần được lưu trữ một cách hiệu quả, có thể được query nhanh chóng, và có cơ chế retention để quản lý chi phí lưu trữ.
+    
+    \item \textbf{Phân tích và trực quan hóa dữ liệu để đưa ra quyết định}: Dữ liệu thô không có giá trị nếu không được phân tích và trực quan hóa. Hệ thống cần cung cấp các công cụ để tạo charts, graphs, và reports từ dữ liệu. Các phân tích có thể bao gồm trend analysis, anomaly detection, và statistical summaries.
+    
+    \item \textbf{Chia sẻ dữ liệu và kết quả phân tích với cộng đồng}: Dữ liệu môi trường có giá trị lớn nhất khi được chia sẻ với cộng đồng. Hệ thống cần hỗ trợ các tính năng như public dashboards, data export, và API để các ứng dụng khác có thể truy cập dữ liệu.
+\end{itemize}
+
+\subsubsection{Vấn Đề Cần Giải Quyết}
+
+Sau khi khảo sát các giải pháp hiện có trên thị trường, nhóm nghiên cứu đã phát hiện ra nhiều hạn chế và vấn đề mà các nền tảng IoT hiện tại đang gặp phải. Những vấn đề này không chỉ ảnh hưởng đến chi phí mà còn đến khả năng sử dụng và hiệu quả của hệ thống.
+
+\textbf{Chi phí cao:} Nhiều nền tảng IoT thương mại như AWS IoT Core, Microsoft Azure IoT Hub, và Google Cloud IoT Core có mô hình pricing dựa trên số lượng messages hoặc devices, có thể trở nên rất đắt đỏ khi scale lên. Ví dụ, AWS IoT Core tính phí \$1.00 cho mỗi triệu messages, và với hàng trăm devices gửi data mỗi phút, chi phí có thể lên đến hàng nghìn USD mỗi tháng. Điều này làm cho các nền tảng này không phù hợp với các dự án nhỏ, nghiên cứu học thuật, hoặc các tổ chức phi lợi nhuận có ngân sách hạn chế. Ngoài ra, nhiều nền tảng yêu cầu subscription fees hàng tháng hoặc hàng năm, tạo ra rào cản tài chính cho việc bắt đầu sử dụng.
+
+\textbf{Độ phức tạp:} Các hệ thống IoT lớn thường có kiến trúc phức tạp với nhiều components và dependencies. Việc setup và cấu hình ban đầu có thể mất nhiều thời gian và yêu cầu kiến thức chuyên sâu về cloud computing. Ví dụ, để setup một hệ thống hoàn chỉnh trên AWS IoT Core, người dùng cần hiểu về MQTT protocol, device certificates, IoT rules, và tích hợp với các dịch vụ AWS khác. Điều này tạo ra learning curve cao và làm chậm quá trình phát triển. Hơn nữa, các hệ thống này thường khó tùy biến theo nhu cầu cụ thể của từng dự án, vì chúng được thiết kế để phục vụ nhiều use cases khác nhau.
+
+\textbf{Hiệu năng:} Khả năng xử lý dữ liệu time-series lớn của nhiều nền tảng chưa được tối ưu. Các database quan hệ truyền thống như MySQL hoặc PostgreSQL thông thường không được thiết kế để xử lý hiệu quả các queries trên dữ liệu time-series với volume lớn. Khi số lượng data tăng lên, performance của các queries có thể giảm đáng kể. Ví dụ, một query để lấy dữ liệu nhiệt độ trong 1 năm từ một trạm cảm biến có thể mất vài giây hoặc thậm chí vài phút nếu không được tối ưu đúng cách. Điều này ảnh hưởng đến user experience và khả năng real-time monitoring.
+
+\textbf{Tính mở rộng:} Nhiều hệ thống gặp khó khăn trong việc mở rộng khi số lượng thiết bị và dữ liệu tăng lên. Các hệ thống monolithic truyền thống thường gặp bottleneck khi scale, vì tất cả components được đóng gói trong một application duy nhất. Khi cần scale, toàn bộ hệ thống phải được scale, dẫn đến lãng phí tài nguyên. Ví dụ, nếu chỉ cần scale database layer, nhưng hệ thống monolithic yêu cầu scale cả application server, điều này không hiệu quả về chi phí. Hơn nữa, việc scale thường yêu cầu downtime hoặc manual intervention, làm giảm tính khả dụng của hệ thống.
+
+\subsubsection{Cơ Hội Thị Trường}
+
+Thị trường IoT và environmental monitoring đang phát triển mạnh mẽ với tốc độ tăng trưởng hàng năm đáng kể. Nhu cầu về các giải pháp open-source, có thể tùy biến, và chi phí hợp lý là rất lớn, đặc biệt trong các lĩnh vực:
+
+\begin{itemize}
+    \item Nghiên cứu khoa học và giáo dục
+    \item Quản lý môi trường và tài nguyên
+    \item Nông nghiệp thông minh
+    \item Giám sát chất lượng không khí và nước
+\end{itemize}
+
+\subsubsection{Mục Tiêu Học Tập Và Nghiên Cứu}
+
+Dự án này cung cấp cơ hội để:
+
+\begin{itemize}
+    \item Áp dụng kiến thức về cloud computing, microservices architecture, và containerization
+    \item Thực hành với các công nghệ hiện đại như AWS, Docker, Go, Vue.js
+    \item Hiểu sâu về xử lý dữ liệu time-series và database optimization
+    \item Phát triển kỹ năng DevOps và cloud infrastructure management
+\end{itemize}
+
+\subsection{Mục Tiêu Của Dự Án}
+
+\subsubsection{Mục Tiêu Chức Năng}
+
+\begin{itemize}
+    \item Xây dựng hệ thống quản lý stations và sensors với đầy đủ CRUD operations
+    \item Triển khai ingestion pipeline để nhận và xử lý dữ liệu từ các thiết bị IoT
+    \item Phát triển API RESTful đầy đủ với authentication và authorization
+    \item Xây dựng giao diện web trực quan để quản lý và xem dữ liệu
+    \item Tích hợp dịch vụ visualization để tạo biểu đồ và báo cáo
+    \item Hỗ trợ đa ngôn ngữ (i18n) cho giao diện người dùng
+\end{itemize}
+
+\subsubsection{Mục Tiêu Kỹ Thuật}
+
+\begin{itemize}
+    \item Đạt hiệu năng cao với khả năng xử lý hàng nghìn requests mỗi giây
+    \item Đảm bảo tính khả dụng cao (High Availability) với auto-scaling
+    \item Triển khai trên cloud với chi phí tối ưu
+    \item Đảm bảo bảo mật dữ liệu với encryption và access control
+    \item Hỗ trợ horizontal scaling để mở rộng khi cần thiết
+\end{itemize}
+
+\subsubsection{Mục Tiêu Nghiên Cứu}
+
+\begin{itemize}
+    \item So sánh và đánh giá các dịch vụ cloud khác nhau (AWS, Azure, GCP)
+    \item Nghiên cứu các phương pháp tối ưu hóa xử lý dữ liệu time-series
+    \item Đánh giá hiệu năng của các database solutions (PostgreSQL, TimescaleDB)
+    \item Phân tích chi phí và hiệu quả của các kiến trúc cloud khác nhau
+\end{itemize}
+
+\subsection{Phạm Vi Dự Án}
+
+\subsubsection{Phạm Vi Bao Gồm}
+
+Dự án bao gồm các thành phần sau:
+
+\begin{itemize}
+    \item \textbf{Backend Services}: Server API, Charting service, và các microservices cần thiết
+    \item \textbf{Frontend Application}: Portal web application với đầy đủ tính năng quản lý
+    \item \textbf{Database}: PostgreSQL với PostGIS và TimescaleDB cho time-series data
+    \item \textbf{Cloud Infrastructure}: Triển khai trên AWS với ECS, ALB, NLB, và các dịch vụ hỗ trợ
+    \item \textbf{Deployment Automation}: Scripts và tools để tự động hóa quá trình triển khai
+    \item \textbf{Documentation}: Tài liệu kỹ thuật và hướng dẫn sử dụng
+\end{itemize}
+
+\subsubsection{Phạm Vi Không Bao Gồm}
+
+Các thành phần sau đây nằm ngoài phạm vi của dự án:
+
+\begin{itemize}
+    \item \textbf{Hardware Development}: Không phát triển phần cứng cảm biến, chỉ tập trung vào phần mềm
+    \item \textbf{Mobile Applications}: Chỉ phát triển web application, không bao gồm mobile apps
+    \item \textbf{Real-time Processing}: Tập trung vào batch processing và query, không xử lý real-time streaming
+    \item \textbf{Machine Learning}: Không bao gồm các tính năng AI/ML để dự đoán hoặc phân loại dữ liệu
+    \item \textbf{Third-party Integrations}: Không tích hợp với các hệ thống bên thứ ba như weather services, social media
+\end{itemize}
+
+\subsubsection{Giới Hạn Của Dự Án}
+
+\begin{itemize}
+    \item Dự án tập trung vào proof-of-concept và demonstration, không phải production-ready system
+    \item Một số tính năng advanced như advanced analytics và reporting có thể được implement ở mức cơ bản
+    \item Security features sẽ được implement ở mức cơ bản, không bao gồm các tính năng enterprise-grade security
+\end{itemize}
+

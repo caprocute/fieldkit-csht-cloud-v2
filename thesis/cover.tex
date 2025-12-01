@@ -1,0 +1,93 @@
+% Trang bìa khoá luận tốt nghiệp
+% Format theo mẫu Đại học Quốc gia Hà Nội - Trường Đại học Công nghệ
+
+\newpage
+\thispagestyle{empty}
+
+\begin{center}
+
+% Border dày
+\setlength{\fboxrule}{4pt}
+\fbox{
+\begin{minipage}{0.85\textwidth}
+\centering
+\vspace{2.5cm}
+
+% Header - Đại học Quốc gia Hà Nội
+{\fontsize{16}{20}\selectfont\bfseries
+ĐẠI HỌC QUỐC GIA HÀ NỘI\\
+\vspace{0.4cm}
+TRƯỜNG ĐẠI HỌC CÔNG NGHỆ\\
+}
+
+\vspace{1.2cm}
+
+% Logo - Placeholder cho logo trường
+% Nếu có file logo.png, uncomment dòng sau và comment phần tikz
+% \includegraphics[width=3.5cm]{logo.png}
+
+% Logo text (tạm thời, nên thay bằng hình ảnh logo thực tế)
+\begin{tikzpicture}
+    \draw[fill=blue!50, line width=2pt] (0,0) circle (1.8cm);
+    \node[white, font=\bfseries\Large] at (0,0.4) {\fontsize{12}{14}\selectfont ĐẠI HỌC};
+    \node[white, font=\bfseries\Large] at (0,-0.4) {\fontsize{12}{14}\selectfont CÔNG NGHỆ};
+    % Vẽ các đường ngang phía trên (giống logo thực tế)
+    \foreach \y in {0.8, 0.5, 0.2} {
+        \draw[white, line width=2pt] (-0.6, \y) -- (0.6, \y);
+    }
+\end{tikzpicture}
+
+\vspace{1.8cm}
+
+% Tên tác giả
+{\fontsize{16}{20}\selectfont\bfseries
+Hoàng Khắc Hiếu\\
+}
+
+\vspace{2cm}
+
+% Tiêu đề khoá luận
+% Theo mẫu: TỐI ƯU HOÁ ĐIỀU KHIỂN GIAO THÔNG THÔNG MINH TRONG ĐÔ THỊ THÔNG QUA ỨNG DỤNG TRÍ TUỆ NHÂN TẠO
+% Hoặc điều chỉnh theo dự án FieldKit:
+{\fontsize{13}{17}\selectfont\bfseries
+TỐI ƯU HOÁ ĐIỀU KHIỂN GIAO THÔNG THÔNG MINH\\
+\vspace{0.4cm}
+TRONG ĐÔ THỊ THÔNG QUA\\
+\vspace{0.4cm}
+ỨNG DỤNG TRÍ TUỆ NHÂN TẠO\\
+}
+
+\vspace{2.5cm}
+
+% Loại tài liệu
+{\fontsize{14}{18}\selectfont\bfseries
+KHOÁ LUẬN TỐT NGHIỆP\\
+\vspace{0.6cm}
+Ngành: Khoa học máy tính\\
+}
+
+\vspace{2.5cm}
+
+% Thông tin hướng dẫn
+{\fontsize{13}{17}\selectfont
+Cán bộ hướng dẫn: TS. Nguyễn Văn Sơn\\
+\vspace{0.4cm}
+Cán bộ đồng hướng dẫn: TS. ...\\
+}
+
+\vspace{3cm}
+
+% Địa điểm và năm
+{\fontsize{14}{18}\selectfont\bfseries
+HÀ NỘI - 2025\\
+}
+
+\vspace{2.5cm}
+
+\end{minipage}
+}
+
+\end{center}
+
+\newpage
+

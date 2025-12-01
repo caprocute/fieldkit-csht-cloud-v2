@@ -1,0 +1,276 @@
+\section{Phân Tích So Sánh Và Đánh Giá Các Dịch Vụ Đám Mây}
+
+\subsection{Giới Thiệu}
+
+Chương này trình bày phân tích so sánh chi tiết và đánh giá ưu nhược điểm của các dịch vụ đám mây đã được lựa chọn để phát triển FieldKit Cloud với các dịch vụ tương tự trong các đám mây của các hãng đối thủ phổ biến như Microsoft Azure và Google Cloud Platform. Việc so sánh này được thực hiện dựa trên nhiều tiêu chí khác nhau bao gồm giá cả, hiệu năng, tính khả dụng, tính năng, khả năng tích hợp, và hỗ trợ từ nhà cung cấp.
+
+Quá trình lựa chọn các dịch vụ đám mây là một bước quan trọng trong việc phát triển hệ thống, vì nó ảnh hưởng trực tiếp đến hiệu năng, chi phí, và khả năng mở rộng của hệ thống. Mỗi nhà cung cấp đám mây lớn (AWS, Azure, GCP) đều có những điểm mạnh và điểm yếu riêng, và việc hiểu rõ những điểm này giúp đưa ra quyết định lựa chọn đúng đắn. Trong bối cảnh của dự án FieldKit Cloud, việc so sánh được thực hiện không chỉ dựa trên các thông số kỹ thuật mà còn dựa trên các yêu cầu cụ thể của dự án, ngân sách có sẵn, và khả năng tích hợp với các dịch vụ khác.
+
+Các dịch vụ được so sánh bao gồm các dịch vụ tính toán (compute services), dịch vụ lưu trữ (storage services), dịch vụ cơ sở dữ liệu (database services), và dịch vụ load balancing. Mỗi loại dịch vụ được phân tích dựa trên các tiêu chí cụ thể phù hợp với loại dịch vụ đó. Ví dụ, đối với dịch vụ tính toán, các tiêu chí quan trọng bao gồm hiệu năng, khả năng mở rộng, và chi phí. Đối với dịch vụ cơ sở dữ liệu, các tiêu chí quan trọng bao gồm hiệu năng query, khả năng lưu trữ, và tính năng hỗ trợ.
+
+\subsection{So Sánh Dịch Vụ Tính Toán (Compute)}
+
+\subsubsection{Dịch Vụ Đã Chọn: AWS ECS Fargate}
+
+AWS ECS Fargate là một dịch vụ tính toán serverless cho containers, cho phép chạy các ứng dụng containerized mà không cần quản lý servers hoặc clusters. Fargate là một phần của AWS Elastic Container Service (ECS), một dịch vụ container orchestration được quản lý hoàn toàn. Khác với EC2 launch type của ECS, nơi người dùng phải tự quản lý EC2 instances, Fargate tự động quản lý toàn bộ infrastructure bao gồm server provisioning, OS patching, và network configuration.
+
+Một trong những đặc điểm nổi bật nhất của Fargate là tính serverless của nó. Người dùng chỉ cần định nghĩa container image và resources cần thiết (CPU và memory), và Fargate tự động chọn và quản lý infrastructure phù hợp. Điều này loại bỏ hoàn toàn việc phải quản lý EC2 instances, security groups, và các thành phần infrastructure khác, giảm đáng kể operational overhead. Mô hình pricing của Fargate là pay-per-use, nghĩa là người dùng chỉ trả tiền cho CPU và memory thực sự sử dụng, không phải trả cho idle instances. Điều này đặc biệt có lợi cho các ứng dụng có traffic không đều, vì chi phí sẽ tự động giảm khi traffic thấp.
+
+Fargate hỗ trợ auto-scaling dựa trên CloudWatch metrics như CPU utilization và memory utilization. Khi utilization vượt quá ngưỡng được cấu hình, Fargate tự động tăng số lượng tasks. Tương tự, khi utilization giảm xuống dưới ngưỡng, Fargate tự động giảm số lượng tasks để tiết kiệm chi phí. Fargate cũng tự động phân phối tasks across multiple availability zones để đảm bảo high availability. Nếu một availability zone gặp sự cố, tasks sẽ tự động được chuyển sang các availability zones khác.
+
+\subsubsection{Các Dịch Vụ Đối Thủ}
+
+\textbf{Azure Container Instances (ACI):} Azure Container Instances là dịch vụ tương tự của Microsoft Azure, cho phép chạy containers mà không cần quản lý infrastructure. ACI được thiết kế đặc biệt cho các workloads ngắn hạn và event-driven, với khả năng start containers trong vài giây. Tuy nhiên, ACI có một số hạn chế so với Fargate. Thứ nhất, ACI không hỗ trợ long-running containers tốt như Fargate, vì nó được tối ưu hóa cho các containers có lifecycle ngắn. Thứ hai, ACI không tích hợp sâu với các dịch vụ Azure khác như Fargate tích hợp với AWS services. Thứ ba, ACI có ít tính năng quản lý và monitoring hơn so với Fargate.
+
+\textbf{Google Cloud Run:} Google Cloud Run là một serverless container platform của Google, tự động scale containers dựa trên số lượng requests. Cloud Run được xây dựng trên Knative, một open-source platform để chạy serverless workloads trên Kubernetes. Cloud Run có một số ưu điểm như khả năng scale về zero (không có requests thì không có containers đang chạy, không tốn chi phí), và hỗ trợ HTTP/2 và gRPC. Tuy nhiên, Cloud Run cũng có một số hạn chế. Thứ nhất, Cloud Run được tối ưu hóa cho request-based workloads, không phù hợp cho long-running tasks như database services. Thứ hai, Cloud Run có cold start latency cao hơn so với Fargate, vì containers có thể bị scale về zero. Thứ ba, Cloud Run có giới hạn về thời gian execution (tối đa 60 phút cho mỗi request), không phù hợp cho các tasks dài.
+
+\begin{table}[H]
+\centering
+\caption{So sánh dịch vụ container orchestration}
+\label{tab:so-sanh-compute}
+\begin{tabular}{|p{2.5cm}|p{3.5cm}|p{3.5cm}|p{3.5cm}|}
+\hline
+\textbf{Tiêu chí} & \textbf{AWS ECS Fargate} & \textbf{Azure ACI} & \textbf{Google Cloud Run} \\
+\hline
+Giá cả & \$0.04/vCPU-hr + \$0.004/GB-hr & \$0.000012/vCPU-sec + \$0.0000015/GB-sec & \$0.00002400/vCPU-sec + \$0.00000250/GB-sec \\
+\hline
+Hiệu năng & Tốt, hỗ trợ long-running tasks & Tốt cho short-lived tasks & Tối ưu cho request-based workloads \\
+\hline
+Tính khả dụng & 99.95\% SLA & 99.9\% SLA & 99.95\% SLA \\
+\hline
+Tích hợp & Tích hợp sâu với AWS services & Tích hợp với Azure services & Tích hợp với GCP services \\
+\hline
+Scaling & Auto-scaling dựa trên metrics & Manual scaling & Auto-scaling dựa trên requests \\
+\hline
+Networking & VPC integration, ALB/NLB & Virtual Network, Load Balancer & Cloud Load Balancing \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Kết Luận và Lý Do Lựa Chọn}
+
+Sau khi phân tích chi tiết các dịch vụ container orchestration từ ba nhà cung cấp đám mây lớn, nhóm nghiên cứu đã quyết định chọn AWS ECS Fargate cho dự án FieldKit Cloud. Quyết định này được đưa ra dựa trên nhiều yếu tố quan trọng.
+
+Yếu tố đầu tiên và quan trọng nhất là khả năng tích hợp với hệ sinh thái AWS. FieldKit Cloud sử dụng nhiều dịch vụ AWS khác như Application Load Balancer (ALB), Network Load Balancer (NLB), Secrets Manager, và CloudWatch Logs. Fargate tích hợp seamlessly với tất cả các dịch vụ này, cho phép xây dựng một kiến trúc thống nhất và dễ quản lý. Ví dụ, Fargate tự động đăng ký tasks với ALB target groups, tự động retrieve secrets từ Secrets Manager, và tự động gửi logs đến CloudWatch. Sự tích hợp này giúp giảm đáng kể complexity trong việc setup và quản lý hệ thống.
+
+Yếu tố thứ hai là khả năng hỗ trợ long-running tasks. FieldKit Cloud cần chạy các services như PostgreSQL và TimescaleDB, những services cần chạy liên tục 24/7. Fargate được thiết kế để hỗ trợ cả long-running tasks và short-lived tasks, trong khi Cloud Run được tối ưu hóa chủ yếu cho request-based workloads và ACI không hỗ trợ tốt long-running containers. Điều này làm cho Fargate trở thành lựa chọn duy nhất phù hợp cho use case của FieldKit Cloud.
+
+Yếu tố thứ ba là tính linh hoạt. Fargate hỗ trợ cả Fargate launch type (serverless) và EC2 launch type (self-managed) trong cùng một cluster. Điều này cho phép FieldKit Cloud sử dụng Fargate cho các services chính và có thể chuyển sang EC2 launch type nếu cần tối ưu hóa chi phí hoặc có yêu cầu đặc biệt. Tính linh hoạt này không có trong ACI và Cloud Run.
+
+Yếu tố thứ tư là độ trưởng thành của dịch vụ. Fargate được phát hành vào năm 2017 và đã được sử dụng rộng rãi trong nhiều năm, trong khi ACI và Cloud Run là các dịch vụ mới hơn. Điều này có nghĩa là Fargate đã được test kỹ lưỡng hơn, có ít bugs hơn, và có nhiều best practices được document hơn. Cuối cùng, AWS có documentation rất phong phú và community support lớn, giúp việc phát triển và troubleshooting dễ dàng hơn.
+
+\subsection{So Sánh Dịch Vụ Lưu Trữ (Storage)}
+
+\subsubsection{Dịch Vụ Đã Chọn: ECR (Container Registry)}
+
+AWS ECR được sử dụng để lưu trữ Docker container images. Mặc dù không phải là object storage truyền thống, ECR đóng vai trò quan trọng trong việc lưu trữ và quản lý container images.
+
+\textbf{Đặc điểm:}
+\begin{itemize}
+    \item Private Docker registry
+    \item Image versioning và tagging
+    \item Security scanning tự động
+    \item Lifecycle policies để quản lý chi phí
+\end{itemize}
+
+\subsubsection{Các Dịch Vụ Đối Thủ}
+
+\textbf{Azure Container Registry (ACR):} Container registry của Microsoft Azure với tính năng tương tự ECR.
+
+\textbf{Google Container Registry (GCR):} Container registry của Google Cloud Platform, tích hợp với GCP services.
+
+\textbf{Docker Hub:} Public container registry, có thể sử dụng private repositories với trả phí.
+
+\begin{table}[H]
+\centering
+\caption{So sánh container registry services}
+\label{tab:so-sanh-storage}
+\begin{tabular}{|p{2.5cm}|p{3.5cm}|p{3.5cm}|p{3.5cm}|}
+\hline
+\textbf{Tiêu chí} & \textbf{AWS ECR} & \textbf{Azure ACR} & \textbf{Google GCR} \\
+\hline
+Giá cả & \$0.10/GB/tháng storage & \$0.167/GB/tháng & \$0.026/GB/tháng \\
+\hline
+Bandwidth & \$0.09/GB (outbound) & \$0.05/GB (outbound) & \$0.12/GB (outbound) \\
+\hline
+Security Scanning & Có (tích hợp) & Có (tích hợp) & Có (tích hợp) \\
+\hline
+Lifecycle Policies & Có & Có & Có \\
+\hline
+Multi-region & Có & Có & Có \\
+\hline
+Integration & ECS, Lambda & AKS, Functions & GKE, Cloud Run \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Kết Luận}
+
+ECR được chọn vì:
+\begin{itemize}
+    \item \textbf{Seamless Integration}: Tích hợp hoàn hảo với ECS, không cần cấu hình thêm
+    \item \textbf{Cost Effective}: Giá cả cạnh tranh, đặc biệt với lifecycle policies
+    \item \textbf{Security}: IAM-based access control và automatic security scanning
+    \item \textbf{Performance}: High availability và low latency khi pull images từ ECS
+\end{itemize}
+
+\subsection{So Sánh Dịch Vụ Cơ Sở Dữ Liệu (Database)}
+
+\subsubsection{Dịch Vụ Đã Chọn: PostgreSQL + TimescaleDB trên ECS}
+
+FieldKit Cloud sử dụng PostgreSQL với PostGIS extension cho dữ liệu quan hệ và TimescaleDB cho dữ liệu time-series, cả hai đều chạy trên ECS Fargate.
+
+\textbf{Đặc điểm:}
+\begin{itemize}
+    \item PostgreSQL: Relational database với PostGIS cho geographic data
+    \item TimescaleDB: Time-series extension của PostgreSQL
+    \item Chạy trên ECS: Containerized, dễ quản lý và scale
+\end{itemize}
+
+\subsubsection{Các Dịch Vụ Đối Thủ}
+
+\textbf{AWS RDS PostgreSQL:} Managed PostgreSQL service của AWS, tự động backup, patching, và scaling.
+
+\textbf{Azure Database for PostgreSQL:} Managed PostgreSQL service của Microsoft Azure.
+
+\textbf{Google Cloud SQL for PostgreSQL:} Fully-managed PostgreSQL service của Google Cloud.
+
+\textbf{AWS Timestream:} Time-series database service của AWS.
+
+\begin{table}[H]
+\centering
+\caption{So sánh database solutions}
+\label{tab:so-sanh-database}
+\begin{tabular}{|p{2.5cm}|p{3.5cm}|p{3.5cm}|p{3.5cm}|}
+\hline
+\textbf{Tiêu chí} & \textbf{PostgreSQL trên ECS} & \textbf{AWS RDS} & \textbf{AWS Timestream} \\
+\hline
+Chi phí & Chỉ trả cho ECS resources & Từ \$15/tháng (db.t3.micro) & \$0.50/GB ingested + \$0.03/GB stored \\
+\hline
+Quản lý & Manual (nhưng linh hoạt) & Fully managed & Fully managed \\
+\hline
+Time-Series & TimescaleDB extension & Không (cần TimescaleDB riêng) & Chuyên biệt \\
+\hline
+Geographic Data & PostGIS extension & PostGIS extension & Không \\
+\hline
+Scaling & Manual scaling & Auto-scaling & Auto-scaling \\
+\hline
+Backup & Manual hoặc script & Automatic & Automatic \\
+\hline
+Customization & Full control & Limited & Limited \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Kết Luận}
+
+PostgreSQL + TimescaleDB trên ECS được chọn vì:
+\begin{itemize}
+    \item \textbf{Cost Effective}: Chi phí thấp hơn so với managed services, đặc biệt cho development và testing
+    \item \textbf{Flexibility}: Full control over configuration và extensions
+    \item \textbf{Hybrid Approach}: Có thể sử dụng cả relational và time-series trong cùng database
+    \item \textbf{PostGIS Support}: Hỗ trợ geographic data với PostGIS extension
+    \item \textbf{Learning Experience}: Cung cấp cơ hội học hỏi về database administration
+\end{itemize}
+
+Tuy nhiên, cho production environment, AWS RDS có thể là lựa chọn tốt hơn do tính năng managed services và automatic backups.
+
+\subsection{So Sánh Load Balancer Services}
+
+\subsubsection{Dịch Vụ Đã Chọn: ALB và NLB}
+
+FieldKit Cloud sử dụng cả Application Load Balancer (ALB) cho HTTP traffic và Network Load Balancer (NLB) cho TCP traffic đến database.
+
+\subsubsection{Các Dịch Vụ Đối Thủ}
+
+\textbf{Azure Load Balancer:} Cung cấp cả Layer 4 và Layer 7 load balancing.
+
+\textbf{Google Cloud Load Balancing:} Cung cấp global load balancing với nhiều loại.
+
+\begin{table}[H]
+\centering
+\caption{So sánh load balancer services}
+\label{tab:so-sanh-lb}
+\begin{tabular}{|p{2.5cm}|p{3.5cm}|p{3.5cm}|p{3.5cm}|}
+\hline
+\textbf{Tiêu chí} & \textbf{AWS ALB/NLB} & \textbf{Azure LB} & \textbf{Google CLB} \\
+\hline
+Giá cả & \$0.0225/GB + \$0.008/LCU-hr & \$0.025/GB + \$0.01/rule-hr & \$0.025/GB + \$0.008/rule-hr \\
+\hline
+Layer 7 & ALB hỗ trợ & Application Gateway & HTTP(S) Load Balancer \\
+\hline
+Layer 4 & NLB hỗ trợ & Standard LB & TCP/UDP Load Balancer \\
+\hline
+Global & Regional & Regional & Global \\
+\hline
+SSL/TLS & Termination & Termination & Termination \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Kết Luận}
+
+ALB và NLB được chọn vì:
+\begin{itemize}
+    \item \textbf{Specialization}: ALB cho HTTP, NLB cho TCP - mỗi loại tối ưu cho use case cụ thể
+    \item \textbf{Integration}: Tích hợp tốt với ECS và tự động register/deregister tasks
+    \item \textbf{Features}: Health checks, SSL termination, path-based routing
+    \item \textbf{Cost}: Giá cả cạnh tranh và chỉ trả cho resources sử dụng
+\end{itemize}
+
+\subsection{So Sánh AWS và Google Cloud Platform}
+
+Trong dự án FieldKit Cloud, cả AWS và Google Cloud Platform đều được sử dụng: AWS cho hệ thống chính và Google Cloud Platform cho module giả lập dữ liệu. Việc sử dụng cả hai platforms cho phép so sánh trực tiếp và hiểu rõ hơn về ưu nhược điểm của mỗi platform.
+
+\subsubsection{So Sánh Container Services: ECS Fargate vs Cloud Run}
+
+AWS ECS Fargate và Google Cloud Run đều là serverless container platforms, nhưng có những khác biệt quan trọng:
+
+\textbf{Scaling Model:}
+\begin{itemize}
+    \item \textbf{ECS Fargate}: Scale dựa trên metrics như CPU/memory utilization. Tasks chạy liên tục cho đến khi được stop manually hoặc service được update. Phù hợp cho long-running services như databases và application servers.
+    \item \textbf{Cloud Run}: Scale dựa trên số lượng requests. Có thể scale về zero khi không có requests, và scale up nhanh chóng khi có requests. Phù hợp cho request-based workloads và scheduled tasks.
+\end{itemize}
+
+\textbf{Pricing:}
+\begin{itemize}
+    \item \textbf{ECS Fargate}: Tính phí theo vCPU-hours và GB-hours, bất kể có requests hay không. Phù hợp cho services cần chạy liên tục.
+    \item \textbf{Cloud Run}: Tính phí theo vCPU-seconds và GB-seconds chỉ khi có requests. Có free tier 2 triệu requests/tháng. Phù hợp cho workloads không liên tục.
+\end{itemize}
+
+\textbf{Use Cases trong FieldKit Cloud:}
+\begin{itemize}
+    \item \textbf{ECS Fargate}: Được sử dụng cho Server service, Charting service, và Database services vì các services này cần chạy liên tục 24/7.
+    \item \textbf{Cloud Run}: Được sử dụng cho module giả lập vì module chỉ cần chạy định kỳ (mỗi 5 phút), không cần chạy liên tục. Cloud Run's scale-to-zero giúp tiết kiệm chi phí đáng kể.
+\end{itemize}
+
+\subsubsection{Kết Luận về Lựa Chọn Multi-Cloud}
+
+Việc sử dụng cả AWS và Google Cloud Platform trong cùng một dự án đã chứng minh tính linh hoạt của kiến trúc FieldKit Cloud. Mỗi platform được sử dụng cho use case phù hợp nhất: AWS cho hệ thống chính cần high availability và long-running services, Google Cloud cho module giả lập cần cost-effective và scheduled execution. Điều này cho thấy việc không bị vendor lock-in và có thể tận dụng best services từ nhiều providers.
+
+\subsection{Tổng Kết Đánh Giá}
+
+Sau khi phân tích và so sánh các dịch vụ đám mây, nhóm đã lựa chọn AWS làm nhà cung cấp chính cho hệ thống với các lý do sau:
+
+\textbf{Lý do chọn AWS:}
+\begin{enumerate}
+    \item \textbf{Ecosystem Integration}: Các dịch vụ AWS tích hợp tốt với nhau, tạo thành một hệ sinh thái hoàn chỉnh
+    \item \textbf{Maturity và Stability}: AWS là nhà cung cấp cloud lớn nhất và có nhiều kinh nghiệm nhất
+    \item \textbf{Documentation và Community}: Tài liệu phong phú và community support lớn
+    \item \textbf{Flexibility}: Hỗ trợ nhiều options từ fully-managed đến self-managed
+    \item \textbf{Cost Optimization}: Nhiều tools và options để tối ưu chi phí
+    \item \textbf{Global Presence}: Có nhiều regions và availability zones trên toàn thế giới
+\end{enumerate}
+
+\textbf{Các dịch vụ cụ thể được chọn:}
+\begin{itemize}
+    \item \textbf{ECS Fargate}: Serverless container orchestration, phù hợp cho microservices
+    \item \textbf{ECR}: Container registry tích hợp tốt với ECS
+    \item \textbf{ALB/NLB}: Load balancing chuyên biệt cho HTTP và TCP
+    \item \textbf{Secrets Manager}: Quản lý secrets an toàn với automatic rotation
+    \item \textbf{CloudWatch Logs}: Centralized logging và monitoring
+    \item \textbf{PostgreSQL + TimescaleDB trên ECS}: Hybrid database solution linh hoạt
+\end{itemize}
+
+Tổng hợp lại, các lựa chọn này tạo nên một kiến trúc linh hoạt, có thể mở rộng, và cost-effective cho FieldKit Cloud platform.
+
