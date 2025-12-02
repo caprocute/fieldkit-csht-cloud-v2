@@ -18,6 +18,7 @@ var JWTAuth = JWTSecurity("jwt", func() {
 })
 
 var Origins = []string{
+	"*", // Allow all origins (for development/staging - TODO: restrict in production)
 	"https://fieldkit.org",
 	"https://*.fieldkit.org",
 	"https://dataviz.floodnet.nyc",

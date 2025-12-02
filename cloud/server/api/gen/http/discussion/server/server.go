@@ -393,6 +393,18 @@ func handleDiscussionOrigin(h http.Handler) http.Handler {
 			// Not a CORS request
 			origHndlr(w, r)
 			return
+		// Allow all origins (for development/staging)
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Vary", "Origin")
+		w.Header().Set("Access-Control-Expose-Headers", "Authorization, Content-Type")
+		w.Header().Set("Access-Control-Max-Age", "86400")
+		w.Header().Set("Access-Control-Allow-Credentials", "false")
+		if acrm := r.Header.Get("Access-Control-Request-Method"); acrm != "" {
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE, PATCH, PUT")
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+		}
+		origHndlr(w, r)
+		return
 		}
 		if cors.MatchOriginRegexp(origin, spec0) {
 			w.Header().Set("Access-Control-Allow-Origin", origin)

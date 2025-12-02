@@ -10,12 +10,10 @@ package server
 import (
 	"context"
 	"net/http"
-	"regexp"
 
 	station "gitlab.com/fieldkit/cloud/server/api/gen/station"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
-	"goa.design/plugins/v3/cors"
 )
 
 // Server lists the station service endpoint HTTP handlers.
@@ -965,9 +963,6 @@ func NewCORSHandler() http.Handler {
 // handleStationOrigin applies the CORS response headers corresponding to the
 // origin for the service station.
 func handleStationOrigin(h http.Handler) http.Handler {
-	spec0 := regexp.MustCompile("(.+[.])?fklocal.org:\\d+")
-	spec1 := regexp.MustCompile("127.0.0.1:\\d+")
-	spec2 := regexp.MustCompile("192.168.(\\d+).(\\d+):\\d+")
 	origHndlr := h.(http.HandlerFunc)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
@@ -976,117 +971,15 @@ func handleStationOrigin(h http.Handler) http.Handler {
 			origHndlr(w, r)
 			return
 		}
-		if cors.MatchOriginRegexp(origin, spec0) {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Vary", "Origin")
-			w.Header().Set("Access-Control-Expose-Headers", "Authorization, Content-Type")
-			w.Header().Set("Access-Control-Max-Age", "86400")
-			w.Header().Set("Access-Control-Allow-Credentials", "false")
-			if acrm := r.Header.Get("Access-Control-Request-Method"); acrm != "" {
-				// We are handling a preflight request
-				w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE, PATCH, PUT")
-				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-			}
-			origHndlr(w, r)
-			return
-		}
-		if cors.MatchOriginRegexp(origin, spec1) {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Vary", "Origin")
-			w.Header().Set("Access-Control-Expose-Headers", "Authorization, Content-Type")
-			w.Header().Set("Access-Control-Max-Age", "86400")
-			w.Header().Set("Access-Control-Allow-Credentials", "false")
-			if acrm := r.Header.Get("Access-Control-Request-Method"); acrm != "" {
-				// We are handling a preflight request
-				w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE, PATCH, PUT")
-				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-			}
-			origHndlr(w, r)
-			return
-		}
-		if cors.MatchOriginRegexp(origin, spec2) {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Vary", "Origin")
-			w.Header().Set("Access-Control-Expose-Headers", "Authorization, Content-Type")
-			w.Header().Set("Access-Control-Max-Age", "86400")
-			w.Header().Set("Access-Control-Allow-Credentials", "false")
-			if acrm := r.Header.Get("Access-Control-Request-Method"); acrm != "" {
-				// We are handling a preflight request
-				w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE, PATCH, PUT")
-				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-			}
-			origHndlr(w, r)
-			return
-		}
-		if cors.MatchOrigin(origin, "https://*.fieldkit.org") {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Vary", "Origin")
-			w.Header().Set("Access-Control-Expose-Headers", "Authorization, Content-Type")
-			w.Header().Set("Access-Control-Max-Age", "86400")
-			w.Header().Set("Access-Control-Allow-Credentials", "false")
-			if acrm := r.Header.Get("Access-Control-Request-Method"); acrm != "" {
-				// We are handling a preflight request
-				w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE, PATCH, PUT")
-				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-			}
-			origHndlr(w, r)
-			return
-		}
-		if cors.MatchOrigin(origin, "https://*.fkdev.org") {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Vary", "Origin")
-			w.Header().Set("Access-Control-Expose-Headers", "Authorization, Content-Type")
-			w.Header().Set("Access-Control-Max-Age", "86400")
-			w.Header().Set("Access-Control-Allow-Credentials", "false")
-			if acrm := r.Header.Get("Access-Control-Request-Method"); acrm != "" {
-				// We are handling a preflight request
-				w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE, PATCH, PUT")
-				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-			}
-			origHndlr(w, r)
-			return
-		}
-		if cors.MatchOrigin(origin, "https://dataviz.floodnet.nyc") {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Vary", "Origin")
-			w.Header().Set("Access-Control-Expose-Headers", "Authorization, Content-Type")
-			w.Header().Set("Access-Control-Max-Age", "86400")
-			w.Header().Set("Access-Control-Allow-Credentials", "false")
-			if acrm := r.Header.Get("Access-Control-Request-Method"); acrm != "" {
-				// We are handling a preflight request
-				w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE, PATCH, PUT")
-				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-			}
-			origHndlr(w, r)
-			return
-		}
-		if cors.MatchOrigin(origin, "https://fieldkit.org") {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Vary", "Origin")
-			w.Header().Set("Access-Control-Expose-Headers", "Authorization, Content-Type")
-			w.Header().Set("Access-Control-Max-Age", "86400")
-			w.Header().Set("Access-Control-Allow-Credentials", "false")
-			if acrm := r.Header.Get("Access-Control-Request-Method"); acrm != "" {
-				// We are handling a preflight request
-				w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE, PATCH, PUT")
-				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-			}
-			origHndlr(w, r)
-			return
-		}
-		if cors.MatchOrigin(origin, "https://fkdev.org") {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Vary", "Origin")
-			w.Header().Set("Access-Control-Expose-Headers", "Authorization, Content-Type")
-			w.Header().Set("Access-Control-Max-Age", "86400")
-			w.Header().Set("Access-Control-Allow-Credentials", "false")
-			if acrm := r.Header.Get("Access-Control-Request-Method"); acrm != "" {
-				// We are handling a preflight request
-				w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE, PATCH, PUT")
-				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-			}
-			origHndlr(w, r)
-			return
+		// Allow all origins (for development/staging)
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Vary", "Origin")
+		w.Header().Set("Access-Control-Expose-Headers", "Authorization, Content-Type")
+		w.Header().Set("Access-Control-Max-Age", "86400")
+		w.Header().Set("Access-Control-Allow-Credentials", "false")
+		if acrm := r.Header.Get("Access-Control-Request-Method"); acrm != "" {
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE, PATCH, PUT")
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
 		}
 		origHndlr(w, r)
 		return
