@@ -66,11 +66,21 @@ fi
 echo "✅ Đã lấy connection string"
 echo ""
 
-# Kiểm tra migrations directory
-PRIMARY_MIGRATIONS_PATH="$(pwd)/migrations/primary"
+# Xác định thư mục gốc của project (thư mục chứa cloud/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+MIGRATIONS_DIR="${PROJECT_ROOT}/cloud/migrations"
+PRIMARY_MIGRATIONS_PATH="${MIGRATIONS_DIR}/primary"
+MIGRATIONS_CLI_DIR="${MIGRATIONS_DIR}/cli"
 
+# Kiểm tra migrations directory
 if [ ! -d "$PRIMARY_MIGRATIONS_PATH" ]; then
     echo "❌ Không tìm thấy migrations directory: ${PRIMARY_MIGRATIONS_PATH}"
+    exit 1
+fi
+
+if [ ! -d "$MIGRATIONS_CLI_DIR" ]; then
+    echo "❌ Không tìm thấy migrations CLI directory: ${MIGRATIONS_CLI_DIR}"
     exit 1
 fi
 
@@ -82,7 +92,7 @@ echo "Database: ${POSTGRES_URL}"
 echo "Migrations path: ${PRIMARY_MIGRATIONS_PATH}"
 echo ""
 
-cd migrations/cli
+cd "${MIGRATIONS_CLI_DIR}"
 
 export MIGRATE_PATH="${PRIMARY_MIGRATIONS_PATH}"
 export MIGRATE_DATABASE_URL="${POSTGRES_URL}"

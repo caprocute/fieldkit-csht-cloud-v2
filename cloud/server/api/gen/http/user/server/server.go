@@ -1487,6 +1487,9 @@ func handleUserOrigin(h http.Handler) http.Handler {
 	spec0 := regexp.MustCompile("(.+[.])?fklocal.org:\\d+")
 	spec1 := regexp.MustCompile("127.0.0.1:\\d+")
 	spec2 := regexp.MustCompile("192.168.(\\d+).(\\d+):\\d+")
+	spec3 := regexp.MustCompile("\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?") // IP addresses with optional port
+	spec4 := regexp.MustCompile("(.+[.])?elb\\.amazonaws\\.com(:\\d+)?") // AWS ELB/ALB domains
+	spec5 := regexp.MustCompile("(.+[.])?ap-southeast-1\\.elb\\.amazonaws\\.com(:\\d+)?") // AWS ALB in ap-southeast-1
 	origHndlr := h.(http.HandlerFunc)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
@@ -1601,6 +1604,48 @@ func handleUserOrigin(h http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Credentials", "false")
 			if acrm := r.Header.Get("Access-Control-Request-Method"); acrm != "" {
 				// We are handling a preflight request
+				w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE, PATCH, PUT")
+				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+			}
+			origHndlr(w, r)
+			return
+		}
+		// Allow IP addresses (for ALB/IP access)
+		if cors.MatchOriginRegexp(origin, spec3) {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Vary", "Origin")
+			w.Header().Set("Access-Control-Expose-Headers", "Authorization, Content-Type")
+			w.Header().Set("Access-Control-Max-Age", "86400")
+			w.Header().Set("Access-Control-Allow-Credentials", "false")
+			if acrm := r.Header.Get("Access-Control-Request-Method"); acrm != "" {
+				w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE, PATCH, PUT")
+				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+			}
+			origHndlr(w, r)
+			return
+		}
+		// Allow AWS ELB/ALB domains
+		if cors.MatchOriginRegexp(origin, spec4) {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Vary", "Origin")
+			w.Header().Set("Access-Control-Expose-Headers", "Authorization, Content-Type")
+			w.Header().Set("Access-Control-Max-Age", "86400")
+			w.Header().Set("Access-Control-Allow-Credentials", "false")
+			if acrm := r.Header.Get("Access-Control-Request-Method"); acrm != "" {
+				w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE, PATCH, PUT")
+				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+			}
+			origHndlr(w, r)
+			return
+		}
+		// Allow AWS ALB in ap-southeast-1
+		if cors.MatchOriginRegexp(origin, spec5) {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Vary", "Origin")
+			w.Header().Set("Access-Control-Expose-Headers", "Authorization, Content-Type")
+			w.Header().Set("Access-Control-Max-Age", "86400")
+			w.Header().Set("Access-Control-Allow-Credentials", "false")
+			if acrm := r.Header.Get("Access-Control-Request-Method"); acrm != "" {
 				w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE, PATCH, PUT")
 				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
 			}

@@ -134,7 +134,18 @@ done
 
 # Build Server Image
 echo "Đang build Server image..."
+
+# Xác định thư mục gốc của project (thư mục chứa cloud/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+CLOUD_DIR="${PROJECT_ROOT}/cloud"
+
+# Chuyển vào thư mục cloud để build
+cd "${CLOUD_DIR}"
+
+# Copy secrets file
 cp portal/src/secrets.ts.aws portal/src/secrets.ts 2>/dev/null || cp portal/src/secrets.ts.template portal/src/secrets.ts
+
 docker build \
     --platform linux/amd64 \
     -t ${SERVER_TAG} \

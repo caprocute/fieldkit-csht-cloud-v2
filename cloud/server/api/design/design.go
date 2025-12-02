@@ -26,6 +26,9 @@ var Origins = []string{
 	"/(.+[.])?fklocal.org:\\d+/",   // Dev
 	"/127.0.0.1:\\d+/",             // Dev
 	"/192.168.(\\d+).(\\d+):\\d+/", // Dev
+	"/\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+/", // IP addresses with port (for ALB/IP access)
+	"/(.+[.])?elb\\.amazonaws\\.com(:\\d+)?/", // AWS ELB/ALB domains
+	"/(.+[.])?ap-southeast-1\\.elb\\.amazonaws\\.com(:\\d+)?/", // AWS ALB in ap-southeast-1
 }
 
 func commonOptions() {

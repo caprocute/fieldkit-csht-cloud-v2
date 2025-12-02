@@ -224,7 +224,7 @@ func main() {
 
 // createUserViaAPI tạo user qua API POST /users
 func createUserViaAPI(client *APIClient, email, name, password string) (*UserResponse, error) {
-	url := fmt.Sprintf("%s/users", client.BaseURL)
+	requestURL := fmt.Sprintf("%s/users", client.BaseURL)
 	payload := map[string]interface{}{
 		"name":     name,
 		"email":    email,
@@ -236,27 +236,50 @@ func createUserViaAPI(client *APIClient, email, name, password string) (*UserRes
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewReader(jsonData))
+	req, err := http.NewRequest("POST", requestURL, bytes.NewReader(jsonData))
 	if err != nil {
 		return nil, err
 	}
 
+	// Parse URL to extract host for Host header
+	parsedURL, err := url.Parse(requestURL)
+	if err == nil {
+		// Set Host header to match what server expects
+		// Server routes based on Host header, so we need to set it correctly
+		// If using ALB, try to extract API domain from URL or use the host directly
+		req.Host = parsedURL.Host
+		// Also try setting it as header (some HTTP clients use this)
+		req.Header.Set("Host", parsedURL.Host)
+	}
+
+	// Set headers
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", "fieldkit-auto-seed/1.0")
 
 	resp, err := client.Client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
+	body, _ := io.ReadAll(resp.Body)
+
+	// Log response for debugging
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		body, _ := io.ReadAll(resp.Body)
+		log.Printf("❌ Create user API call failed:")
+		log.Printf("   URL: %s", requestURL)
+		log.Printf("   Method: POST")
+		log.Printf("   Host header: %s", req.Host)
+		log.Printf("   Status: %d %s", resp.StatusCode, resp.Status)
+		log.Printf("   Response headers: %v", resp.Header)
+		log.Printf("   Response body: %s", string(body))
 		return nil, fmt.Errorf("create user failed: status %d, body: %s", resp.StatusCode, string(body))
 	}
 
 	var result UserResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, err
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w, body: %s", err, string(body))
 	}
 
 	return &result, nil
